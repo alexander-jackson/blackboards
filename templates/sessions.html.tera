@@ -1,0 +1,79 @@
+{% extends "base" %}
+
+{% block content %}
+
+{{ super() }}
+
+<div class="container">
+
+	<div class="row">
+
+		<div class="col-sm m-4">
+
+			{% if current %}
+
+			<h2>Register for {{ current.start_time }}</h2>
+
+			<form accept-charset="utf-8" action="/session/register" method="post">
+
+				<div class="row">
+
+					<input name="session_id" type="hidden" value="{{ current.id }}">
+
+					<div class="col-sm form-group">
+						<label for="email">Email</label>
+						<input name="email" type="email" class="form-control" placeholder="someone@warwick.ac.uk">
+					</div>
+
+					<div class="col-sm form-group">
+						<label for="name">Name</label>
+						<input name="name" type="text" class="form-control" placeholder="John Smith">
+					</div>
+
+				</div>
+
+				<button type="submit" class="btn btn-primary">Submit</button>
+
+			</form>
+
+			{% endif %}
+
+			<h2>Available Sessions</h2>
+
+			<table class="table table-dark">
+
+				<thead>
+
+					<tr>
+						<th scope="col">Title</th>
+						<th scope="col">Start Time</th>
+						<th scope="col">Remaining Spaces</th>
+					</tr>
+
+				</thead>
+
+				<tbody>
+
+					{% for session in sessions %}
+
+					<tr>
+						<td>
+							<a class="font-weight-bold" href="/sessions/{{ session.id }}">{{ session.title }}</a>
+						</td>
+						<td>{{ session.start_time }}</td>
+						<td>{{ session.remaining }}</td>
+					</tr>
+
+					{% endfor %}
+
+				</tbody>
+
+			</table>
+
+		</div>
+
+	</div>
+
+</div>
+
+{% endblock content %}
