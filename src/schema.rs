@@ -107,8 +107,15 @@ impl Request {
         let registration = Registration::create(request);
         registration.insert(conn)?;
 
+        Request::delete(identifier, conn)?;
+
         email::send_confirmation_email(&registration, &session);
         Ok(0)
+    }
+
+    pub fn delete(identifier: i32, conn: &diesel::SqliteConnection) -> QueryResult<usize> {
+        diesel::delete(requests::dsl::requests.filter(requests::dsl::identifier.eq(&identifier)))
+            .execute(conn)
     }
 }
 
