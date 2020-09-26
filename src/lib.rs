@@ -18,6 +18,7 @@ use rocket_contrib::templates::Template;
 
 mod api;
 mod context;
+mod email;
 mod forms;
 mod frontend;
 mod guards;
@@ -32,7 +33,8 @@ pub fn build_rocket() -> rocket::Rocket {
             routes![
                 frontend::dashboard,
                 frontend::specific_session,
-                api::register
+                api::register,
+                api::confirm_email,
             ],
         )
 }

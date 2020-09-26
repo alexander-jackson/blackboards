@@ -12,6 +12,9 @@ serde = "1"
 serde_derive = "1"
 lazy_static = "1.4.0"
 regex = "1"
+lettre = "0.10.0-alpha.2"
+dotenv = "0.15"
+rand = "0.7"
 
 [dependencies.rocket_contrib]
 version = "0.4"

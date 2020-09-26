@@ -14,7 +14,7 @@ impl<'v> FromFormValue<'v> for WarwickEmail {
         }
 
         if RE.is_match(form_value) {
-            Ok(WarwickEmail(form_value.to_string()))
+            Ok(WarwickEmail(form_value.to_string().replace("%40", "@")))
         } else {
             Err(form_value)
         }

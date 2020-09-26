@@ -11,8 +11,15 @@ use crate::guards::DatabaseConnection;
 pub fn register(conn: DatabaseConnection, data: Form<forms::Register>) -> Redirect {
     let data = data.into_inner();
 
-    let registration = schema::Registration::create(data);
-    registration.insert(&conn.0);
+    let request = schema::Request::create(data);
+    request.insert(&conn.0).unwrap();
+
+    Redirect::to(uri!(frontend::dashboard))
+}
+
+#[get("/session/confirm/<id>")]
+pub fn confirm_email(conn: DatabaseConnection, id: i32) -> Redirect {
+    schema::Request::verify(id, &conn.0).unwrap();
 
     Redirect::to(uri!(frontend::dashboard))
 }

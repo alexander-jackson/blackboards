@@ -1,5 +1,7 @@
 use diesel::{ExpressionMethods, QueryDsl, QueryResult, RunQueryDsl};
+use rand::Rng;
 
+use crate::email;
 use crate::forms;
 
 table! {
@@ -8,6 +10,15 @@ table! {
         title -> Text,
         start_time -> Text,
         remaining -> Integer,
+    }
+}
+
+table! {
+    requests (email) {
+        session_id -> Integer,
+        email -> Text,
+        name -> Text,
+        identifier -> Integer,
     }
 }
 
@@ -25,6 +36,14 @@ pub struct Session {
     pub title: String,
     pub start_time: String,
     pub remaining: i32,
+}
+
+#[derive(Debug, Insertable, Queryable, Serialize)]
+pub struct Request {
+    pub session_id: i32,
+    pub email: String,
+    pub name: String,
+    pub identifier: i32,
 }
 
 #[derive(Debug, Insertable, Queryable, Serialize)]
@@ -52,11 +71,52 @@ impl Session {
     }
 }
 
-impl Registration {
+impl Request {
     pub fn create(data: forms::Register) -> Self {
         Self {
             session_id: data.session_id,
             email: data.email.0,
+            name: data.name,
+            identifier: rand::thread_rng().gen::<i32>().abs(),
+        }
+    }
+
+    pub fn insert(&self, conn: &diesel::SqliteConnection) -> QueryResult<usize> {
+        // Ensure the session has spaces
+        let session = Session::find(self.session_id, conn)?;
+
+        if session.remaining == 0 {
+            return Err(diesel::result::Error::NotFound);
+        }
+
+        // Email the user
+        email::confirm_email_address(&self, &session);
+
+        diesel::insert_into(requests::table)
+            .values(self)
+            .execute(conn)
+    }
+
+    pub fn verify(identifier: i32, conn: &diesel::SqliteConnection) -> QueryResult<usize> {
+        // Find the request
+        let request: Self = requests::dsl::requests
+            .filter(requests::dsl::identifier.eq(&identifier))
+            .first(conn)?;
+        let session = Session::find(request.session_id, conn)?;
+
+        let registration = Registration::create(request);
+        registration.insert(conn)?;
+
+        email::send_confirmation_email(&registration, &session);
+        Ok(0)
+    }
+}
+
+impl Registration {
+    pub fn create(data: Request) -> Self {
+        Self {
+            session_id: data.session_id,
+            email: data.email,
             name: data.name,
         }
     }
