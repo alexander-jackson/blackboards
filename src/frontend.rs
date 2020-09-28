@@ -1,3 +1,4 @@
+use rocket::request::FlashMessage;
 use rocket::response::Redirect;
 use rocket_contrib::templates::Template;
 
@@ -7,14 +8,17 @@ use crate::schema;
 use crate::guards::DatabaseConnection;
 
 #[get("/sessions")]
-pub fn dashboard(conn: DatabaseConnection) -> Template {
+pub fn dashboard(conn: DatabaseConnection, flash: Option<FlashMessage>) -> Template {
     let sessions = schema::Session::get_results(&conn.0).unwrap();
+
+    let message = flash.map(|f| f.msg().to_string());
 
     Template::render(
         "sessions",
         context::Context {
             sessions,
             current: None,
+            message,
         },
     )
 }
@@ -26,6 +30,10 @@ pub fn specific_session(conn: DatabaseConnection, session_id: i32) -> Result<Tem
 
     Ok(Template::render(
         "sessions",
-        context::Context { sessions, current },
+        context::Context {
+            sessions,
+            current,
+            message: None,
+        },
     ))
 }
