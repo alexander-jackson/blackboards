@@ -1,5 +1,5 @@
 fn main() {
-    dotenv::dotenv().ok();
+    dotenv::dotenv().unwrap();
 
     let rocket = sessions::build_rocket();
     rocket.launch();
