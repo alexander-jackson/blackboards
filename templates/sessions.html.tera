@@ -27,7 +27,8 @@
 
 					<div class="col-sm form-group">
 						<label for="name">Name</label>
-						<input name="name" type="text" class="form-control" placeholder="John Smith">
+						<input name="name" type="text" class="form-control"
+						placeholder="John Smith" required>
 					</div>
 
 				</div>
