@@ -32,7 +32,15 @@ pub fn confirm_email_address(request: &schema::Request, session: &schema::Sessio
 
     let from = format!("{} <{}>", config.from_name, config.from_address);
     let to = format!("{} <{}>", request.name, request.email);
-    let body = format!("To confirm your booking for {} on {}, please click the following link: https://blackboards.pl/session/confirm/{}", session.title, session.start_time, request.identifier);
+    let body = format!(
+        r#"Hey {},
+
+To confirm your booking for {} on {}, please click the following link:
+https://blackboards.pl/session/confirm/{}
+
+Thanks!"#,
+        request.name, session.title, session.start_time, request.identifier
+    );
 
     let email = Message::builder()
         .from(from.parse().unwrap())
@@ -63,8 +71,10 @@ pub fn send_confirmation_email(registration: &schema::Registration, session: &sc
     let from = format!("{} <{}>", config.from_name, config.from_address);
     let to = format!("{} <{}>", registration.name, registration.email);
     let body = format!(
-        "Your booking for {} at {} has been confirmed!",
-        session.title, session.start_time
+        r#"Hey {},
+
+Your booking for {} at {} has been confirmed, see you there!"#,
+        registration.name, session.title, session.start_time
     );
 
     let email = Message::builder()
