@@ -2,7 +2,7 @@ DROP TABLE IF EXISTS sessions;
 CREATE TABLE sessions (
 	id INTEGER PRIMARY KEY,
 	title TEXT,
-	start_time TEXT,
+	start_time INTEGER,
 	remaining INTEGER
 );
 

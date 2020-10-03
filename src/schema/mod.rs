@@ -4,11 +4,13 @@ use rand::Rng;
 use crate::email;
 use crate::forms;
 
+mod custom_types;
+
 table! {
     sessions {
         id -> Integer,
         title -> Text,
-        start_time -> Text,
+        start_time -> BigInt,
         remaining -> Integer,
     }
 }
@@ -34,7 +36,7 @@ table! {
 pub struct Session {
     pub id: i32,
     pub title: String,
-    pub start_time: String,
+    pub start_time: custom_types::DateTime,
     pub remaining: i32,
 }
 

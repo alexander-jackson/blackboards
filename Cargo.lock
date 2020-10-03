@@ -200,9 +200,9 @@ checksum = "4785bdd1c96b2a846b2bd7cc02e86b6b3dbf14e7e53446c4f54c92a361040822"
 
 [[package]]
 name = "chrono"
-version = "0.4.16"
+version = "0.4.19"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9942f5f46d88ae2926edcd93a8a5b24151133cf6dc4e5f4c3fadb1c532ac8041"
+checksum = "670ad68c9088c2a963aaa298cb369688cf3f9465ce5e2d4ca10e6e0098a1ce73"
 dependencies = [
  "libc",
  "num-integer",
@@ -1433,6 +1433,7 @@ dependencies = [
 name = "sessions"
 version = "0.1.0"
 dependencies = [
+ "chrono",
  "diesel",
  "dotenv",
  "lazy_static",

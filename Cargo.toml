@@ -15,6 +15,7 @@ regex = "1"
 lettre = "0.10.0-alpha.2"
 dotenv = "0.15"
 rand = "0.7"
+chrono = "0.4.19"
 
 [dependencies.rocket_contrib]
 version = "0.4"
