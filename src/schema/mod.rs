@@ -57,7 +57,9 @@ pub struct Registration {
 
 impl Session {
     pub fn get_results(conn: &diesel::SqliteConnection) -> QueryResult<Vec<Self>> {
-        sessions::dsl::sessions.get_results::<Self>(conn)
+        sessions::dsl::sessions
+            .order_by(sessions::dsl::start_time.asc())
+            .get_results::<Self>(conn)
     }
 
     pub fn find(id: i32, conn: &diesel::SqliteConnection) -> QueryResult<Self> {
