@@ -11,8 +11,6 @@ extern crate rocket_contrib;
 extern crate diesel;
 #[macro_use]
 extern crate serde_derive;
-#[macro_use]
-extern crate lazy_static;
 
 use rocket_contrib::templates::Template;
 

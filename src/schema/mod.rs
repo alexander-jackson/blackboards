@@ -16,18 +16,18 @@ table! {
 }
 
 table! {
-    requests (email) {
+    requests (warwick_id) {
         session_id -> Integer,
-        email -> Text,
+        warwick_id -> Integer,
         name -> Text,
         identifier -> Integer,
     }
 }
 
 table! {
-    registrations (email) {
+    registrations (warwick_id) {
         session_id -> Integer,
-        email -> Text,
+        warwick_id -> Integer,
         name -> Text,
     }
 }
@@ -43,7 +43,7 @@ pub struct Session {
 #[derive(Debug, Insertable, Queryable, Serialize)]
 pub struct Request {
     pub session_id: i32,
-    pub email: String,
+    pub warwick_id: i32,
     pub name: String,
     pub identifier: i32,
 }
@@ -51,7 +51,7 @@ pub struct Request {
 #[derive(Debug, Insertable, Queryable, Serialize)]
 pub struct Registration {
     pub session_id: i32,
-    pub email: String,
+    pub warwick_id: i32,
     pub name: String,
 }
 
@@ -79,7 +79,7 @@ impl Request {
     pub fn create(data: forms::Register) -> Self {
         Self {
             session_id: data.session_id,
-            email: data.email.0,
+            warwick_id: data.warwick_id,
             name: data.name,
             identifier: rand::thread_rng().gen::<i32>().abs(),
         }
@@ -127,7 +127,7 @@ impl Registration {
     pub fn create(data: Request) -> Self {
         Self {
             session_id: data.session_id,
-            email: data.email,
+            warwick_id: data.warwick_id,
             name: data.name,
         }
     }

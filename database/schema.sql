@@ -9,7 +9,7 @@ CREATE TABLE sessions (
 DROP TABLE IF EXISTS requests;
 CREATE TABLE requests (
 	session_id INTEGER,
-	email TEXT PRIMARY KEY,
+	warwick_id INTEGER PRIMARY KEY,
 	name TEXT NOT NULL,
 	identifier INTEGER NOT NULL
 );
@@ -17,6 +17,6 @@ CREATE TABLE requests (
 DROP TABLE IF EXISTS registrations;
 CREATE TABLE registrations (
 	session_id INTEGER,
-	email TEXT PRIMARY KEY,
+	warwick_id INTEGER PRIMARY KEY,
 	name TEXT NOT NULL
 );

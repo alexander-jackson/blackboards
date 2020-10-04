@@ -22,6 +22,10 @@ impl EmailConfig {
     }
 }
 
+fn format_warwick_email(warwick_id: i32) -> String {
+    format!("u{}@live.warwick.ac.uk", warwick_id)
+}
+
 pub fn confirm_email_address(request: &schema::Request, session: &schema::Session) {
     // Check whether email settings are on
     if env::var("SEND_EMAILS").is_err() {
@@ -31,7 +35,11 @@ pub fn confirm_email_address(request: &schema::Request, session: &schema::Sessio
     let config = EmailConfig::from_env().expect("Config was malformed");
 
     let from = format!("{} <{}>", config.from_name, config.from_address);
-    let to = format!("{} <{}>", request.name, request.email);
+    let to = format!(
+        "{} <{}>",
+        request.name,
+        format_warwick_email(request.warwick_id),
+    );
     let body = format!(
         r#"Hey {},
 
@@ -69,7 +77,11 @@ pub fn send_confirmation_email(registration: &schema::Registration, session: &sc
     let config = EmailConfig::from_env().expect("Config was malformed");
 
     let from = format!("{} <{}>", config.from_name, config.from_address);
-    let to = format!("{} <{}>", registration.name, registration.email);
+    let to = format!(
+        "{} <{}>",
+        registration.name,
+        format_warwick_email(registration.warwick_id)
+    );
     let body = format!(
         r#"Hey {},
 

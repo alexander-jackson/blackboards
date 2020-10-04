@@ -21,14 +21,14 @@
 					<input name="session_id" type="hidden" value="{{ current.id }}">
 
 					<div class="col-sm form-group">
-						<label for="email">Email</label>
-						<input name="email" type="email" class="form-control" placeholder="someone@warwick.ac.uk">
+						<label for="warwick_id">Warwick ID</label>
+						<input name="warwick_id" type="number" class="form-control">
 					</div>
 
 					<div class="col-sm form-group">
 						<label for="name">Name</label>
 						<input name="name" type="text" class="form-control"
-						placeholder="John Smith" required>
+						placeholder="Alex Jackson" required>
 					</div>
 
 				</div>
