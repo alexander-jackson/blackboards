@@ -24,12 +24,18 @@ pub fn register(conn: DatabaseConnection, data: Form<forms::Register>) -> Flash<
 
     // User already has a verified email
     let registration = schema::Registration::create_from_verified(data);
-    registration.insert(&conn.0).unwrap();
 
-    Flash::success(
-        Redirect::to(uri!(frontend::dashboard)),
-        "Successfully registered for the session!",
-    )
+    // Check whether they broke the database
+    match registration.insert(&conn.0) {
+        Ok(_) => Flash::success(
+            Redirect::to(uri!(frontend::dashboard)),
+            "Successfully registered for the session!",
+        ),
+        Err(_) => Flash::error(
+            Redirect::to(uri!(frontend::dashboard)),
+            "Failed to register for the session, have you already booked one?",
+        ),
+    }
 }
 
 #[get("/session/confirm/<id>")]
