@@ -12,7 +12,7 @@ pub fn register(conn: DatabaseConnection, data: Form<forms::Register>) -> Flash<
     let data = data.into_inner();
 
     // Check whether the user needs to be verified
-    if !schema::VerifiedEmail::exists(data.warwick_id, &conn.0) {
+    if !schema::VerifiedEmail::exists(data.warwick_id.0, &conn.0) {
         let request = schema::Request::create(data);
         request.insert(&conn.0).unwrap();
 

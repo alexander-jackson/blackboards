@@ -114,7 +114,7 @@ impl Request {
     pub fn create(data: forms::Register) -> Self {
         Self {
             session_id: data.session_id,
-            warwick_id: data.warwick_id,
+            warwick_id: data.warwick_id.0,
             name: data.name,
             identifier: rand::thread_rng().gen::<i32>().abs(),
         }
@@ -171,7 +171,7 @@ impl Registration {
     pub fn create_from_verified(data: forms::Register) -> Self {
         Self {
             session_id: data.session_id,
-            warwick_id: data.warwick_id,
+            warwick_id: data.warwick_id.0,
             name: data.name,
         }
     }
