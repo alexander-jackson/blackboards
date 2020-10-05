@@ -16,6 +16,13 @@ table! {
 }
 
 table! {
+    verified_emails (warwick_id) {
+        warwick_id -> Integer,
+        name -> Text,
+    }
+}
+
+table! {
     requests (warwick_id) {
         session_id -> Integer,
         warwick_id -> Integer,
@@ -38,6 +45,12 @@ pub struct Session {
     pub title: String,
     pub start_time: custom_types::DateTime,
     pub remaining: i32,
+}
+
+#[derive(Debug, Insertable, Queryable, Serialize)]
+pub struct VerifiedEmail {
+    pub warwick_id: i32,
+    pub name: String,
 }
 
 #[derive(Debug, Insertable, Queryable, Serialize)]
@@ -75,6 +88,28 @@ impl Session {
     }
 }
 
+impl VerifiedEmail {
+    pub fn create(warwick_id: i32, name: String) -> Self {
+        Self { warwick_id, name }
+    }
+
+    pub fn insert(&self, conn: &diesel::SqliteConnection) -> QueryResult<usize> {
+        diesel::insert_into(verified_emails::table)
+            .values(self)
+            .execute(conn)
+    }
+
+    pub fn find(warwick_id: i32, conn: &diesel::SqliteConnection) -> QueryResult<Self> {
+        verified_emails::dsl::verified_emails
+            .find(warwick_id)
+            .first::<Self>(conn)
+    }
+
+    pub fn exists(warwick_id: i32, conn: &diesel::SqliteConnection) -> bool {
+        Self::find(warwick_id, conn).is_ok()
+    }
+}
+
 impl Request {
     pub fn create(data: forms::Register) -> Self {
         Self {
@@ -106,15 +141,16 @@ impl Request {
         let request: Self = requests::dsl::requests
             .filter(requests::dsl::identifier.eq(&identifier))
             .first(conn)?;
-        let session = Session::find(request.session_id, conn)?;
 
         let registration = Registration::create(request);
         registration.insert(conn)?;
 
-        Request::delete(identifier, conn)?;
+        // Add the user to the confirmed emails
+        let verification =
+            VerifiedEmail::create(registration.warwick_id, registration.name.clone());
+        verification.insert(conn)?;
 
-        email::send_confirmation_email(&registration, &session);
-        Ok(0)
+        Request::delete(identifier, conn)
     }
 
     pub fn delete(identifier: i32, conn: &diesel::SqliteConnection) -> QueryResult<usize> {
@@ -132,17 +168,27 @@ impl Registration {
         }
     }
 
+    pub fn create_from_verified(data: forms::Register) -> Self {
+        Self {
+            session_id: data.session_id,
+            warwick_id: data.warwick_id,
+            name: data.name,
+        }
+    }
+
     pub fn insert(&self, conn: &diesel::SqliteConnection) -> QueryResult<usize> {
         // Ensure the session has spaces
-        let remaining = Session::find(self.session_id, conn)?.remaining;
+        let session = Session::find(self.session_id, conn)?;
 
-        if remaining == 0 {
+        if session.remaining == 0 {
             return Err(diesel::result::Error::NotFound);
         }
 
         diesel::insert_into(registrations::table)
             .values(self)
             .execute(conn)?;
+
+        email::send_confirmation_email(&self, &session);
 
         Session::decrement_remaining(self.session_id, conn)
     }
