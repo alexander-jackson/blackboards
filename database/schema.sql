@@ -23,7 +23,6 @@ CREATE TABLE requests (
 DROP TABLE IF EXISTS registrations;
 CREATE TABLE registrations (
 	session_id INTEGER,
-	warwick_id INTEGER,
-	name TEXT NOT NULL,
-	PRIMARY KEY (session_id, warwick_id)
+	warwick_id INTEGER PRIMARY KEY,
+	name TEXT NOT NULL
 );
