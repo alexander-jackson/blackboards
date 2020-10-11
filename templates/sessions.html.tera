@@ -27,8 +27,7 @@
 
 					<div class="col-sm form-group">
 						<label for="name">Name</label>
-						<input name="name" type="text" class="form-control"
-						placeholder="Alex Jackson" required>
+						<input name="name" type="text" class="form-control" placeholder="Alex Jackson" required>
 					</div>
 
 				</div>
@@ -76,6 +75,24 @@
 				</tbody>
 
 			</table>
+
+			{% if registrations %}
+
+			<h2>Current Registrations</h2>
+
+			{% for session in registrations %}
+
+			<h3>{{ session.0.0 }} - {{ session.0.1 }}</h3>
+
+			<ul class="list-style">
+				{% for member in session.1 %}
+				<li>{{ member }}</li>
+				{% endfor %}
+			</ul>
+
+			{% endfor %}
+
+			{% endif %}
 
 		</div>
 

@@ -6,16 +6,14 @@ use diesel::serialize::Output;
 use diesel::sql_types::BigInt;
 use diesel::types::{FromSql, ToSql};
 
-#[derive(Debug, AsExpression)]
+#[derive(Debug, AsExpression, Eq, PartialEq, Ord, PartialOrd)]
 pub struct DateTime {
-    value: chrono::NaiveDateTime,
+    value: i64,
 }
 
 impl DateTime {
     pub fn new(timestamp: i64) -> Self {
-        Self {
-            value: chrono::NaiveDateTime::from_timestamp(i64::from(timestamp), 0),
-        }
+        Self { value: timestamp }
     }
 }
 
@@ -24,7 +22,8 @@ impl serde::Serialize for DateTime {
     where
         S: serde::Serializer,
     {
-        let formatted = self.value.format("%a %d %h, %H:%M").to_string();
+        let datetime = chrono::NaiveDateTime::from_timestamp(i64::from(self.value), 0);
+        let formatted = datetime.format("%a %d %h, %H:%M").to_string();
         serializer.serialize_str(&formatted)
     }
 }
@@ -32,7 +31,8 @@ impl serde::Serialize for DateTime {
 impl fmt::Display for DateTime {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         // Mon 08 Oct, 12:15
-        write!(f, "{}", self.value.format("%a %d %h, %H:%M"))
+        let datetime = chrono::NaiveDateTime::from_timestamp(i64::from(self.value), 0);
+        write!(f, "{}", datetime.format("%a %d %h, %H:%M"))
     }
 }
 
@@ -42,7 +42,7 @@ where
     i64: ToSql<BigInt, DB>,
 {
     fn to_sql<W: Write>(&self, out: &mut Output<W, DB>) -> diesel::serialize::Result {
-        (self.value.timestamp() as i64).to_sql(out)
+        self.value.to_sql(out)
     }
 }
 

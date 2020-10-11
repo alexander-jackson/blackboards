@@ -4,7 +4,7 @@ use rand::Rng;
 use crate::email;
 use crate::forms;
 
-mod custom_types;
+pub mod custom_types;
 
 table! {
     sessions {
@@ -38,6 +38,9 @@ table! {
         name -> Text,
     }
 }
+
+joinable!(registrations -> sessions (session_id));
+allow_tables_to_appear_in_same_query!(registrations, sessions);
 
 #[derive(Debug, Insertable, Queryable, Serialize)]
 pub struct Session {
@@ -198,5 +201,23 @@ impl Registration {
             .filter(registrations::dsl::session_id.eq(&session_id))
             .count()
             .get_result(conn)
+    }
+
+    pub fn get_registration_list(
+        conn: &diesel::SqliteConnection,
+    ) -> QueryResult<Vec<(i32, custom_types::DateTime, String, String)>> {
+        let columns = (
+            sessions::dsl::id,
+            sessions::dsl::start_time,
+            sessions::dsl::title,
+            registrations::dsl::name,
+        );
+        let ordering = (sessions::dsl::start_time, sessions::dsl::id);
+
+        registrations::dsl::registrations
+            .inner_join(sessions::dsl::sessions)
+            .select(columns)
+            .order_by(ordering)
+            .load(conn)
     }
 }
