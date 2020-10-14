@@ -6,13 +6,13 @@ use lettre::{Message, SmtpTransport, Transport};
 use crate::schema;
 
 #[derive(Debug)]
-pub struct EmailConfig {
+pub struct Config {
     pub from_address: String,
     pub from_name: String,
     pub app_password: String,
 }
 
-impl EmailConfig {
+impl Config {
     pub fn from_env() -> Result<Self, std::env::VarError> {
         Ok(Self {
             from_address: env::var("FROM_ADDRESS")?,
@@ -26,13 +26,13 @@ fn format_warwick_email(warwick_id: i32) -> String {
     format!("u{}@live.warwick.ac.uk", warwick_id)
 }
 
-pub fn confirm_email_address(request: &schema::Request, session: &schema::Session) {
+pub fn confirm_address(request: &schema::Request, session: &schema::Session) {
     // Check whether email settings are on
     if env::var("SEND_EMAILS").is_err() {
         return;
     }
 
-    let config = EmailConfig::from_env().expect("Config was malformed");
+    let config = Config::from_env().expect("Config was malformed");
 
     let from = format!("{} <{}>", config.from_name, config.from_address);
     let to = format!(
@@ -68,13 +68,13 @@ Thanks!"#,
     mailer.send(&email).unwrap();
 }
 
-pub fn send_confirmation_email(registration: &schema::Registration, session: &schema::Session) {
+pub fn send_confirmation(registration: &schema::Registration, session: &schema::Session) {
     // Check whether email settings are on
     if env::var("SEND_EMAILS").is_err() {
         return;
     }
 
-    let config = EmailConfig::from_env().expect("Config was malformed");
+    let config = Config::from_env().expect("Config was malformed");
 
     let from = format!("{} <{}>", config.from_name, config.from_address);
     let to = format!(

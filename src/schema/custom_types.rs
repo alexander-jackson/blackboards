@@ -22,7 +22,7 @@ impl serde::Serialize for DateTime {
     where
         S: serde::Serializer,
     {
-        let datetime = chrono::NaiveDateTime::from_timestamp(i64::from(self.value), 0);
+        let datetime = chrono::NaiveDateTime::from_timestamp(self.value, 0);
         let formatted = datetime.format("%a %d %h, %H:%M").to_string();
         serializer.serialize_str(&formatted)
     }
@@ -31,7 +31,7 @@ impl serde::Serialize for DateTime {
 impl fmt::Display for DateTime {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         // Mon 08 Oct, 12:15
-        let datetime = chrono::NaiveDateTime::from_timestamp(i64::from(self.value), 0);
+        let datetime = chrono::NaiveDateTime::from_timestamp(self.value, 0);
         write!(f, "{}", datetime.format("%a %d %h, %H:%M"))
     }
 }

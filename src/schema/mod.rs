@@ -145,7 +145,7 @@ impl Request {
         }
 
         // Email the user
-        email::confirm_email_address(&self, &session);
+        email::confirm_address(&self, &session);
 
         diesel::insert_into(requests::table)
             .values(self)
@@ -162,8 +162,7 @@ impl Request {
         registration.insert(conn)?;
 
         // Add the user to the confirmed emails
-        let verification =
-            VerifiedEmail::create(registration.warwick_id, registration.name.clone());
+        let verification = VerifiedEmail::create(registration.warwick_id, registration.name);
         verification.insert(conn)?;
 
         Request::delete(identifier, conn)
@@ -204,7 +203,7 @@ impl Registration {
             .values(self)
             .execute(conn)?;
 
-        email::send_confirmation_email(&self, &session);
+        email::send_confirmation(&self, &session);
 
         Session::decrement_remaining(self.session_id, conn)
     }

@@ -8,7 +8,7 @@ impl<'v> FromFormValue<'v> for WarwickId {
     type Error = &'v RawStr;
 
     fn from_form_value(form_value: &'v RawStr) -> Result<Self, &'v RawStr> {
-        if !(form_value.chars().all(|c| c.is_numeric()) && form_value.len() == 7) {
+        if !(form_value.chars().all(char::is_numeric) && form_value.len() == 7) {
             return Err(form_value);
         }
 
