@@ -49,13 +49,24 @@ pub fn confirm_email(conn: DatabaseConnection, id: i32) -> Flash<Redirect> {
 }
 
 #[post("/attendance/record", data = "<data>")]
-pub fn record_attendance(conn: DatabaseConnection, data: Form<forms::Attendance>) -> Redirect {
+pub fn record_attendance(
+    conn: DatabaseConnection,
+    data: Form<forms::Attendance>,
+) -> Flash<Redirect> {
     let data = data.into_inner();
 
     // Record the attendance
-    schema::Attendance::create(data).insert(&conn.0).unwrap();
+    let insertion = schema::Attendance::create(data).insert(&conn.0);
 
-    Redirect::to(uri!(
-        frontend::session_attendance: session_id = data.session_id
-    ))
+    // Check whether they broke the database
+    match insertion {
+        Ok(_) => Flash::success(
+            Redirect::to(uri!(frontend::session_attendance: data.session_id)),
+            format!("Recorded attendance for ID: {}", data.warwick_id.0),
+        ),
+        Err(_) => Flash::error(
+            Redirect::to(uri!(frontend::session_attendance: data.session_id)),
+            format!("Failed to record attendance for ID: {}", data.warwick_id.0),
+        ),
+    }
 }

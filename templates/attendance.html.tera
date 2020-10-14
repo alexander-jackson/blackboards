@@ -33,6 +33,12 @@
 
 			{% endif %}
 
+			{% if message %}
+
+			<p>{{ message }}</p>
+
+			{% endif %}
+
 			<h2>Available Sessions</h2>
 
 			<table class="table table-dark">

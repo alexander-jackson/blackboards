@@ -14,4 +14,5 @@ pub struct Context {
 pub struct Attendance {
     pub sessions: Vec<schema::Session>,
     pub current: Option<schema::Session>,
+    pub message: Option<String>,
 }

@@ -81,17 +81,27 @@ pub fn attendance(conn: DatabaseConnection) -> Result<Template, Redirect> {
         context::Attendance {
             sessions,
             current: None,
+            message: None,
         },
     ))
 }
 
 #[get("/attendance/<session_id>")]
-pub fn session_attendance(conn: DatabaseConnection, session_id: i32) -> Result<Template, Redirect> {
+pub fn session_attendance(
+    conn: DatabaseConnection,
+    flash: Option<FlashMessage>,
+    session_id: i32,
+) -> Result<Template, Redirect> {
     let sessions = schema::Session::get_results(&conn.0).unwrap();
     let current = schema::Session::find(session_id, &conn.0).ok();
+    let message = flash.map(|f| f.msg().to_string());
 
     Ok(Template::render(
         "attendance",
-        context::Attendance { sessions, current },
+        context::Attendance {
+            sessions,
+            current,
+            message,
+        },
     ))
 }
