@@ -20,7 +20,7 @@ mod email;
 mod forms;
 mod frontend;
 mod guards;
-pub mod schema;
+mod schema;
 
 pub fn build_rocket() -> rocket::Rocket {
     rocket::ignite()
