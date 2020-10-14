@@ -1,0 +1,72 @@
+{% extends "base" %}
+
+{% block content %}
+
+{{ super() }}
+
+<div class="container">
+
+	<div class="row">
+
+		<div class="col-sm m-4">
+
+			{% if current %}
+
+			<h2>Register attendance for {{ current.start_time }}</h2>
+
+			<form accept-charset="utf-8" action="/attendance/record" method="post">
+
+				<div class="row">
+
+					<input name="session_id" type="hidden" value="{{ current.id }}">
+
+					<div class="col-sm form-group">
+						<label for="warwick_id">Warwick ID</label>
+						<input name="warwick_id" type="number" class="form-control">
+					</div>
+
+				</div>
+
+				<button type="submit" class="btn btn-primary">Submit</button>
+
+			</form>
+
+			{% endif %}
+
+			<h2>Available Sessions</h2>
+
+			<table class="table table-dark">
+
+				<thead>
+
+					<tr>
+						<th scope="col">Title</th>
+						<th scope="col">Start Time</th>
+					</tr>
+
+				</thead>
+
+				<tbody>
+
+					{% for session in sessions %}
+
+					<tr>
+						<td>
+							<a class="font-weight-bold" href="/attendance/{{ session.id }}">{{ session.title }}</a>
+						</td>
+						<td>{{ session.start_time }}</td>
+					</tr>
+
+					{% endfor %}
+
+				</tbody>
+
+			</table>
+
+		</div>
+
+	</div>
+
+</div>
+
+{% endblock content %}

@@ -47,3 +47,15 @@ pub fn confirm_email(conn: DatabaseConnection, id: i32) -> Flash<Redirect> {
         "Thanks for confirming your email, see you at the session!",
     )
 }
+
+#[post("/attendance/record", data = "<data>")]
+pub fn record_attendance(conn: DatabaseConnection, data: Form<forms::Attendance>) -> Redirect {
+    let data = data.into_inner();
+
+    // Record the attendance
+    schema::Attendance::create(data).insert(&conn.0).unwrap();
+
+    Redirect::to(uri!(
+        frontend::session_attendance: session_id = data.session_id
+    ))
+}

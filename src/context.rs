@@ -9,3 +9,9 @@ pub struct Context {
     pub message: Option<String>,
     pub registrations: Option<Vec<Registrations>>,
 }
+
+#[derive(Serialize)]
+pub struct Attendance {
+    pub sessions: Vec<schema::Session>,
+    pub current: Option<schema::Session>,
+}

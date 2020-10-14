@@ -1,7 +1,7 @@
 use rocket::http::RawStr;
 use rocket::request::FromFormValue;
 
-#[derive(Debug)]
+#[derive(Copy, Clone, Debug)]
 pub struct WarwickId(pub i32);
 
 impl<'v> FromFormValue<'v> for WarwickId {
@@ -21,4 +21,10 @@ pub struct Register {
     pub session_id: i32,
     pub warwick_id: WarwickId,
     pub name: String,
+}
+
+#[derive(Copy, Clone, Debug, FromForm)]
+pub struct Attendance {
+    pub session_id: i32,
+    pub warwick_id: WarwickId,
 }

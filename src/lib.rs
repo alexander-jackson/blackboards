@@ -31,8 +31,11 @@ pub fn build_rocket() -> rocket::Rocket {
             routes![
                 frontend::dashboard,
                 frontend::specific_session,
+                frontend::attendance,
+                frontend::session_attendance,
                 api::register,
                 api::confirm_email,
+                api::record_attendance,
             ],
         )
 }
