@@ -56,17 +56,23 @@ pub fn record_attendance(
     let data = data.into_inner();
 
     // Record the attendance
-    let insertion = schema::Attendance::create(data).insert(&conn.0);
+    if let Err(e) = schema::Attendance::create(data).insert(&conn.0) {
+        use diesel::result::{DatabaseErrorKind, Error};
 
-    // Check whether they broke the database
-    match insertion {
-        Ok(_) => Flash::success(
-            Redirect::to(uri!(frontend::session_attendance: data.session_id)),
-            format!("Recorded attendance for ID: {}", data.warwick_id.0),
-        ),
-        Err(_) => Flash::error(
-            Redirect::to(uri!(frontend::session_attendance: data.session_id)),
-            format!("Failed to record attendance for ID: {}", data.warwick_id.0),
-        ),
+        let redirect = Redirect::to(uri!(frontend::session_attendance: data.session_id));
+        let msg = match e {
+            Error::DatabaseError(DatabaseErrorKind::UniqueViolation, _) => format!(
+                "Attendance for {} has already been recorded for this session",
+                data.warwick_id.0
+            ),
+            _ => String::from("Something happened in the database incorrectly"),
+        };
+
+        return Flash::error(redirect, msg);
     }
+
+    Flash::success(
+        Redirect::to(uri!(frontend::session_attendance: data.session_id)),
+        format!("Recorded attendance for ID: {}", data.warwick_id.0),
+    )
 }
