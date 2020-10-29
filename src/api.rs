@@ -19,7 +19,7 @@ pub fn register(conn: DatabaseConnection, data: Form<forms::Register>) -> Flash<
 
     // Check whether the user needs to be verified
     if !schema::VerifiedEmail::exists(data.warwick_id.0, &conn.0) {
-        let request = schema::Request::create(data);
+        let request = schema::Request::from(data);
         request.insert(&conn.0).unwrap();
 
         return Flash::success(
@@ -29,7 +29,7 @@ pub fn register(conn: DatabaseConnection, data: Form<forms::Register>) -> Flash<
     }
 
     // User already has a verified email
-    let registration = schema::Registration::create_from_verified(data);
+    let registration = schema::Registration::from(data);
 
     // Check whether they broke the database
     match registration.insert(&conn.0) {
@@ -64,7 +64,7 @@ pub fn record_attendance(
     let data = data.into_inner();
 
     // Record the attendance
-    if let Err(e) = schema::Attendance::create(data).insert(&conn.0) {
+    if let Err(e) = schema::Attendance::from(data).insert(&conn.0) {
         use diesel::result::{DatabaseErrorKind, Error};
 
         let redirect = Redirect::to(uri!(frontend::session_attendance: data.session_id));

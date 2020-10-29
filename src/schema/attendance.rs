@@ -24,18 +24,20 @@ pub struct Attendance {
 }
 
 impl Attendance {
-    /// Creates a new [`Attendance`] struct from the form data.
-    pub fn create(data: forms::Attendance) -> Self {
-        Self {
-            session_id: data.session_id,
-            warwick_id: data.warwick_id.0,
-        }
-    }
-
     /// Inserts the data into the appropriate table.
     pub fn insert(&self, conn: &diesel::SqliteConnection) -> QueryResult<usize> {
         diesel::insert_into(attendances::table)
             .values(self)
             .execute(conn)
+    }
+}
+
+impl From<forms::Attendance> for Attendance {
+    /// Creates a new [`Attendance`] struct from the form data.
+    fn from(data: forms::Attendance) -> Self {
+        Self {
+            session_id: data.session_id,
+            warwick_id: data.warwick_id.0,
+        }
     }
 }

@@ -30,24 +30,6 @@ pub struct Registration {
 }
 
 impl Registration {
-    /// Creates a new [`Registration`] from a [`Request`].
-    pub fn create(data: Request) -> Self {
-        Self {
-            session_id: data.session_id,
-            warwick_id: data.warwick_id,
-            name: data.name,
-        }
-    }
-
-    /// Creates a new [`Registration`] assuming the user is already verified.
-    pub fn create_from_verified(data: forms::Register) -> Self {
-        Self {
-            session_id: data.session_id,
-            warwick_id: data.warwick_id.0,
-            name: data.name,
-        }
-    }
-
     /// Inserts the [`Registration`] into the database.
     ///
     /// This fails if the session has no remaining places, and sends the user a confirmation email
@@ -94,5 +76,27 @@ impl Registration {
             .select(columns)
             .order_by(ordering)
             .load(conn)
+    }
+}
+
+impl From<Request> for Registration {
+    /// Creates a new [`Registration`] from a [`Request`].
+    fn from(data: Request) -> Self {
+        Self {
+            session_id: data.session_id,
+            warwick_id: data.warwick_id,
+            name: data.name,
+        }
+    }
+}
+
+impl From<forms::Register> for Registration {
+    /// Creates a new [`Registration`] assuming the user is already verified.
+    fn from(data: forms::Register) -> Self {
+        Self {
+            session_id: data.session_id,
+            warwick_id: data.warwick_id.0,
+            name: data.name,
+        }
     }
 }

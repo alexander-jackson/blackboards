@@ -2,6 +2,8 @@
 
 use diesel::{QueryDsl, QueryResult, RunQueryDsl};
 
+use crate::schema::Registration;
+
 table! {
     /// Represents the schema for `verified_emails`.
     verified_emails (warwick_id) {
@@ -22,11 +24,6 @@ pub struct VerifiedEmail {
 }
 
 impl VerifiedEmail {
-    /// Creates a new [`VerifiedEmail`] given a Warwick ID and a name.
-    pub fn create(warwick_id: i32, name: String) -> Self {
-        Self { warwick_id, name }
-    }
-
     /// Inserts the row into the database.
     pub fn insert(&self, conn: &diesel::SqliteConnection) -> QueryResult<usize> {
         diesel::insert_into(verified_emails::table)
@@ -44,5 +41,15 @@ impl VerifiedEmail {
     /// Checks if a row with a given Warwick ID exists in the database.
     pub fn exists(warwick_id: i32, conn: &diesel::SqliteConnection) -> bool {
         Self::find(warwick_id, conn).is_ok()
+    }
+}
+
+impl From<Registration> for VerifiedEmail {
+    /// Creates a new [`VerifiedEmail`] given a Warwick ID and a name.
+    fn from(registration: Registration) -> Self {
+        Self {
+            warwick_id: registration.warwick_id,
+            name: registration.name,
+        }
     }
 }

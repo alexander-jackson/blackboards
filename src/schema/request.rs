@@ -35,16 +35,6 @@ pub struct Request {
 }
 
 impl Request {
-    /// Creates a new [`Request`] from the registration form.
-    pub fn create(data: forms::Register) -> Self {
-        Self {
-            session_id: data.session_id,
-            warwick_id: data.warwick_id.0,
-            name: data.name,
-            identifier: rand::thread_rng().gen::<i32>().abs(),
-        }
-    }
-
     /// Inserts the [`Request`] into the database.
     pub fn insert(&self, conn: &diesel::SqliteConnection) -> QueryResult<usize> {
         // Ensure the session has spaces
@@ -73,11 +63,11 @@ impl Request {
             .filter(requests::dsl::identifier.eq(&identifier))
             .first(conn)?;
 
-        let registration = Registration::create(request);
+        let registration = Registration::from(request);
         registration.insert(conn)?;
 
         // Add the user to the confirmed emails
-        let verification = VerifiedEmail::create(registration.warwick_id, registration.name);
+        let verification = VerifiedEmail::from(registration);
         verification.insert(conn)?;
 
         Request::delete(identifier, conn)
@@ -87,5 +77,17 @@ impl Request {
     pub fn delete(identifier: i32, conn: &diesel::SqliteConnection) -> QueryResult<usize> {
         diesel::delete(requests::dsl::requests.filter(requests::dsl::identifier.eq(&identifier)))
             .execute(conn)
+    }
+}
+
+impl From<forms::Register> for Request {
+    /// Creates a new [`Request`] from the registration form.
+    fn from(data: forms::Register) -> Self {
+        Self {
+            session_id: data.session_id,
+            warwick_id: data.warwick_id.0,
+            name: data.name,
+            identifier: rand::thread_rng().gen::<i32>().abs(),
+        }
     }
 }
