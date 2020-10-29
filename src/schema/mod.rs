@@ -1,3 +1,5 @@
+//! Represents the Rust side of the database schema and the tables within it.
+
 pub mod attendance;
 pub mod custom_types;
 pub mod registration;

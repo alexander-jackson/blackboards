@@ -1,3 +1,5 @@
+//! Handles the routes that return Templates for the user to view.
+
 use std::collections::BTreeMap;
 
 use rocket::request::FlashMessage;
@@ -38,6 +40,7 @@ fn get_registrations(conn: &diesel::SqliteConnection) -> Option<Vec<context::Reg
     }
 }
 
+/// Gets the information needed for the general dashboard and renders the template.
 #[get("/sessions")]
 pub fn dashboard(conn: DatabaseConnection, flash: Option<FlashMessage>) -> Template {
     let sessions = schema::Session::get_results(&conn.0).unwrap();
@@ -55,6 +58,7 @@ pub fn dashboard(conn: DatabaseConnection, flash: Option<FlashMessage>) -> Templ
     )
 }
 
+/// Gets the information needed for the session registration and renders the template.
 #[get("/sessions/<session_id>")]
 pub fn specific_session(conn: DatabaseConnection, session_id: i32) -> Result<Template, Redirect> {
     let sessions = schema::Session::get_results(&conn.0).unwrap();
@@ -72,6 +76,7 @@ pub fn specific_session(conn: DatabaseConnection, session_id: i32) -> Result<Tem
     ))
 }
 
+/// Gets the information needed for the attendance recording dashboard and renders the template.
 #[get("/attendance")]
 pub fn attendance(conn: DatabaseConnection) -> Result<Template, Redirect> {
     let sessions = schema::Session::get_results(&conn.0).unwrap();
@@ -86,6 +91,7 @@ pub fn attendance(conn: DatabaseConnection) -> Result<Template, Redirect> {
     ))
 }
 
+/// Gets the information needed for the attendance recording and renders the template.
 #[get("/attendance/<session_id>")]
 pub fn session_attendance(
     conn: DatabaseConnection,

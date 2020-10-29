@@ -1,3 +1,5 @@
+//! Handles verification and confirmation emails for user registrations.
+
 use std::env;
 
 use lettre::transport::smtp::authentication::Credentials;
@@ -5,14 +7,19 @@ use lettre::{Message, SmtpTransport, Transport};
 
 use crate::schema;
 
+/// The configuration for sending emails.
 #[derive(Debug)]
 pub struct Config {
+    /// The address to send from.
     pub from_address: String,
+    /// The name to send from.
     pub from_name: String,
+    /// The application specific password for Gmail.
     pub app_password: String,
 }
 
 impl Config {
+    /// Builds a configuration from the environment variables.
     pub fn from_env() -> Result<Self, std::env::VarError> {
         Ok(Self {
             from_address: env::var("FROM_ADDRESS")?,
@@ -22,10 +29,12 @@ impl Config {
     }
 }
 
+/// Formats a Warwick email address given an identifier.
 fn format_warwick_email(warwick_id: i32) -> String {
     format!("u{}@live.warwick.ac.uk", warwick_id)
 }
 
+/// Sends an email to the user so they can confirm their address as valid.
 pub fn confirm_address(request: &schema::Request, session: &schema::Session) {
     // Check whether email settings are on
     if env::var("SEND_EMAILS").is_err() {
@@ -68,6 +77,7 @@ Thanks!"#,
     mailer.send(&email).unwrap();
 }
 
+/// Sends an email to the user confirming their booking for a given session.
 pub fn send_confirmation(registration: &schema::Registration, session: &schema::Session) {
     // Check whether email settings are on
     if env::var("SEND_EMAILS").is_err() {

@@ -1,3 +1,8 @@
+//! Defines the backend API functions that get called by the frontend.
+//!
+//! Deals with processing data into the database from forms and returning error messages to the
+//! frontend to be displayed.
+
 use rocket::request::Form;
 use rocket::response::{Flash, Redirect};
 
@@ -7,6 +12,7 @@ use crate::schema;
 
 use crate::guards::DatabaseConnection;
 
+/// Registers a user for a session, confirming their email if needed.
 #[post("/session/register", data = "<data>")]
 pub fn register(conn: DatabaseConnection, data: Form<forms::Register>) -> Flash<Redirect> {
     let data = data.into_inner();
@@ -38,6 +44,7 @@ pub fn register(conn: DatabaseConnection, data: Form<forms::Register>) -> Flash<
     }
 }
 
+/// Confirms a user's email in the database.
 #[get("/session/confirm/<id>")]
 pub fn confirm_email(conn: DatabaseConnection, id: i32) -> Flash<Redirect> {
     schema::Request::verify(id, &conn.0).unwrap();
@@ -48,6 +55,7 @@ pub fn confirm_email(conn: DatabaseConnection, id: i32) -> Flash<Redirect> {
     )
 }
 
+/// Records the attendance for a given Warwick ID at a session.
 #[post("/attendance/record", data = "<data>")]
 pub fn record_attendance(
     conn: DatabaseConnection,

@@ -1,3 +1,5 @@
+//! Stores the custom datatypes required for the schema to work.
+
 use std::fmt;
 use std::io::Write;
 
@@ -6,12 +8,14 @@ use diesel::serialize::Output;
 use diesel::sql_types::BigInt;
 use diesel::types::{FromSql, ToSql};
 
+/// Represents a custom datetime, to be stored as BigInt in SQL and formatted otherwise.
 #[derive(Debug, AsExpression, Eq, PartialEq, Ord, PartialOrd)]
 pub struct DateTime {
     value: i64,
 }
 
 impl DateTime {
+    /// Creates a new [`DateTime`] from a timestamp.
     pub fn new(timestamp: i64) -> Self {
         Self { value: timestamp }
     }
