@@ -149,7 +149,12 @@ pub fn authorised(
     let token = &query_params["oauth_token"];
     let secret = &query_params["oauth_token_secret"];
 
+    // Request the user's information
+    let user_info = auth::request_user_information(token, secret, &consumer_key, &consumer_secret);
+
     // Set the user's cookie to be their token
+    cookies.add_private(Cookie::new("id", user_info.id.to_string()));
+    cookies.add_private(Cookie::new("name", user_info.name));
     cookies.add_private(Cookie::new("token", token.to_string()));
 
     Redirect::to(uri!(frontend::dashboard))

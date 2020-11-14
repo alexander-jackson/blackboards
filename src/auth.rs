@@ -1,13 +1,10 @@
 //! Stores authorisation primitives for running OAuth1.
 
+use std::collections::HashMap;
+use std::str::FromStr;
+
 use oauth::{Builder, Credentials};
 use reqwest::blocking::Client;
-
-#[derive(oauth::Request)]
-struct Request {
-    scope: &'static str,
-    expiry: &'static str,
-}
 
 const SCOPE: &str = "urn:websignon.warwick.ac.uk:sso:service";
 const EXPIRY: &str = "forever";
@@ -16,6 +13,41 @@ const OAUTH_CALLBACK: &str = "http://localhost:8000/authorised";
 const REQUEST_TOKEN_URL: &str = "https://websignon.warwick.ac.uk/oauth/requestToken";
 const AUTHORISE_TOKEN_URL: &str = "https://websignon.warwick.ac.uk/oauth/authorise";
 const ACCESS_TOKEN_URL: &str = "https://websignon.warwick.ac.uk/oauth/accessToken";
+const ATTRIBUTES_URL: &str = "https://websignon.warwick.ac.uk/oauth/authenticate/attributes";
+
+#[derive(oauth::Request)]
+struct Request {
+    scope: &'static str,
+    expiry: &'static str,
+}
+
+/// Represents the information requested from the Warwick API.
+#[derive(Debug)]
+pub struct UserInfo {
+    /// The user's Warwick ID
+    pub id: u32,
+    /// The user's name
+    pub name: String,
+}
+
+impl From<HashMap<&str, &str>> for UserInfo {
+    fn from(map: HashMap<&str, &str>) -> Self {
+        Self {
+            id: u32::from_str(map["id"]).unwrap(),
+            name: String::from(map["name"]),
+        }
+    }
+}
+
+fn parse_mappings(text: &str) -> HashMap<&str, &str> {
+    text.trim()
+        .split('\n')
+        .map(|line| {
+            let index = line.find('=').unwrap();
+            (&line[..index], &line[index + 1..])
+        })
+        .collect()
+}
 
 /// Obtains a request token from the OAuth provider, corresponding to Stage 1.
 ///
@@ -79,4 +111,33 @@ pub fn build_callback(token: &str) -> String {
         "{}?oauth_token={}&oauth_callback={}",
         AUTHORISE_TOKEN_URL, token, OAUTH_CALLBACK
     )
+}
+
+/// Requests the user's information from the Warwick API.
+///
+/// Forms a request to the Warwick API using the user's token and secret, before extracting just
+/// the information needed for the website.
+pub fn request_user_information(
+    token: &str,
+    secret: &str,
+    consumer_key: &str,
+    consumer_secret: &str,
+) -> UserInfo {
+    let token = oauth::Credentials::new(token, secret);
+
+    let credentials = Credentials::new(consumer_key, consumer_secret);
+    let auth = Builder::<_, _>::new(credentials, oauth::HmacSha1)
+        .token(Some(token))
+        .post(&ATTRIBUTES_URL, &());
+
+    let client = Client::new();
+    let request = client
+        .post(ATTRIBUTES_URL)
+        .header("Authorization", auth)
+        .header("User-Agent", "Cinnamon");
+
+    let response = request.send().unwrap();
+    let text = response.text().unwrap();
+
+    UserInfo::from(parse_mappings(&text))
 }
