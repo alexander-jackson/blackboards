@@ -4,6 +4,8 @@ use std::borrow::Cow;
 
 use diesel::{QueryDsl, QueryResult, RunQueryDsl};
 
+use crate::auth;
+
 table! {
     /// Represents the schema for `auth_pairs`.
     auth_pairs (token) {
@@ -34,6 +36,15 @@ impl AuthPair {
     /// Finds an [`AuthPair`] given a token.
     pub fn find(token: &str, conn: &diesel::SqliteConnection) -> QueryResult<Self> {
         auth_pairs::dsl::auth_pairs.find(token).first::<Self>(conn)
+    }
+}
+
+impl From<auth::TokenPair> for AuthPair {
+    fn from(pair: auth::TokenPair) -> Self {
+        Self {
+            token: pair.token,
+            secret: pair.secret,
+        }
     }
 }
 

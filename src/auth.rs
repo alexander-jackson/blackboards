@@ -5,6 +5,7 @@ use std::str::FromStr;
 
 use oauth::{Builder, Credentials};
 use reqwest::blocking::Client;
+use url::form_urlencoded;
 
 const SCOPE: &str = "urn:websignon.warwick.ac.uk:sso:service";
 const EXPIRY: &str = "forever";
@@ -19,6 +20,15 @@ const ATTRIBUTES_URL: &str = "https://websignon.warwick.ac.uk/oauth/authenticate
 struct Request {
     scope: &'static str,
     expiry: &'static str,
+}
+
+/// Represents a token and secret pair from the Warwick API.
+#[derive(Debug)]
+pub struct TokenPair {
+    /// The public token itself
+    pub token: String,
+    /// The related secret
+    pub secret: String,
 }
 
 /// Represents the information requested from the Warwick API.
@@ -61,7 +71,7 @@ pub fn build_callback(token: &str) -> String {
 ///
 /// Using the `consumer_key` and `consumer_secret`, signs a request to the SSO service and requests
 /// a new request token. This can then be used later on to become an access token.
-pub fn obtain_request_token(consumer_key: &str, consumer_secret: &str) -> String {
+pub fn obtain_request_token(consumer_key: &str, consumer_secret: &str) -> TokenPair {
     let credentials = Credentials::new(consumer_key, consumer_secret);
     let request = Request {
         scope: SCOPE,
@@ -79,7 +89,13 @@ pub fn obtain_request_token(consumer_key: &str, consumer_secret: &str) -> String
         .query(&[("scope", SCOPE), ("expiry", EXPIRY)]);
 
     let response = request.send().unwrap();
-    response.text().unwrap()
+    let text = response.text().unwrap();
+
+    let query_params: HashMap<_, _> = form_urlencoded::parse(&text.as_bytes()).collect();
+    let token = query_params["oauth_token"].to_string();
+    let secret = query_params["oauth_token_secret"].to_string();
+
+    TokenPair { token, secret }
 }
 
 /// Exchanges a request token for an access token, corresponding to Stage 3.
@@ -93,7 +109,7 @@ pub fn exchange_request_for_access(
     oauth_token: &str,
     oauth_secret: &str,
     oauth_verifier: &str,
-) -> String {
+) -> TokenPair {
     let token = oauth::Credentials::new(oauth_token, oauth_secret);
 
     let credentials = Credentials::new(consumer_key, consumer_secret);
@@ -109,8 +125,13 @@ pub fn exchange_request_for_access(
         .header("User-Agent", "Cinnamon");
 
     let response = request.send().unwrap();
+    let text = response.text().unwrap();
 
-    response.text().unwrap()
+    let query_params: HashMap<_, _> = form_urlencoded::parse(&text.as_bytes()).collect();
+    let token = query_params["oauth_token"].to_string();
+    let secret = query_params["oauth_token_secret"].to_string();
+
+    TokenPair { token, secret }
 }
 
 /// Requests the user's information from the Warwick API.

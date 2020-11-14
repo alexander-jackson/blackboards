@@ -3,13 +3,11 @@
 //! Deals with processing data into the database from forms and returning error messages to the
 //! frontend to be displayed.
 
-use std::collections::HashMap;
 use std::env;
 
 use rocket::http::{Cookie, Cookies, RawStr};
 use rocket::request::Form;
 use rocket::response::{Flash, Redirect};
-use url::form_urlencoded;
 
 use crate::auth;
 use crate::forms;
@@ -102,18 +100,13 @@ pub fn authenticate(mut cookies: Cookies, conn: DatabaseConnection) -> Redirect 
     let consumer_key = env::var("CONSUMER_KEY").unwrap();
     let consumer_secret = env::var("CONSUMER_SECRET").unwrap();
 
-    let request_token = auth::obtain_request_token(&consumer_key, &consumer_secret);
-
-    let query_params: HashMap<_, _> = form_urlencoded::parse(&request_token.as_bytes()).collect();
-    let token = &query_params["oauth_token"];
-    let secret = &query_params["oauth_token_secret"];
+    let pair = auth::obtain_request_token(&consumer_key, &consumer_secret);
+    let callback = auth::build_callback(&pair.token);
 
     // Write the secret to the database
-    schema::AuthPair::from((token, secret))
-        .insert(&conn.0)
-        .unwrap();
+    schema::AuthPair::from(pair).insert(&conn.0).unwrap();
 
-    Redirect::to(auth::build_callback(token))
+    Redirect::to(callback)
 }
 
 /// Represents the callback of the website. Users are sent here after signing in through SSO.
@@ -145,17 +138,14 @@ pub fn authorised(
         oauth_verifier,
     );
 
-    let query_params: HashMap<_, _> = form_urlencoded::parse(&pair.as_bytes()).collect();
-    let token = &query_params["oauth_token"];
-    let secret = &query_params["oauth_token_secret"];
-
     // Request the user's information
-    let user_info = auth::request_user_information(token, secret, &consumer_key, &consumer_secret);
+    let user_info =
+        auth::request_user_information(&pair.token, &pair.secret, &consumer_key, &consumer_secret);
 
     // Set the user's cookie to be their token
     cookies.add_private(Cookie::new("id", user_info.id.to_string()));
     cookies.add_private(Cookie::new("name", user_info.name));
-    cookies.add_private(Cookie::new("token", token.to_string()));
+    cookies.add_private(Cookie::new("token", pair.token.to_string()));
 
     Redirect::to(uri!(frontend::dashboard))
 }
