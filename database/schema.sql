@@ -34,3 +34,9 @@ CREATE TABLE attendances (
 	warwick_id INTEGER,
 	PRIMARY KEY (session_id, warwick_id)
 );
+
+DROP TABLE IF EXISTS auth_pairs;
+CREATE TABLE auth_pairs (
+	token TEXT PRIMARY KEY,
+	secret TEXT
+);

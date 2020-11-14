@@ -18,6 +18,7 @@ extern crate serde_derive;
 use rocket_contrib::templates::Template;
 
 pub mod api;
+pub mod auth;
 pub mod context;
 pub mod email;
 pub mod forms;
@@ -43,6 +44,8 @@ pub fn build_rocket() -> rocket::Rocket {
                 api::register,
                 api::confirm_email,
                 api::record_attendance,
+                api::authenticate,
+                api::authorised,
             ],
         )
 }

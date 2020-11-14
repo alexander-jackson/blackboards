@@ -3,9 +3,15 @@
 //! Deals with processing data into the database from forms and returning error messages to the
 //! frontend to be displayed.
 
+use std::collections::HashMap;
+use std::env;
+
+use rocket::http::{Cookie, Cookies, RawStr};
 use rocket::request::Form;
 use rocket::response::{Flash, Redirect};
+use url::form_urlencoded;
 
+use crate::auth;
 use crate::forms;
 use crate::frontend;
 use crate::schema;
@@ -83,4 +89,68 @@ pub fn record_attendance(
         Redirect::to(uri!(frontend::session_attendance: data.session_id)),
         format!("Recorded attendance for ID: {}", data.warwick_id.0),
     )
+}
+
+/// Begins the OAuth1 authentication process.
+#[get("/authenticate")]
+pub fn authenticate(mut cookies: Cookies, conn: DatabaseConnection) -> Redirect {
+    // Check whether their cookie is already set
+    if cookies.get_private("token").is_some() {
+        return Redirect::to(uri!(frontend::dashboard));
+    }
+
+    let consumer_key = env::var("CONSUMER_KEY").unwrap();
+    let consumer_secret = env::var("CONSUMER_SECRET").unwrap();
+
+    let request_token = auth::obtain_request_token(&consumer_key, &consumer_secret);
+
+    let query_params: HashMap<_, _> = form_urlencoded::parse(&request_token.as_bytes()).collect();
+    let token = &query_params["oauth_token"];
+    let secret = &query_params["oauth_token_secret"];
+
+    // Write the secret to the database
+    schema::AuthPair::from((token, secret))
+        .insert(&conn.0)
+        .unwrap();
+
+    Redirect::to(auth::build_callback(token))
+}
+
+/// Represents the callback of the website. Users are sent here after signing in through SSO.
+///
+/// Gets the parameters from the query string and logs them to the terminal before requesting to
+/// exchange the request token for an access token. If this succeeds, logs the token and displays
+/// it on the frontend to the user.
+#[get("/authorised?<oauth_token>&<user_id>&<oauth_verifier>")]
+pub fn authorised(
+    mut cookies: Cookies,
+    conn: DatabaseConnection,
+    oauth_token: &RawStr,
+    user_id: &RawStr,
+    oauth_verifier: &RawStr,
+) -> Redirect {
+    let request_token = oauth_token.as_str();
+    let user_id = user_id.as_str();
+    let oauth_verifier = oauth_verifier.as_str();
+
+    let consumer_key = env::var("CONSUMER_KEY").unwrap();
+    let consumer_secret = env::var("CONSUMER_SECRET").unwrap();
+    let auth_pair = schema::AuthPair::find(request_token, &conn.0).unwrap();
+
+    let pair = auth::exchange_request_for_access(
+        &consumer_key,
+        &consumer_secret,
+        request_token,
+        &auth_pair.secret,
+        oauth_verifier,
+    );
+
+    let query_params: HashMap<_, _> = form_urlencoded::parse(&pair.as_bytes()).collect();
+    let token = &query_params["oauth_token"];
+    let secret = &query_params["oauth_token_secret"];
+
+    // Set the user's cookie to be their token
+    cookies.add_private(Cookie::new("token", token.to_string()));
+
+    Redirect::to(uri!(frontend::dashboard))
 }
