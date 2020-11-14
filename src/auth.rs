@@ -49,6 +49,14 @@ fn parse_mappings(text: &str) -> HashMap<&str, &str> {
         .collect()
 }
 
+/// Builds the callback url for OAuth1.
+pub fn build_callback(token: &str) -> String {
+    format!(
+        "{}?oauth_token={}&oauth_callback={}",
+        AUTHORISE_TOKEN_URL, token, OAUTH_CALLBACK
+    )
+}
+
 /// Obtains a request token from the OAuth provider, corresponding to Stage 1.
 ///
 /// Using the `consumer_key` and `consumer_secret`, signs a request to the SSO service and requests
@@ -103,14 +111,6 @@ pub fn exchange_request_for_access(
     let response = request.send().unwrap();
 
     response.text().unwrap()
-}
-
-/// Builds the callback url for OAuth1.
-pub fn build_callback(token: &str) -> String {
-    format!(
-        "{}?oauth_token={}&oauth_callback={}",
-        AUTHORISE_TOKEN_URL, token, OAUTH_CALLBACK
-    )
 }
 
 /// Requests the user's information from the Warwick API.
