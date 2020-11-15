@@ -73,7 +73,7 @@ pub fn record_attendance(
 #[get("/authenticate")]
 pub fn authenticate(mut cookies: Cookies, conn: DatabaseConnection) -> Redirect {
     // Check whether their cookie is already set
-    if cookies.get_private("token").is_some() {
+    if cookies.get_private("id").is_some() && cookies.get_private("name").is_some() {
         return Redirect::to(uri!(frontend::dashboard));
     }
 
@@ -122,10 +122,9 @@ pub fn authorised(
     let user_info =
         auth::request_user_information(&pair.token, &pair.secret, &consumer_key, &consumer_secret);
 
-    // Set the user's cookie to be their token
+    // Set the user's id and name cookies
     cookies.add_private(Cookie::new("id", user_info.id.to_string()));
     cookies.add_private(Cookie::new("name", user_info.name));
-    cookies.add_private(Cookie::new("token", pair.token));
 
     Redirect::to(uri!(frontend::authenticated))
 }
