@@ -145,7 +145,7 @@ pub fn authorised(
     // Set the user's cookie to be their token
     cookies.add_private(Cookie::new("id", user_info.id.to_string()));
     cookies.add_private(Cookie::new("name", user_info.name));
-    cookies.add_private(Cookie::new("token", pair.token.to_string()));
+    cookies.add_private(Cookie::new("token", pair.token));
 
     Redirect::to(uri!(frontend::authenticated))
 }
