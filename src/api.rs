@@ -14,26 +14,17 @@ use crate::forms;
 use crate::frontend;
 use crate::schema;
 
-use crate::guards::DatabaseConnection;
+use crate::guards::{AuthorisedUser, DatabaseConnection};
 
 /// Registers a user for a session, confirming their email if needed.
 #[post("/session/register", data = "<data>")]
-pub fn register(conn: DatabaseConnection, data: Form<forms::Register>) -> Flash<Redirect> {
+pub fn register(
+    user: AuthorisedUser,
+    conn: DatabaseConnection,
+    data: Form<forms::Register>,
+) -> Flash<Redirect> {
     let data = data.into_inner();
-
-    // Check whether the user needs to be verified
-    if !schema::VerifiedEmail::exists(data.warwick_id.0, &conn.0) {
-        let request = schema::Request::from(data);
-        request.insert(&conn.0).unwrap();
-
-        return Flash::success(
-            Redirect::to(uri!(frontend::dashboard)),
-            "Successfully registered for the session, check your email to confirm it!",
-        );
-    }
-
-    // User already has a verified email
-    let registration = schema::Registration::from(data);
+    let registration = schema::Registration::from((user, data));
 
     // Check whether they broke the database
     match registration.insert(&conn.0) {

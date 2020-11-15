@@ -25,10 +25,6 @@ impl<'v> FromFormValue<'v> for WarwickId {
 pub struct Register {
     /// The identifier for the session.
     pub session_id: i32,
-    /// The user's Warwick ID.
-    pub warwick_id: WarwickId,
-    /// The user's name.
-    pub name: String,
 }
 
 /// Defines the contents of the attendance form for a session.

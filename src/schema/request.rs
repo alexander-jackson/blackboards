@@ -5,6 +5,7 @@ use rand::Rng;
 
 use crate::email;
 use crate::forms;
+use crate::guards::AuthorisedUser;
 use crate::schema::{Registration, Session, VerifiedEmail};
 
 table! {
@@ -80,13 +81,13 @@ impl Request {
     }
 }
 
-impl From<forms::Register> for Request {
+impl From<(AuthorisedUser, forms::Register)> for Request {
     /// Creates a new [`Request`] from the registration form.
-    fn from(data: forms::Register) -> Self {
+    fn from(data: (AuthorisedUser, forms::Register)) -> Self {
         Self {
-            session_id: data.session_id,
-            warwick_id: data.warwick_id.0,
-            name: data.name,
+            session_id: data.1.session_id,
+            warwick_id: data.0.id,
+            name: data.0.name,
             identifier: rand::thread_rng().gen::<i32>().abs(),
         }
     }

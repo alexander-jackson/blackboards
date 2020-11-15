@@ -12,7 +12,7 @@ pub struct DatabaseConnection(diesel::SqliteConnection);
 #[derive(Debug)]
 pub struct AuthorisedUser {
     /// The user's Warwick ID
-    pub id: u32,
+    pub id: i32,
     /// The user's name
     pub name: String,
 }
@@ -33,7 +33,7 @@ impl<'a, 'r> FromRequest<'a, 'r> for AuthorisedUser {
         };
 
         Outcome::Success(Self {
-            id: u32::from_str(id.value()).unwrap(),
+            id: i32::from_str(id.value()).unwrap(),
             name: String::from(name.value()),
         })
     }

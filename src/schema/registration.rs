@@ -4,6 +4,7 @@ use diesel::{ExpressionMethods, QueryDsl, QueryResult, RunQueryDsl};
 
 use crate::email;
 use crate::forms;
+use crate::guards::AuthorisedUser;
 use crate::schema::{custom_types, sessions, Request, Session};
 
 table! {
@@ -90,13 +91,13 @@ impl From<Request> for Registration {
     }
 }
 
-impl From<forms::Register> for Registration {
+impl From<(AuthorisedUser, forms::Register)> for Registration {
     /// Creates a new [`Registration`] assuming the user is already verified.
-    fn from(data: forms::Register) -> Self {
+    fn from(data: (AuthorisedUser, forms::Register)) -> Self {
         Self {
-            session_id: data.session_id,
-            warwick_id: data.warwick_id.0,
-            name: data.name,
+            session_id: data.1.session_id,
+            warwick_id: data.0.id,
+            name: data.0.name,
         }
     }
 }

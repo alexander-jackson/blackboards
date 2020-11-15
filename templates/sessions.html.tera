@@ -16,21 +16,7 @@
 
 			<form accept-charset="utf-8" action="/session/register" method="post">
 
-				<div class="row">
-
-					<input name="session_id" type="hidden" value="{{ current.id }}">
-
-					<div class="col-sm form-group">
-						<label for="warwick_id">Warwick ID</label>
-						<input name="warwick_id" type="number" class="form-control">
-					</div>
-
-					<div class="col-sm form-group">
-						<label for="name">Name</label>
-						<input name="name" type="text" class="form-control" placeholder="Alex Jackson" required>
-					</div>
-
-				</div>
+				<input name="session_id" type="hidden" value="{{ current.id }}">
 
 				<button type="submit" class="btn btn-primary">Submit</button>
 

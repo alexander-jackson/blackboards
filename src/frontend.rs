@@ -64,7 +64,11 @@ pub fn dashboard(
 
 /// Gets the information needed for the session registration and renders the template.
 #[get("/sessions/<session_id>")]
-pub fn specific_session(conn: DatabaseConnection, session_id: i32) -> Result<Template, Redirect> {
+pub fn specific_session(
+    _user: AuthorisedUser,
+    conn: DatabaseConnection,
+    session_id: i32,
+) -> Result<Template, Redirect> {
     let sessions = schema::Session::get_results(&conn.0).unwrap();
     let current = schema::Session::find(session_id, &conn.0).ok();
     let registrations = get_registrations(&conn.0);
