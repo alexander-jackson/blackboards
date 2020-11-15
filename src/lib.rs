@@ -51,7 +51,6 @@ pub fn build_rocket() -> rocket::Rocket {
                 frontend::session_attendance,
                 frontend::authenticated,
                 api::register,
-                api::confirm_email,
                 api::record_attendance,
                 api::authenticate,
                 api::authorised,

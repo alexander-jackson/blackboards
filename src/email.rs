@@ -34,49 +34,6 @@ fn format_warwick_email(warwick_id: i32) -> String {
     format!("u{}@live.warwick.ac.uk", warwick_id)
 }
 
-/// Sends an email to the user so they can confirm their address as valid.
-pub fn confirm_address(request: &schema::Request, session: &schema::Session) {
-    // Check whether email settings are on
-    if env::var("SEND_EMAILS").is_err() {
-        return;
-    }
-
-    let config = Config::from_env().expect("Config was malformed");
-
-    let from = format!("{} <{}>", config.from_name, config.from_address);
-    let to = format!(
-        "{} <{}>",
-        request.name,
-        format_warwick_email(request.warwick_id),
-    );
-    let body = format!(
-        r#"Hey {},
-
-To confirm your booking for {} on {}, please click the following link:
-https://blackboards.pl/session/confirm/{}
-
-Thanks!"#,
-        request.name, session.title, session.start_time, request.identifier
-    );
-
-    let email = Message::builder()
-        .from(from.parse().unwrap())
-        .to(to.parse().unwrap())
-        .subject("Warwick Barbell Session Registration")
-        .body(body)
-        .unwrap();
-
-    let creds = Credentials::new(config.from_address, config.app_password);
-
-    // Open a remote connection to gmail
-    let mailer = SmtpTransport::relay("smtp.gmail.com")
-        .unwrap()
-        .credentials(creds)
-        .build();
-
-    mailer.send(&email).unwrap();
-}
-
 /// Sends an email to the user confirming their booking for a given session.
 pub fn send_confirmation(registration: &schema::Registration, session: &schema::Session) {
     // Check whether email settings are on
