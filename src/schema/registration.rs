@@ -5,7 +5,7 @@ use diesel::{ExpressionMethods, QueryDsl, QueryResult, RunQueryDsl};
 use crate::email;
 use crate::forms;
 use crate::guards::AuthorisedUser;
-use crate::schema::{custom_types, sessions, Request, Session};
+use crate::schema::{custom_types, sessions, Session};
 
 table! {
     /// Represents the schema for `registrations`.
@@ -77,17 +77,6 @@ impl Registration {
             .select(columns)
             .order_by(ordering)
             .load(conn)
-    }
-}
-
-impl From<Request> for Registration {
-    /// Creates a new [`Registration`] from a [`Request`].
-    fn from(data: Request) -> Self {
-        Self {
-            session_id: data.session_id,
-            warwick_id: data.warwick_id,
-            name: data.name,
-        }
     }
 }
 

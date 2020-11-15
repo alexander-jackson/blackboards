@@ -39,17 +39,6 @@ pub fn register(
     }
 }
 
-/// Confirms a user's email in the database.
-#[get("/session/confirm/<id>")]
-pub fn confirm_email(conn: DatabaseConnection, id: i32) -> Flash<Redirect> {
-    schema::Request::verify(id, &conn.0).unwrap();
-
-    Flash::success(
-        Redirect::to(uri!(frontend::dashboard)),
-        "Thanks for confirming your email, see you at the session!",
-    )
-}
-
 /// Records the attendance for a given Warwick ID at a session.
 #[post("/attendance/record", data = "<data>")]
 pub fn record_attendance(

@@ -6,20 +6,6 @@ CREATE TABLE sessions (
 	remaining INTEGER
 );
 
-DROP TABLE IF EXISTS verified_emails;
-CREATE TABLE verified_emails (
-	warwick_id INTEGER PRIMARY KEY,
-	name TEXT
-);
-
-DROP TABLE IF EXISTS requests;
-CREATE TABLE requests (
-	session_id INTEGER,
-	warwick_id INTEGER PRIMARY KEY,
-	name TEXT NOT NULL,
-	identifier INTEGER NOT NULL
-);
-
 DROP TABLE IF EXISTS registrations;
 CREATE TABLE registrations (
 	session_id INTEGER,
