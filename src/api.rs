@@ -147,5 +147,5 @@ pub fn authorised(
     cookies.add_private(Cookie::new("name", user_info.name));
     cookies.add_private(Cookie::new("token", pair.token.to_string()));
 
-    Redirect::to(uri!(frontend::dashboard))
+    Redirect::to(uri!(frontend::authenticated))
 }

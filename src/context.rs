@@ -1,5 +1,7 @@
 //! Stores the Tera context's needed for rendering the frontend webpages.
 
+use std::collections::HashMap;
+
 use crate::schema;
 
 /// Represents the session title, start time and the users' registered for it.
@@ -27,4 +29,9 @@ pub struct Attendance {
     pub current: Option<schema::Session>,
     /// The message to display to the user, for errors.
     pub message: Option<String>,
+}
+
+/// Returns an empty `HashMap` for templates that don't require context.
+pub fn get_empty() -> HashMap<&'static str, &'static str> {
+    HashMap::new()
 }

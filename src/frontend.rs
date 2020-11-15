@@ -9,7 +9,7 @@ use rocket_contrib::templates::Template;
 use crate::context;
 use crate::schema;
 
-use crate::guards::DatabaseConnection;
+use crate::guards::{AuthorisedUser, DatabaseConnection};
 
 fn format_registrations(
     unformatted: Vec<(i32, schema::custom_types::DateTime, String, String)>,
@@ -42,7 +42,11 @@ fn get_registrations(conn: &diesel::SqliteConnection) -> Option<Vec<context::Reg
 
 /// Gets the information needed for the general dashboard and renders the template.
 #[get("/sessions")]
-pub fn dashboard(conn: DatabaseConnection, flash: Option<FlashMessage>) -> Template {
+pub fn dashboard(
+    _user: AuthorisedUser,
+    conn: DatabaseConnection,
+    flash: Option<FlashMessage>,
+) -> Template {
     let sessions = schema::Session::get_results(&conn.0).unwrap();
     let message = flash.map(|f| f.msg().to_string());
     let registrations = get_registrations(&conn.0);
@@ -110,4 +114,10 @@ pub fn session_attendance(
             message,
         },
     ))
+}
+
+/// Displays a small splash page after authenticating.
+#[get("/authenticated")]
+pub fn authenticated() -> Template {
+    Template::render("authenticated", context::get_empty())
 }

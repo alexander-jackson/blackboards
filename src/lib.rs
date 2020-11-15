@@ -15,6 +15,7 @@ extern crate diesel;
 #[macro_use]
 extern crate serde_derive;
 
+use rocket::response::Redirect;
 use rocket_contrib::templates::Template;
 
 pub mod api;
@@ -26,6 +27,12 @@ pub mod frontend;
 pub mod guards;
 pub mod schema;
 
+/// Catches 401 error codes for redirecting.
+#[catch(401)]
+pub fn unauthorised() -> Redirect {
+    Redirect::to(uri!(api::authenticate))
+}
+
 /// Builds the Rocket object defining the web server.
 ///
 /// Adds the database connection and the template handler to the rocket, along with the routes that
@@ -34,6 +41,7 @@ pub fn build_rocket() -> rocket::Rocket {
     rocket::ignite()
         .attach(guards::DatabaseConnection::fairing())
         .attach(Template::fairing())
+        .register(catchers![unauthorised])
         .mount(
             "/",
             routes![
@@ -41,6 +49,7 @@ pub fn build_rocket() -> rocket::Rocket {
                 frontend::specific_session,
                 frontend::attendance,
                 frontend::session_attendance,
+                frontend::authenticated,
                 api::register,
                 api::confirm_email,
                 api::record_attendance,
