@@ -27,6 +27,7 @@
 		{% block head %}{% endblock %}
 	</head>
 	<body>
+		{% include "navbar" %}
 		{% block content %}{% endblock %}
 	</body>
 </html>
