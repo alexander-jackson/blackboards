@@ -27,6 +27,13 @@ pub struct Register {
     pub session_id: i32,
 }
 
+/// Defines the contents of the cancellation form for a session.
+#[derive(Debug, FromForm)]
+pub struct Cancel {
+    /// The identifier for the session.
+    pub session_id: i32,
+}
+
 /// Defines the contents of the attendance form for a session.
 #[derive(Copy, Clone, Debug, FromForm)]
 pub struct Attendance {

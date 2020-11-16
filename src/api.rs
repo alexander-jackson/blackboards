@@ -39,6 +39,29 @@ pub fn register(
     }
 }
 
+/// Cancel a user's registration for a session.
+#[post("/session/cancel", data = "<data>")]
+pub fn cancel(
+    user: AuthorisedUser,
+    conn: DatabaseConnection,
+    data: Form<forms::Cancel>,
+) -> Flash<Redirect> {
+    let data = data.into_inner();
+    let registration = schema::Registration::cancel(user.id, data.session_id, &conn.0);
+
+    // Check whether they broke the database
+    match registration {
+        Ok(_) => Flash::success(
+            Redirect::to(uri!(frontend::dashboard)),
+            "Successfully cancelled the session!",
+        ),
+        Err(_) => Flash::error(
+            Redirect::to(uri!(frontend::dashboard)),
+            "Failed to cancel the session, try again or let me know if it keeps happening.",
+        ),
+    }
+}
+
 /// Records the attendance for a given Warwick ID at a session.
 #[post("/attendance/record", data = "<data>")]
 pub fn record_attendance(

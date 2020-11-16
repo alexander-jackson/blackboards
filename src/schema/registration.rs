@@ -53,6 +53,21 @@ impl Registration {
         Session::decrement_remaining(self.session_id, conn)
     }
 
+    /// Deletes a user's registration from the database if it exists.
+    pub fn cancel(
+        warwick_id: i32,
+        session_id: i32,
+        conn: &diesel::SqliteConnection,
+    ) -> QueryResult<usize> {
+        let filter = registrations::dsl::warwick_id
+            .eq(warwick_id)
+            .and(registrations::dsl::session_id.eq(session_id));
+
+        Session::increment_remaining(session_id, conn)?;
+
+        diesel::delete(registrations::table.filter(filter)).execute(conn)
+    }
+
     /// Gets the number of registrations for a given session.
     pub fn count(session_id: i32, conn: &diesel::SqliteConnection) -> QueryResult<i64> {
         registrations::dsl::registrations

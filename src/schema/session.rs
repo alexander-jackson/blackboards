@@ -68,4 +68,13 @@ impl Session {
             .set(sessions::dsl::remaining.eq(current - 1))
             .execute(conn)
     }
+
+    /// Increases the number of remaining places for a session given its identifier.
+    pub fn increment_remaining(id: i32, conn: &diesel::SqliteConnection) -> QueryResult<usize> {
+        let current = Self::find(id, conn)?.remaining;
+
+        diesel::update(sessions::dsl::sessions.filter(sessions::dsl::id.eq(&id)))
+            .set(sessions::dsl::remaining.eq(current + 1))
+            .execute(conn)
+    }
 }

@@ -19,6 +19,7 @@
 					<tr>
 						<th scope="col">Title</th>
 						<th scope="col">Start Time</th>
+						<th scope="col">Cancel</th>
 					</tr>
 
 				</thead>
@@ -32,6 +33,12 @@
 							<a class="font-weight-bold" href="/sessions/{{ session.id }}">{{ session.title }}</a>
 						</td>
 						<td>{{ session.start_time }}</td>
+						<td>
+							<form accept-charset="utf-8" action="/session/cancel" method="post">
+								<input name="session_id" type="hidden" value="{{ session.id }}">
+								<button type="submit" class="btn btn-danger btn-sm">Cancel</button>
+							</form>
+						</td>
 					</tr>
 
 					{% endfor %}
