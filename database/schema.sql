@@ -26,3 +26,14 @@ CREATE TABLE auth_pairs (
 	token TEXT PRIMARY KEY,
 	secret TEXT
 );
+
+DROP TABLE IF EXISTS personal_bests;
+CREATE TABLE personal_bests (
+	warwick_id INTEGER PRIMARY KEY,
+	name TEXT NOT NULL,
+	squat REAL,
+	bench REAL,
+	deadlift REAL,
+	snatch REAL,
+	clean_and_jerk REAL
+);

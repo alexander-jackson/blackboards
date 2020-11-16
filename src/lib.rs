@@ -52,6 +52,7 @@ pub fn build_rocket() -> rocket::Rocket {
                 frontend::attendance,
                 frontend::session_attendance,
                 frontend::authenticated,
+                frontend::blackboard,
                 api::register,
                 api::cancel,
                 api::record_attendance,
