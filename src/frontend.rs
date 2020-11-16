@@ -131,3 +131,20 @@ pub fn session_attendance(
 pub fn authenticated() -> Template {
     Template::render("authenticated", context::get_empty())
 }
+
+/// Displays a small splash page after authenticating.
+#[get("/bookings")]
+pub fn bookings(user: AuthorisedUser, conn: DatabaseConnection) -> Template {
+    let window = SessionWindow::from_current_time();
+    let sessions = schema::Registration::get_user_bookings(user.id, window, &conn.0).unwrap();
+
+    Template::render(
+        "bookings",
+        context::Context {
+            sessions,
+            current: None,
+            message: None,
+            registrations: None,
+        },
+    )
+}

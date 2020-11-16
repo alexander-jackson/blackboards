@@ -62,6 +62,8 @@
 
 			</table>
 
+			<a class="btn btn-primary my-1" href="/bookings" role="button">Bookings</a>
+
 			{% if registrations %}
 
 			<h2>Current Registrations</h2>

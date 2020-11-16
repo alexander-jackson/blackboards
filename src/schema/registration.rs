@@ -84,6 +84,27 @@ impl Registration {
             .order_by(ordering)
             .load(conn)
     }
+
+    /// Gets all the sessions that a user has booked.
+    pub fn get_user_bookings(
+        id: i32,
+        window: SessionWindow,
+        conn: &diesel::SqliteConnection,
+    ) -> QueryResult<Vec<Session>> {
+        let columns = sessions::all_columns;
+        let ordering = (sessions::dsl::start_time, sessions::dsl::id);
+        let filter = sessions::dsl::start_time
+            .gt(window.start)
+            .and(sessions::dsl::start_time.lt(window.end))
+            .and(registrations::dsl::warwick_id.eq(id));
+
+        registrations::dsl::registrations
+            .inner_join(sessions::dsl::sessions)
+            .select(columns)
+            .filter(filter)
+            .order_by(ordering)
+            .load(conn)
+    }
 }
 
 impl From<(AuthorisedUser, forms::Register)> for Registration {
