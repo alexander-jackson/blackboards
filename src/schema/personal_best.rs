@@ -26,7 +26,7 @@ table! {
 }
 
 /// Represents a row in the `personal_bests` table.
-#[derive(Debug, Insertable, Queryable, Serialize)]
+#[derive(Debug, Default, Insertable, Queryable, Serialize)]
 pub struct PersonalBest {
     /// The user's Warwick ID
     pub warwick_id: i32,
@@ -58,20 +58,29 @@ impl PersonalBest {
     }
 
     /// Finds a user's personal bests in the database given their Warwick ID.
-    pub fn find(id: i32, conn: &diesel::SqliteConnection) -> QueryResult<Self> {
-        personal_bests::dsl::personal_bests
-            .find(id)
-            .first::<PersonalBest>(conn)
+    pub fn find(user: AuthorisedUser, conn: &diesel::SqliteConnection) -> QueryResult<Self> {
+        if let Ok(pbs) = personal_bests::dsl::personal_bests
+            .find(user.id)
+            .first::<Self>(conn)
+        {
+            return Ok(pbs);
+        }
+
+        // Insert a blank one and return that instead
+        let pbs = PersonalBest::from(user);
+        pbs.insert(conn)?;
+
+        Ok(pbs)
     }
 
     /// Updates a user's personal bests based on their form submission.
     pub fn update(
-        &self,
         user: AuthorisedUser,
         data: forms::PersonalBests,
         conn: &diesel::SqliteConnection,
     ) -> QueryResult<usize> {
-        let current = Self::find(user.id, conn)?;
+        let filter = personal_bests::dsl::warwick_id.eq(user.id);
+        let current = Self::find(user, conn)?;
 
         // Check which columns need updating
         let updates = (
@@ -82,10 +91,18 @@ impl PersonalBest {
             personal_bests::dsl::clean_and_jerk.eq(data.clean_and_jerk.or(current.clean_and_jerk)),
         );
 
-        diesel::update(
-            personal_bests::dsl::personal_bests.filter(personal_bests::dsl::warwick_id.eq(user.id)),
-        )
-        .set(updates)
-        .execute(conn)
+        diesel::update(personal_bests::dsl::personal_bests.filter(filter))
+            .set(updates)
+            .execute(conn)
+    }
+}
+
+impl From<AuthorisedUser> for PersonalBest {
+    fn from(user: AuthorisedUser) -> Self {
+        Self {
+            warwick_id: user.id,
+            name: user.name,
+            ..Default::default()
+        }
     }
 }

@@ -171,7 +171,7 @@ pub fn personal_bests(
     conn: DatabaseConnection,
     flash: Option<FlashMessage>,
 ) -> Template {
-    let personal_bests = schema::PersonalBest::find(user.id, &conn.0).unwrap();
+    let personal_bests = schema::PersonalBest::find(user, &conn.0).unwrap();
     let message = flash.map(|f| f.msg().to_string());
 
     Template::render(

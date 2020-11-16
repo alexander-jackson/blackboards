@@ -79,10 +79,10 @@ pub fn personal_bests(
     data: Form<forms::PersonalBests>,
 ) -> Flash<Redirect> {
     let data = data.into_inner();
-    let original = schema::PersonalBest::find(user.id, &conn.0).unwrap();
+    let result = schema::PersonalBest::update(user, data, &conn.0);
 
     // Check whether they broke the database
-    match original.update(user, data, &conn.0) {
+    match result {
         Ok(_) => Flash::success(
             Redirect::to(uri!(frontend::personal_bests)),
             "Successfully updated your PBs!",
