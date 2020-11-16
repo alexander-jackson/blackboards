@@ -62,6 +62,15 @@ pub fn cancel(
     }
 }
 
+/// Logs the user out and deletes their cookies.
+#[get("/logout")]
+pub fn logout(_user: AuthorisedUser, mut cookies: Cookies) -> &'static str {
+    cookies.remove_private(Cookie::named("id"));
+    cookies.remove_private(Cookie::named("name"));
+
+    "Logged out"
+}
+
 /// Updates a user's personal bests.
 #[post("/pbs", data = "<data>")]
 pub fn personal_bests(

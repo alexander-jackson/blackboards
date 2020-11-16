@@ -18,6 +18,7 @@
 				<a class="nav-link" href="/pbs">Personal Bests</a>
 			</li>
 		</ul>
+		<a class="nav-link text-danger" href="/logout">Logout</a>
 	</div>
 </nav>
 

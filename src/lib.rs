@@ -60,6 +60,7 @@ pub fn build_rocket() -> rocket::Rocket {
                 api::authenticate,
                 api::authorised,
                 api::personal_bests,
+                api::logout,
             ],
         )
 }
