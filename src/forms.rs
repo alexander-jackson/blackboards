@@ -42,3 +42,18 @@ pub struct Attendance {
     /// The user's Warwick ID.
     pub warwick_id: WarwickId,
 }
+
+/// Defines the contents of the personal bests form.
+#[derive(Clone, Debug, FromForm)]
+pub struct PersonalBests {
+    /// The user's best squat.
+    pub squat: Option<f32>,
+    /// The user's best bench.
+    pub bench: Option<f32>,
+    /// The user's best deadlift.
+    pub deadlift: Option<f32>,
+    /// The user's best snatch.
+    pub snatch: Option<f32>,
+    /// The user's best clean and jerk.
+    pub clean_and_jerk: Option<f32>,
+}

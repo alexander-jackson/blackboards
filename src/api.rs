@@ -62,6 +62,29 @@ pub fn cancel(
     }
 }
 
+/// Updates a user's personal bests.
+#[post("/pbs", data = "<data>")]
+pub fn personal_bests(
+    user: AuthorisedUser,
+    conn: DatabaseConnection,
+    data: Form<forms::PersonalBests>,
+) -> Flash<Redirect> {
+    let data = data.into_inner();
+    let original = schema::PersonalBest::find(user.id, &conn.0).unwrap();
+
+    // Check whether they broke the database
+    match original.update(user, data, &conn.0) {
+        Ok(_) => Flash::success(
+            Redirect::to(uri!(frontend::personal_bests)),
+            "Successfully updated your PBs!",
+        ),
+        Err(_) => Flash::error(
+            Redirect::to(uri!(frontend::personal_bests)),
+            "Failed to update the PBs, try again or let me know if it keeps happening.",
+        ),
+    }
+}
+
 /// Records the attendance for a given Warwick ID at a session.
 #[post("/attendance/record", data = "<data>")]
 pub fn record_attendance(

@@ -163,3 +163,22 @@ pub fn blackboard(user: AuthorisedUser, conn: DatabaseConnection) -> Template {
         },
     )
 }
+
+/// Allows the user to change their personal bests.
+#[get("/pbs")]
+pub fn personal_bests(
+    user: AuthorisedUser,
+    conn: DatabaseConnection,
+    flash: Option<FlashMessage>,
+) -> Template {
+    let personal_bests = schema::PersonalBest::find(user.id, &conn.0).unwrap();
+    let message = flash.map(|f| f.msg().to_string());
+
+    Template::render(
+        "personal_bests",
+        context::PersonalBests {
+            personal_bests,
+            message,
+        },
+    )
+}

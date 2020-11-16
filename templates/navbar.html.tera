@@ -14,6 +14,9 @@
 			<li class="nav-item">
 				<a class="nav-link" href="/bookings">Bookings</a>
 			</li>
+			<li class="nav-item">
+				<a class="nav-link" href="/pbs">Personal Bests</a>
+			</li>
 		</ul>
 	</div>
 </nav>

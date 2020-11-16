@@ -1,0 +1,71 @@
+{% extends "base" %}
+
+{% block content %}
+
+{{ super() }}
+
+<div class="container">
+
+	<div class="row">
+
+		<div class="col-sm m-4">
+
+			{% if message %}
+
+			<p>{{ message }}</p>
+
+			{% endif %}
+
+			<h2>Personal Bests</h2>
+
+			<form accept-charset="utf-8" action="/pbs" method="post">
+
+				<div class="form-row">
+					<div class="col">
+						<div class="form-group">
+							<label for="squat">SQ</label>
+							<input type="number" step="0.5" class="form-control" placeholder="{{ personal_bests.squat }}">
+						</div>
+					</div>
+					<div class="col">
+						<div class="form-group">
+							<label for="bench">BP</label>
+							<input type="number" step="0.5" class="form-control" placeholder="{{ personal_bests.bench }}">
+						</div>
+					</div>
+					<div class="col">
+						<div class="form-group">
+							<label for="deadlift">DL</label>
+							<input type="number" step="0.5" class="form-control" placeholder="{{ personal_bests.deadlift }}">
+						</div>
+					</div>
+				</div>
+
+				<div class="form-row">
+					<div class="col">
+						<div class="form-group">
+							<label for="snatch">SN</label>
+							<input type="number" step="0.5" class="form-control" placeholder="{{ personal_bests.snatch }}">
+						</div>
+					</div>
+					<div class="col">
+						<div class="form-group">
+							<label for="clean_and_jerk">CnJ</label>
+							<input type="number" step="0.5" class="form-control" placeholder="{{ personal_bests.clean_and_jerk }}">
+						</div>
+					</div>
+					<div class="col">
+					</div>
+				</div>
+
+				<button type="submit" class="btn btn-primary">Submit</button>
+
+			</form>
+
+		</div>
+
+	</div>
+
+</div>
+
+{% endblock content %}

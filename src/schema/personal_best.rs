@@ -1,6 +1,9 @@
 //! Allows modifications of the `personal_bests` table in the database.
 
-use diesel::{QueryResult, RunQueryDsl};
+use diesel::{ExpressionMethods, QueryDsl, QueryResult, RunQueryDsl};
+
+use crate::forms;
+use crate::guards::AuthorisedUser;
 
 table! {
     /// Represents the schema for `personal_bests`.
@@ -52,5 +55,37 @@ impl PersonalBest {
     /// Gets all personal bests currently in the database.
     pub fn get_results(conn: &diesel::SqliteConnection) -> QueryResult<Vec<Self>> {
         personal_bests::dsl::personal_bests.get_results::<Self>(conn)
+    }
+
+    /// Finds a user's personal bests in the database given their Warwick ID.
+    pub fn find(id: i32, conn: &diesel::SqliteConnection) -> QueryResult<Self> {
+        personal_bests::dsl::personal_bests
+            .find(id)
+            .first::<PersonalBest>(conn)
+    }
+
+    /// Updates a user's personal bests based on their form submission.
+    pub fn update(
+        &self,
+        user: AuthorisedUser,
+        data: forms::PersonalBests,
+        conn: &diesel::SqliteConnection,
+    ) -> QueryResult<usize> {
+        let current = Self::find(user.id, conn)?;
+
+        // Check which columns need updating
+        let updates = (
+            personal_bests::dsl::squat.eq(data.squat.or(current.squat)),
+            personal_bests::dsl::bench.eq(data.bench.or(current.bench)),
+            personal_bests::dsl::deadlift.eq(data.deadlift.or(current.deadlift)),
+            personal_bests::dsl::snatch.eq(data.snatch.or(current.snatch)),
+            personal_bests::dsl::clean_and_jerk.eq(data.clean_and_jerk.or(current.clean_and_jerk)),
+        );
+
+        diesel::update(
+            personal_bests::dsl::personal_bests.filter(personal_bests::dsl::warwick_id.eq(user.id)),
+        )
+        .set(updates)
+        .execute(conn)
     }
 }

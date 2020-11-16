@@ -53,11 +53,13 @@ pub fn build_rocket() -> rocket::Rocket {
                 frontend::session_attendance,
                 frontend::authenticated,
                 frontend::blackboard,
+                frontend::personal_bests,
                 api::register,
                 api::cancel,
                 api::record_attendance,
                 api::authenticate,
                 api::authorised,
+                api::personal_bests,
             ],
         )
 }
