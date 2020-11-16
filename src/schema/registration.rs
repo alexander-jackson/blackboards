@@ -1,11 +1,12 @@
 //! Allows modifications of the `registrations` table in the database.
 
-use diesel::{ExpressionMethods, QueryDsl, QueryResult, RunQueryDsl};
+use diesel::{BoolExpressionMethods, ExpressionMethods, QueryDsl, QueryResult, RunQueryDsl};
 
 use crate::email;
 use crate::forms;
 use crate::guards::AuthorisedUser;
 use crate::schema::{custom_types, sessions, Session};
+use crate::session_window::SessionWindow;
 
 table! {
     /// Represents the schema for `registrations`.
@@ -63,6 +64,7 @@ impl Registration {
     /// Gets the session data and names of those registered for all sessions in the database.
     pub fn get_registration_list(
         conn: &diesel::SqliteConnection,
+        window: SessionWindow,
     ) -> QueryResult<Vec<(i32, custom_types::DateTime, String, String)>> {
         let columns = (
             sessions::dsl::id,
@@ -71,10 +73,14 @@ impl Registration {
             registrations::dsl::name,
         );
         let ordering = (sessions::dsl::start_time, sessions::dsl::id);
+        let filter = sessions::dsl::start_time
+            .gt(window.start)
+            .and(sessions::dsl::start_time.lt(window.end));
 
         registrations::dsl::registrations
             .inner_join(sessions::dsl::sessions)
             .select(columns)
+            .filter(filter)
             .order_by(ordering)
             .load(conn)
     }

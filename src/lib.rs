@@ -26,6 +26,7 @@ pub mod forms;
 pub mod frontend;
 pub mod guards;
 pub mod schema;
+pub mod session_window;
 
 /// Catches 401 error codes for redirecting.
 #[catch(401)]

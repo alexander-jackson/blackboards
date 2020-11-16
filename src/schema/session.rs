@@ -1,8 +1,9 @@
 //! Allows modifications of the `sessions` table in the database.
 
-use diesel::{ExpressionMethods, QueryDsl, QueryResult, RunQueryDsl};
+use diesel::{BoolExpressionMethods, ExpressionMethods, QueryDsl, QueryResult, RunQueryDsl};
 
 use crate::schema::custom_types;
+use crate::session_window::SessionWindow;
 
 table! {
     /// Represents the schema for `sessions`.
@@ -35,6 +36,21 @@ impl Session {
     /// Gets all available sessions currently in the database.
     pub fn get_results(conn: &diesel::SqliteConnection) -> QueryResult<Vec<Self>> {
         sessions::dsl::sessions
+            .order_by(sessions::dsl::start_time.asc())
+            .get_results::<Self>(conn)
+    }
+
+    /// Gets all available sessions currently in the database.
+    pub fn get_results_between(
+        conn: &diesel::SqliteConnection,
+        window: SessionWindow,
+    ) -> QueryResult<Vec<Self>> {
+        let filter = sessions::dsl::start_time
+            .gt(window.start)
+            .and(sessions::dsl::start_time.lt(window.end));
+
+        sessions::dsl::sessions
+            .filter(filter)
             .order_by(sessions::dsl::start_time.asc())
             .get_results::<Self>(conn)
     }

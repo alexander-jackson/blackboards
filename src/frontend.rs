@@ -10,6 +10,7 @@ use crate::context;
 use crate::schema;
 
 use crate::guards::{AuthorisedUser, DatabaseConnection};
+use crate::session_window::SessionWindow;
 
 fn format_registrations(
     unformatted: Vec<(i32, schema::custom_types::DateTime, String, String)>,
@@ -30,8 +31,11 @@ fn format_registrations(
     registrations
 }
 
-fn get_registrations(conn: &diesel::SqliteConnection) -> Option<Vec<context::Registrations>> {
-    let unformatted = schema::Registration::get_registration_list(conn).unwrap();
+fn get_registrations(
+    conn: &diesel::SqliteConnection,
+    window: SessionWindow,
+) -> Option<Vec<context::Registrations>> {
+    let unformatted = schema::Registration::get_registration_list(conn, window).unwrap();
     let formatted = format_registrations(unformatted);
 
     match formatted.len() {
@@ -47,9 +51,10 @@ pub fn dashboard(
     conn: DatabaseConnection,
     flash: Option<FlashMessage>,
 ) -> Template {
-    let sessions = schema::Session::get_results(&conn.0).unwrap();
+    let window = SessionWindow::from_current_time();
+    let sessions = schema::Session::get_results_between(&conn.0, window).unwrap();
     let message = flash.map(|f| f.msg().to_string());
-    let registrations = get_registrations(&conn.0);
+    let registrations = get_registrations(&conn.0, window);
 
     Template::render(
         "sessions",
@@ -69,9 +74,10 @@ pub fn specific_session(
     conn: DatabaseConnection,
     session_id: i32,
 ) -> Result<Template, Redirect> {
-    let sessions = schema::Session::get_results(&conn.0).unwrap();
+    let window = SessionWindow::from_current_time();
+    let sessions = schema::Session::get_results_between(&conn.0, window).unwrap();
     let current = schema::Session::find(session_id, &conn.0).ok();
-    let registrations = get_registrations(&conn.0);
+    let registrations = get_registrations(&conn.0, window);
 
     Ok(Template::render(
         "sessions",
