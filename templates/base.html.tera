@@ -3,8 +3,8 @@
 	<head>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-		<title>Blackboard</title>
-		<meta name="description" content="Track your powerlifting sessions">
+		<title>Blackboards</title>
+		<meta name="description" content="Warwick Barbell Sessions/PBs">
 		<meta name="author" content="Alexander Jackson">
 		<link
 			rel="stylesheet"
@@ -22,8 +22,6 @@
 			integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI"
 			crossorigin="anonymous">
 		</script>
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.3/Chart.bundle.min.js"></script>
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.27.0/moment.min.js"></script>
 		{% block head %}{% endblock %}
 	</head>
 	<body>
