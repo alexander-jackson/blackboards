@@ -10,7 +10,7 @@
 
 		<div class="col-sm m-4">
 
-			<h2>Personal Bests</h2>
+			<h2>Powerlifting</h2>
 
 			<table class="table table-dark">
 
@@ -21,8 +21,6 @@
 						<th scope="col">SQ</th>
 						<th scope="col">BP</th>
 						<th scope="col">DL</th>
-						<th scope="col">SN</th>
-						<th scope="col">CJ</th>
 					</tr>
 
 				</thead>
@@ -36,6 +34,34 @@
 						<td>{% if pb.squat %} {{ pb.squat }} {% else %} {% endif %}</td>
 						<td>{% if pb.bench %} {{ pb.bench }} {% else %} {% endif %}</td>
 						<td>{% if pb.deadlift %} {{ pb.deadlift }} {% else %} {% endif %}</td>
+					</tr>
+
+					{% endfor %}
+
+				</tbody>
+
+			</table>
+
+			<h2>Weightlifting</h2>
+
+			<table class="table table-dark">
+
+				<thead>
+
+					<tr>
+						<th scope="col">Name</th>
+						<th scope="col">SN</th>
+						<th scope="col">CJ</th>
+					</tr>
+
+				</thead>
+
+				<tbody>
+
+					{% for pb in personal_bests %}
+
+					<tr>
+						<td {% if pb.warwick_id == user_id %} class="text-success" {% endif %}>{{ pb.name }}</td>
 						<td>{% if pb.snatch %} {{ pb.snatch }} {% else %} {% endif %}</td>
 						<td>{% if pb.clean_and_jerk %} {{ pb.clean_and_jerk }} {% else %} {% endif %}</td>
 					</tr>
