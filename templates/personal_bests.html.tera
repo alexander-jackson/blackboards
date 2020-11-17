@@ -58,7 +58,17 @@
 					</div>
 				</div>
 
-				<button type="submit" class="btn btn-primary">Submit</button>
+				<h6>Show me for:</h6>
+				<div class="form-check">
+					<input name="show_pl" class="form-check-input" type="checkbox" {% if personal_bests.show_pl %} checked {% endif %}>
+					<label class="form-check-label">Powerlifting</label>
+				</div>
+				<div class="form-check">
+					<input name="show_wl" class="form-check-input" type="checkbox" {% if personal_bests.show_wl %} checked {% endif %}>
+					<label class="form-check-label">Weightlifting</label>
+				</div>
+
+				<button type="submit" class="btn btn-primary my-2">Submit</button>
 
 			</form>
 

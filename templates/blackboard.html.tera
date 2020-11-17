@@ -27,7 +27,7 @@
 
 				<tbody>
 
-					{% for pb in personal_bests %}
+					{% for pb in pl %}
 
 					<tr>
 						<td {% if pb.warwick_id == user_id %} class="text-success" {% endif %}>{{ pb.name }}</td>
@@ -58,7 +58,7 @@
 
 				<tbody>
 
-					{% for pb in personal_bests %}
+					{% for pb in wl %}
 
 					<tr>
 						<td {% if pb.warwick_id == user_id %} class="text-success" {% endif %}>{{ pb.name }}</td>

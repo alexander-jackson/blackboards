@@ -152,16 +152,10 @@ pub fn bookings(user: AuthorisedUser, conn: DatabaseConnection) -> Template {
 /// Displays the PB board for people to view.
 #[get("/")]
 pub fn blackboard(user: AuthorisedUser, conn: DatabaseConnection) -> Template {
-    let personal_bests = schema::PersonalBest::get_results(&conn.0).unwrap();
+    let (pl, wl) = schema::PersonalBest::get_results(&conn.0).unwrap();
     let user_id = user.id;
 
-    Template::render(
-        "blackboard",
-        context::Blackboard {
-            personal_bests,
-            user_id,
-        },
-    )
+    Template::render("blackboard", context::Blackboard { pl, wl, user_id })
 }
 
 /// Allows the user to change their personal bests.

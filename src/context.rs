@@ -34,8 +34,10 @@ pub struct Attendance {
 /// The context for the blackboards page.
 #[derive(Serialize)]
 pub struct Blackboard {
-    /// The recorded personal bests for each user
-    pub personal_bests: Vec<schema::PersonalBest>,
+    /// The recorded personal bests for each PL user
+    pub pl: Vec<schema::PersonalBest>,
+    /// The recorded personal bests for each WL user
+    pub wl: Vec<schema::PersonalBest>,
     /// The Warwick ID of the viewer
     pub user_id: i32,
 }

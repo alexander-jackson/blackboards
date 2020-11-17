@@ -56,4 +56,8 @@ pub struct PersonalBests {
     pub snatch: Option<f32>,
     /// The user's best clean and jerk.
     pub clean_and_jerk: Option<f32>,
+    /// Whether to display the user on the PL board.
+    pub show_pl: bool,
+    /// Whether to display the user on the WL board.
+    pub show_wl: bool,
 }

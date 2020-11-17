@@ -22,6 +22,10 @@ table! {
         snatch -> Nullable<Float>,
         /// The user's best clean and jerk.
         clean_and_jerk -> Nullable<Float>,
+        /// Whether to show the user for the PL board.
+        show_pl -> Bool,
+        /// Whether to show the user for the WL board.
+        show_wl -> Bool,
     }
 }
 
@@ -42,6 +46,10 @@ pub struct PersonalBest {
     pub snatch: Option<f32>,
     /// The user's best clean and jerk.
     pub clean_and_jerk: Option<f32>,
+    /// Whether to show the user for the PL board.
+    pub show_pl: bool,
+    /// Whether to show the user for the WL board.
+    pub show_wl: bool,
 }
 
 impl PersonalBest {
@@ -53,8 +61,29 @@ impl PersonalBest {
     }
 
     /// Gets all personal bests currently in the database.
-    pub fn get_results(conn: &diesel::SqliteConnection) -> QueryResult<Vec<Self>> {
-        personal_bests::dsl::personal_bests.get_results::<Self>(conn)
+    pub fn get_results(conn: &diesel::SqliteConnection) -> QueryResult<(Vec<Self>, Vec<Self>)> {
+        let pl = Self::get_pl(conn)?;
+        let wl = Self::get_wl(conn)?;
+
+        Ok((pl, wl))
+    }
+
+    /// Gets all personal bests currently in the database.
+    pub fn get_pl(conn: &diesel::SqliteConnection) -> QueryResult<Vec<Self>> {
+        let filter = personal_bests::dsl::show_pl.eq(true);
+
+        personal_bests::dsl::personal_bests
+            .filter(filter)
+            .get_results::<Self>(conn)
+    }
+
+    /// Gets all personal bests currently in the database.
+    pub fn get_wl(conn: &diesel::SqliteConnection) -> QueryResult<Vec<Self>> {
+        let filter = personal_bests::dsl::show_wl.eq(true);
+
+        personal_bests::dsl::personal_bests
+            .filter(filter)
+            .get_results::<Self>(conn)
     }
 
     /// Finds a user's personal bests in the database given their Warwick ID.
@@ -89,6 +118,8 @@ impl PersonalBest {
             personal_bests::dsl::deadlift.eq(data.deadlift.or(current.deadlift)),
             personal_bests::dsl::snatch.eq(data.snatch.or(current.snatch)),
             personal_bests::dsl::clean_and_jerk.eq(data.clean_and_jerk.or(current.clean_and_jerk)),
+            personal_bests::dsl::show_pl.eq(data.show_pl),
+            personal_bests::dsl::show_wl.eq(data.show_wl),
         );
 
         diesel::update(personal_bests::dsl::personal_bests.filter(filter))

@@ -35,5 +35,7 @@ CREATE TABLE personal_bests (
 	bench REAL,
 	deadlift REAL,
 	snatch REAL,
-	clean_and_jerk REAL
+	clean_and_jerk REAL,
+	show_pl BOOLEAN,
+	show_wl BOOLEAN
 );
