@@ -1,0 +1,13 @@
+name: cargo fmt
+
+on:
+  pull_request:
+    branches: [ master, develop ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: cargo fmt
+      uses: actions/checkout@v2
+    - run: cargo fmt -- --check
