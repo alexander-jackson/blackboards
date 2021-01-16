@@ -9,7 +9,12 @@ use url::form_urlencoded;
 
 const SCOPE: &str = "urn:websignon.warwick.ac.uk:sso:service";
 const EXPIRY: &str = "forever";
+
+#[cfg(debug_assertions)]
 const OAUTH_CALLBACK: &str = "http://localhost:8000/authorised";
+
+#[cfg(not(debug_assertions))]
+const OAUTH_CALLBACK: &str = "http://blackboards.pl/authorised";
 
 const REQUEST_TOKEN_URL: &str = "https://websignon.warwick.ac.uk/oauth/requestToken";
 const AUTHORISE_TOKEN_URL: &str = "https://websignon.warwick.ac.uk/oauth/authorise";
