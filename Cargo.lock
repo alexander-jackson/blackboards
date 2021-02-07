@@ -151,6 +151,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "blackboards"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "diesel",
+ "dotenv",
+ "lettre",
+ "oauth1-request",
+ "rand 0.8.2",
+ "reqwest",
+ "rocket",
+ "rocket_contrib",
+ "serde",
+ "serde_derive",
+ "url 2.2.0",
+]
+
+[[package]]
 name = "block-buffer"
 version = "0.7.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1939,24 +1957,6 @@ dependencies = [
  "itoa",
  "ryu",
  "serde",
-]
-
-[[package]]
-name = "sessions"
-version = "0.1.0"
-dependencies = [
- "chrono",
- "diesel",
- "dotenv",
- "lettre",
- "oauth1-request",
- "rand 0.8.2",
- "reqwest",
- "rocket",
- "rocket_contrib",
- "serde",
- "serde_derive",
- "url 2.2.0",
 ]
 
 [[package]]

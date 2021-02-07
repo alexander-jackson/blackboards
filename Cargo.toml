@@ -1,5 +1,5 @@
 [package]
-name = "sessions"
+name = "blackboards"
 version = "0.1.0"
 authors = ["Alexander Jackson <alexanderjackson@protonmail.com>"]
 edition = "2018"

@@ -1,6 +1,6 @@
 fn main() {
     dotenv::dotenv().unwrap();
 
-    let rocket = sessions::build_rocket();
+    let rocket = blackboards::build_rocket();
     rocket.launch();
 }
