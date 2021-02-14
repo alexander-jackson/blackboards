@@ -54,6 +54,8 @@ pub fn build_rocket() -> rocket::Rocket {
                 frontend::authenticated,
                 frontend::blackboard,
                 frontend::personal_bests,
+                frontend::taskmaster_leaderboard,
+                frontend::taskmaster_edit,
                 api::register,
                 api::cancel,
                 api::record_attendance,
@@ -61,6 +63,7 @@ pub fn build_rocket() -> rocket::Rocket {
                 api::authorised,
                 api::personal_bests,
                 api::logout,
+                api::taskmaster_edit,
             ],
         )
 }

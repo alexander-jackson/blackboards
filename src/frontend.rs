@@ -176,3 +176,55 @@ pub fn personal_bests(
         },
     )
 }
+
+/// Displays the state of the Taskmaster leaderboard.
+#[get("/taskmaster")]
+pub fn taskmaster_leaderboard(
+    user: AuthorisedUser,
+    conn: DatabaseConnection,
+    flash: Option<FlashMessage>,
+) -> Template {
+    let leaderboard = schema::TaskmasterEntry::get_results(&conn.0).unwrap();
+    let message = flash.map(|f| f.msg().to_string());
+
+    Template::render(
+        "taskmaster_leaderboard",
+        context::TaskmasterLeaderboard {
+            leaderboard,
+            admin: user.is_taskmaster_admin(),
+            message,
+        },
+    )
+}
+
+/// Allows authorised users to edit the Taskmaster leaderboard.
+#[get("/taskmaster/edit")]
+pub fn taskmaster_edit(
+    user: AuthorisedUser,
+    conn: DatabaseConnection,
+    flash: Option<FlashMessage>,
+) -> Result<Template, Redirect> {
+    if !user.is_taskmaster_admin() {
+        return Err(Redirect::to(uri!(taskmaster_leaderboard)));
+    }
+
+    // TODO: Ensure this user is authorised for Taskmaster editing
+    let leaderboard = schema::TaskmasterEntry::get_results(&conn.0).unwrap();
+    let message = flash.map(|f| f.msg().to_string());
+
+    let leaderboard_csv: String = leaderboard
+        .iter()
+        .map(|entry| format!("{},{}", entry.name, entry.score))
+        .collect::<Vec<String>>()
+        .join("\n");
+
+    let template = Template::render(
+        "taskmaster_edit",
+        context::TaskmasterEdit {
+            leaderboard_csv,
+            message,
+        },
+    );
+
+    Ok(template)
+}

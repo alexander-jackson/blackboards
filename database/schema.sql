@@ -39,3 +39,9 @@ CREATE TABLE personal_bests (
 	show_pl BOOLEAN,
 	show_wl BOOLEAN
 );
+
+DROP TABLE IF EXISTS taskmaster_entries;
+CREATE TABLE taskmaster_entries (
+	name TEXT PRIMARY KEY,
+	score INTEGER NOT NULL
+);

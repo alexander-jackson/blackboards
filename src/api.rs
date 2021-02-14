@@ -183,3 +183,17 @@ pub fn authorised(
 
     Redirect::to(uri!(frontend::authenticated))
 }
+
+/// Allows the Taskmaster leaderboard to be edited.
+#[post("/taskmaster/edit", data = "<data>")]
+pub fn taskmaster_edit(
+    user: AuthorisedUser,
+    conn: DatabaseConnection,
+    data: Form<forms::TaskmasterUpdate>,
+) -> Redirect {
+    if user.is_taskmaster_admin() {
+        schema::TaskmasterEntry::update_all(&data.leaderboard, &conn.0).unwrap();
+    }
+
+    Redirect::to(uri!(frontend::taskmaster_leaderboard))
+}

@@ -61,3 +61,10 @@ pub struct PersonalBests {
     /// Whether to display the user on the WL board.
     pub show_wl: bool,
 }
+
+/// Defines the contents of a taskmaster board update.
+#[derive(Debug, FromForm)]
+pub struct TaskmasterUpdate {
+    /// The CSV representing the new board state.
+    pub leaderboard: String,
+}
