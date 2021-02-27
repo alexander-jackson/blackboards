@@ -10,15 +10,13 @@
 
 		<div class="col-sm m-4">
 
-			<h2>Exec Positions</h2>
+			<h2>Nominations</h2>
 
 			<div class="list-group">
 
-				{% for position in exec_positions %}
+				{% for nomination in nominations %}
 
-				<a href="/elections/voting/{{ position.id }}" class="list-group-item list-group-item-action">
-					{{ position.title }}
-				</a>
+					{{ nomination.warwick_id }}
 
 				{% endfor %}
 

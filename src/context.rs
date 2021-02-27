@@ -78,6 +78,13 @@ pub struct Elections {
     pub exec_positions: Vec<schema::ExecPosition>,
 }
 
+/// The context for displaying the voting page.
+#[derive(Serialize)]
+pub struct Voting {
+    /// The positions to show
+    pub nominations: Vec<schema::Nomination>,
+}
+
 /// Returns an empty `HashMap` for templates that don't require context.
 pub fn get_empty() -> HashMap<&'static str, &'static str> {
     HashMap::new()

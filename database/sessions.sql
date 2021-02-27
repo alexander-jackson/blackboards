@@ -30,14 +30,10 @@ INSERT INTO sessions VALUES (
 	87415, "Intermediate", 1601730000, 10
 );
 
-INSERT INTO exec_positions VALUES (
-	1, "President"
-);
+INSERT INTO exec_positions VALUES (1, "President");
+INSERT INTO exec_positions VALUES (2, "Secretary");
+INSERT INTO exec_positions VALUES (3, "Powerlifting Captain");
 
-INSERT INTO exec_positions VALUES (
-	2, "Secretary"
-);
-
-INSERT INTO exec_positions VALUES (
-	3, "Powerlifting Captain"
-);
+INSERT INTO nominations VALUES (1, 1702502);
+INSERT INTO nominations VALUES (1, 1701229);
+INSERT INTO nominations VALUES (2, 1702502);

@@ -231,11 +231,26 @@ pub fn taskmaster_edit(
 
 /// Shows the elections board.
 #[get("/elections")]
-pub fn elections(user: AuthorisedUser, conn: DatabaseConnection) -> Result<Template, Redirect> {
+pub fn elections(_user: AuthorisedUser, conn: DatabaseConnection) -> Result<Template, Redirect> {
     let exec_positions = schema::ExecPosition::get_results(&conn.0).unwrap();
 
     Ok(Template::render(
         "elections",
         context::Elections { exec_positions },
+    ))
+}
+
+/// Gets the information needed for the session registration and renders the template.
+#[get("/elections/voting/<position_id>")]
+pub fn election_voting(
+    _user: AuthorisedUser,
+    conn: DatabaseConnection,
+    position_id: i32,
+) -> Result<Template, Redirect> {
+    let nominations = schema::Nomination::for_position(position_id, &conn.0).unwrap();
+
+    Ok(Template::render(
+        "election_voting",
+        context::Voting { nominations },
     ))
 }

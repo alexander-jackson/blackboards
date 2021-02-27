@@ -51,3 +51,10 @@ CREATE TABLE exec_positions (
 	id INTEGER PRIMARY KEY,
 	title TEXT NOT NULL
 );
+
+DROP TABLE IF EXISTS nominations;
+CREATE TABLE nominations (
+	position_id INTEGER NOT NULL,
+	warwick_id INTEGER NOT NULL,
+	PRIMARY KEY (position_id, warwick_id)
+);
