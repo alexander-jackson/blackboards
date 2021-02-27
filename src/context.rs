@@ -71,6 +71,13 @@ pub struct TaskmasterEdit {
     pub message: Option<String>,
 }
 
+/// The context for displaying the exec positions.
+#[derive(Serialize)]
+pub struct Elections {
+    /// The positions to show
+    pub exec_positions: Vec<schema::ExecPosition>,
+}
+
 /// Returns an empty `HashMap` for templates that don't require context.
 pub fn get_empty() -> HashMap<&'static str, &'static str> {
     HashMap::new()

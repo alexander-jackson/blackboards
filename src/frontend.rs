@@ -228,3 +228,14 @@ pub fn taskmaster_edit(
 
     Ok(template)
 }
+
+/// Shows the elections board.
+#[get("/elections")]
+pub fn elections(user: AuthorisedUser, conn: DatabaseConnection) -> Result<Template, Redirect> {
+    let exec_positions = schema::ExecPosition::get_results(&conn.0).unwrap();
+
+    Ok(Template::render(
+        "elections",
+        context::Elections { exec_positions },
+    ))
+}

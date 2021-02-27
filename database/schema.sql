@@ -45,3 +45,9 @@ CREATE TABLE taskmaster_entries (
 	name TEXT PRIMARY KEY,
 	score INTEGER NOT NULL
 );
+
+DROP TABLE IF EXISTS exec_positions;
+CREATE TABLE exec_positions (
+	id INTEGER PRIMARY KEY,
+	title TEXT NOT NULL
+);

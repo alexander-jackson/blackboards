@@ -29,3 +29,15 @@ INSERT INTO sessions VALUES (
 INSERT INTO sessions VALUES (
 	87415, "Intermediate", 1601730000, 10
 );
+
+INSERT INTO exec_positions VALUES (
+	1, "President"
+);
+
+INSERT INTO exec_positions VALUES (
+	2, "Secretary"
+);
+
+INSERT INTO exec_positions VALUES (
+	3, "Powerlifting Captain"
+);
