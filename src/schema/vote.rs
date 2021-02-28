@@ -58,4 +58,9 @@ impl Vote {
             .values(votes)
             .execute(conn)
     }
+
+    /// Gets all [`Vote`] entries in the database.
+    pub fn get_results(conn: &diesel::SqliteConnection) -> QueryResult<Vec<Self>> {
+        votes::dsl::votes.get_results::<Self>(conn)
+    }
 }

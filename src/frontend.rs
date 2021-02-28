@@ -1,6 +1,6 @@
 //! Handles the routes that return Templates for the user to view.
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashMap};
 
 use rocket::request::FlashMessage;
 use rocket::response::Redirect;
@@ -256,4 +256,49 @@ pub fn election_voting(
             nominations,
         },
     ))
+}
+
+/// Calculates the results of the elections won so far.
+#[get("/elections/results")]
+pub fn election_results(_user: AuthorisedUser, conn: DatabaseConnection) -> Template {
+    // Pull all the votes so far
+    let votes = schema::Vote::get_results(&conn.0).unwrap();
+
+    // Sort all the votes by position they are voting for
+    let mut by_position: BTreeMap<i32, Vec<schema::Vote>> = BTreeMap::new();
+
+    for vote in votes {
+        by_position.entry(vote.position_id).or_default().push(vote);
+    }
+
+    let results: Vec<_> = by_position
+        .iter_mut()
+        .map(|(_position_id, votes)| {
+            // Sort the votes by `warwick_id` and then `ranking`
+            votes.sort_by(|a, b| {
+                a.warwick_id
+                    .cmp(&b.warwick_id)
+                    .then(a.ranking.cmp(&b.ranking))
+            });
+
+            let mut map: HashMap<i32, Vec<i32>> = HashMap::new();
+
+            for vote in votes {
+                map.entry(vote.warwick_id)
+                    .or_default()
+                    .push(vote.candidate_id);
+            }
+
+            let collected: Vec<_> = map.values().map(Vec::clone).collect();
+
+            match rcir::run_election(&collected, rcir::MajorityMode::RemainingMajority).unwrap() {
+                rcir::ElectionResult::Winner(winner) => (Some(*winner), None),
+                rcir::ElectionResult::Tie(candidates) => {
+                    (None, Some(candidates.iter().map(|x| **x).collect()))
+                }
+            }
+        })
+        .collect();
+
+    Template::render("election_results", context::ElectionResults { results })
 }

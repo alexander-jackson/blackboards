@@ -1,0 +1,43 @@
+{% extends "base" %}
+
+{% block content %}
+
+{{ super() }}
+
+<div class="container">
+
+	<div class="row">
+
+		<div class="col-sm m-4">
+
+			<h2>Election Results</h2>
+
+			{% for result in results %}
+
+				{% if result.0 %}
+
+				<h4>Winner: {{ result.0 }}</h4>
+
+				{% else %}
+
+				<h4>Tie:
+
+					{% for candidate in result.1 %}
+
+						{{ candidate }}
+
+					{% endfor %}
+
+				</h4>
+
+				{% endif %}
+
+			{% endfor %}
+
+		</div>
+
+	</div>
+
+</div>
+
+{% endblock content %}

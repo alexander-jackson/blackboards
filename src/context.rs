@@ -87,6 +87,15 @@ pub struct Voting {
     pub position_id: i32,
 }
 
+type ElectionResult = (Option<i32>, Option<Vec<i32>>);
+
+/// The context for displaying the election results.
+#[derive(Serialize)]
+pub struct ElectionResults {
+    /// The results of each election
+    pub results: Vec<ElectionResult>,
+}
+
 /// Returns an empty `HashMap` for templates that don't require context.
 pub fn get_empty() -> HashMap<&'static str, &'static str> {
     HashMap::new()
