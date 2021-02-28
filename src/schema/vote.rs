@@ -2,7 +2,7 @@
 
 use std::collections::HashMap;
 
-use diesel::{QueryResult, RunQueryDsl};
+use diesel::{BoolExpressionMethods, ExpressionMethods, QueryDsl, QueryResult, RunQueryDsl};
 
 table! {
     /// Represents the schema for `votes`.
@@ -44,6 +44,16 @@ impl Vote {
         votes: &HashMap<i32, i32>,
         conn: &diesel::SqliteConnection,
     ) -> QueryResult<usize> {
+        // Delete all previous votes to avoid clashes
+        diesel::delete(
+            votes::dsl::votes.filter(
+                votes::dsl::warwick_id
+                    .eq(user_id)
+                    .and(votes::dsl::position_id.eq(position_id)),
+            ),
+        )
+        .execute(conn)?;
+
         let votes: Vec<Self> = votes
             .iter()
             .map(|(ranking, candidate_id)| Vote {
