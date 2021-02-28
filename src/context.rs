@@ -87,7 +87,16 @@ pub struct Voting {
     pub position_id: i32,
 }
 
-type ElectionResult = (Option<i32>, Option<Vec<i32>>);
+/// The result of a single election on a position.
+#[derive(Serialize)]
+pub struct ElectionResult {
+    /// The title of the position
+    pub title: String,
+    /// The winner, if there was one
+    pub winner: Option<i32>,
+    /// The candidates who tied, if there was one
+    pub tie: Option<Vec<i32>>,
+}
 
 /// The context for displaying the election results.
 #[derive(Serialize)]

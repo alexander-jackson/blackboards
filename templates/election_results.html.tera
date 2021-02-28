@@ -14,15 +14,17 @@
 
 			{% for result in results %}
 
-				{% if result.0 %}
+				<h3>{{ result.title }}</h3>
 
-				<h4>Winner: {{ result.0 }}</h4>
+				{% if result.winner %}
 
-				{% elif result.1 %}
+				<h4>Winner: {{ result.winner }}</h4>
+
+				{% elif result.tie %}
 
 				<h4>Tie:
 
-					{% for candidate in result.1 %}
+					{% for candidate in result.tie %}
 
 						{{ candidate }}
 

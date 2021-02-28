@@ -269,8 +269,6 @@ pub fn election_results(_user: AuthorisedUser, conn: DatabaseConnection) -> Temp
         .map(|pos| (pos.id, pos.title))
         .collect();
 
-    dbg!(&positions);
-
     // Pull all the votes so far
     let votes = schema::Vote::get_results(&conn.0).unwrap();
 
@@ -284,7 +282,7 @@ pub fn election_results(_user: AuthorisedUser, conn: DatabaseConnection) -> Temp
 
     let results: Vec<_> = by_position
         .iter_mut()
-        .map(|(_position_id, votes)| {
+        .map(|(position_id, votes)| {
             // Sort the votes by `warwick_id` and then `ranking`
             votes.sort_by(|a, b| {
                 a.warwick_id
@@ -301,9 +299,10 @@ pub fn election_results(_user: AuthorisedUser, conn: DatabaseConnection) -> Temp
             }
 
             let collected: Vec<_> = map.values().map(Vec::clone).collect();
-            let result = rcir::run_election(&collected, rcir::MajorityMode::RemainingMajority);
+            let election_result =
+                rcir::run_election(&collected, rcir::MajorityMode::RemainingMajority);
 
-            if let Ok(r) = result {
+            let outcome = if let Ok(r) = election_result {
                 match r {
                     ElectionResult::Winner(winner) => (Some(*winner), None),
                     ElectionResult::Tie(candidates) => {
@@ -312,6 +311,12 @@ pub fn election_results(_user: AuthorisedUser, conn: DatabaseConnection) -> Temp
                 }
             } else {
                 (None, None)
+            };
+
+            context::ElectionResult {
+                title: positions[position_id].clone(),
+                winner: outcome.0,
+                tie: outcome.1,
             }
         })
         .collect();
