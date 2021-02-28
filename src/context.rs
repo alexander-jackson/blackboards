@@ -7,6 +7,13 @@ use crate::schema;
 /// Represents the session title, start time and the users' registered for it.
 pub type Registrations = ((String, String), Vec<String>);
 
+/// Represents a flash message, but including the variant.
+#[derive(Serialize)]
+pub struct Flash {
+    pub variant: String,
+    pub message: String,
+}
+
 /// The context for session registrations.
 #[derive(Serialize)]
 pub struct Context {
@@ -86,7 +93,7 @@ pub struct Voting {
     /// The position we are voting for
     pub position_id: i32,
     /// The message to display to the user, for errors
-    pub message: Option<String>,
+    pub flash: Option<Flash>,
 }
 
 /// The result of a single election on a position.

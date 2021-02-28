@@ -250,14 +250,17 @@ pub fn election_voting(
     position_id: i32,
 ) -> Result<Template, Redirect> {
     let nominations = schema::Nomination::for_position(position_id, &conn.0).unwrap();
-    let message = flash.map(|f| f.msg().to_string());
+    let flash = flash.map(|f| context::Flash {
+        variant: f.name().to_string(),
+        message: f.msg().to_string(),
+    });
 
     Ok(Template::render(
         "election_voting",
         context::Voting {
             position_id,
             nominations,
-            message,
+            flash,
         },
     ))
 }

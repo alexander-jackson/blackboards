@@ -10,9 +10,21 @@
 
 		<div class="col-sm m-4">
 
-			{% if message %}
+			{% if flash %}
 
-				{{ message }}
+				{% if flash.variant == "success" %}
+
+				<div class="alert alert-success" role="alert">
+
+				{% else %}
+
+				<div class="alert alert-danger" role="alert">
+
+				{% endif %}
+
+				{{ flash.message }}
+
+				</div>
 
 			{% endif %}
 
