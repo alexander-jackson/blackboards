@@ -3,7 +3,7 @@
 use diesel::{QueryResult, RunQueryDsl};
 
 table! {
-    /// Represents the schema for `registrations`.
+    /// Represents the schema for `exec_positions`.
     exec_positions {
         /// The identifier for the position.
         id -> Integer,

@@ -251,6 +251,9 @@ pub fn election_voting(
 
     Ok(Template::render(
         "election_voting",
-        context::Voting { nominations },
+        context::Voting {
+            position_id,
+            nominations,
+        },
     ))
 }

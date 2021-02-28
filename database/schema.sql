@@ -58,3 +58,12 @@ CREATE TABLE nominations (
 	warwick_id INTEGER NOT NULL,
 	PRIMARY KEY (position_id, warwick_id)
 );
+
+DROP TABLE IF EXISTS votes;
+CREATE TABLE votes (
+	warwick_id INTEGER NOT NULL,
+	position_id INTEGER NOT NULL,
+	candidate_id INTEGER NOT NULL,
+	ranking INTEGER NOT NULL,
+	PRIMARY KEY (warwick_id, position_id, candidate_id)
+);

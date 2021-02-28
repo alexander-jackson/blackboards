@@ -83,6 +83,8 @@ pub struct Elections {
 pub struct Voting {
     /// The positions to show
     pub nominations: Vec<schema::Nomination>,
+    /// The position we are voting for
+    pub position_id: i32,
 }
 
 /// Returns an empty `HashMap` for templates that don't require context.

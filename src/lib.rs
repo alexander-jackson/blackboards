@@ -66,6 +66,7 @@ pub fn build_rocket() -> rocket::Rocket {
                 api::personal_bests,
                 api::logout,
                 api::taskmaster_edit,
+                api::election_vote,
             ],
         )
 }

@@ -12,15 +12,31 @@
 
 			<h2>Nominations</h2>
 
-			<div class="list-group">
+			<form accept-charset="utf-8" action="/election/vote/{{ position_id }}" method="post">
 
-				{% for nomination in nominations %}
+				<div class="form-group">
 
-					{{ nomination.warwick_id }}
+					{% for _ in nominations %}
 
-				{% endfor %}
+						<h4>Choice Number: {{ loop.index }}</h4>
 
-			</div>
+						<select class="form-control" id="{{ loop.index }}" name="{{ loop.index }}">
+
+							{% for nomination in nominations %}
+
+							<option value="{{ nomination.warwick_id }}">{{ nomination.warwick_id }}</option>
+
+							{% endfor %}
+
+						</select>
+
+					{% endfor %}
+
+				</div>
+
+				<button type="submit" class="btn btn-primary my-2">Submit</button>
+
+			</form>
 
 		</div>
 

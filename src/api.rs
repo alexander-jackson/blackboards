@@ -197,3 +197,19 @@ pub fn taskmaster_edit(
 
     Redirect::to(uri!(frontend::taskmaster_leaderboard))
 }
+
+/// Allows users to vote on the election.
+#[post("/election/vote/<position_id>", data = "<data>")]
+pub fn election_vote(
+    user: AuthorisedUser,
+    conn: DatabaseConnection,
+    position_id: i32,
+    data: Form<forms::RawMap<i32, i32>>,
+) -> Redirect {
+    let data = (*data).into_inner();
+
+    // Record the user's votes
+    schema::Vote::insert_all(user.id, position_id, data, &conn.0).unwrap();
+
+    Redirect::to(uri!(frontend::election_voting: position_id))
+}
