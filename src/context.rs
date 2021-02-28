@@ -22,7 +22,7 @@ pub struct Context {
     /// The currently selected session if it exists.
     pub current: Option<schema::Session>,
     /// The message to display to the user, for errors.
-    pub message: Option<String>,
+    pub flash: Option<Flash>,
     /// The registrations for each session.
     pub registrations: Option<Vec<Registrations>>,
 }
@@ -35,7 +35,7 @@ pub struct Attendance {
     /// The currently selected session if it exists.
     pub current: Option<schema::Session>,
     /// The message to display to the user, for errors.
-    pub message: Option<String>,
+    pub flash: Option<Flash>,
 }
 
 /// The context for the blackboards page.
@@ -55,7 +55,7 @@ pub struct PersonalBests {
     /// The user's personal bests
     pub personal_bests: schema::PersonalBest,
     /// The message to display to the user, for errors
-    pub message: Option<String>,
+    pub flash: Option<Flash>,
 }
 
 /// The context for displaying the Taskmaster leaderboard.
@@ -66,7 +66,7 @@ pub struct TaskmasterLeaderboard {
     /// Whether the user has permission to edit the board
     pub admin: bool,
     /// The message to display to the user, for errors
-    pub message: Option<String>,
+    pub flash: Option<Flash>,
 }
 
 /// The context for displaying the Taskmaster leaderboard.
@@ -75,7 +75,7 @@ pub struct TaskmasterEdit {
     /// The state of the leaderboard, as a CSV
     pub leaderboard_csv: String,
     /// The message to display to the user, for errors
-    pub message: Option<String>,
+    pub flash: Option<Flash>,
 }
 
 /// The context for displaying the exec positions.

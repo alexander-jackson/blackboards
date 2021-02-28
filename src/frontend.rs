@@ -54,7 +54,10 @@ pub fn dashboard(
 ) -> Template {
     let window = SessionWindow::from_current_time();
     let sessions = schema::Session::get_results_between(&conn.0, window).unwrap();
-    let message = flash.map(|f| f.msg().to_string());
+    let flash = flash.map(|f| context::Flash {
+        variant: f.name().to_string(),
+        message: f.msg().to_string(),
+    });
     let registrations = get_registrations(&conn.0, window);
 
     Template::render(
@@ -62,7 +65,7 @@ pub fn dashboard(
         context::Context {
             sessions,
             current: None,
-            message,
+            flash,
             registrations,
         },
     )
@@ -85,7 +88,7 @@ pub fn specific_session(
         context::Context {
             sessions,
             current,
-            message: None,
+            flash: None,
             registrations,
         },
     ))
@@ -101,7 +104,7 @@ pub fn attendance(conn: DatabaseConnection) -> Result<Template, Redirect> {
         context::Attendance {
             sessions,
             current: None,
-            message: None,
+            flash: None,
         },
     ))
 }
@@ -115,14 +118,17 @@ pub fn session_attendance(
 ) -> Result<Template, Redirect> {
     let sessions = schema::Session::get_results(&conn.0).unwrap();
     let current = schema::Session::find(session_id, &conn.0).ok();
-    let message = flash.map(|f| f.msg().to_string());
+    let flash = flash.map(|f| context::Flash {
+        variant: f.name().to_string(),
+        message: f.msg().to_string(),
+    });
 
     Ok(Template::render(
         "attendance",
         context::Attendance {
             sessions,
             current,
-            message,
+            flash,
         },
     ))
 }
@@ -144,7 +150,7 @@ pub fn bookings(user: AuthorisedUser, conn: DatabaseConnection) -> Template {
         context::Context {
             sessions,
             current: None,
-            message: None,
+            flash: None,
             registrations: None,
         },
     )
@@ -167,13 +173,16 @@ pub fn personal_bests(
     flash: Option<FlashMessage>,
 ) -> Template {
     let personal_bests = schema::PersonalBest::find(user, &conn.0).unwrap();
-    let message = flash.map(|f| f.msg().to_string());
+    let flash = flash.map(|f| context::Flash {
+        variant: f.name().to_string(),
+        message: f.msg().to_string(),
+    });
 
     Template::render(
         "personal_bests",
         context::PersonalBests {
             personal_bests,
-            message,
+            flash,
         },
     )
 }
@@ -186,14 +195,17 @@ pub fn taskmaster_leaderboard(
     flash: Option<FlashMessage>,
 ) -> Template {
     let leaderboard = schema::TaskmasterEntry::get_results(&conn.0).unwrap();
-    let message = flash.map(|f| f.msg().to_string());
+    let flash = flash.map(|f| context::Flash {
+        variant: f.name().to_string(),
+        message: f.msg().to_string(),
+    });
 
     Template::render(
         "taskmaster_leaderboard",
         context::TaskmasterLeaderboard {
             leaderboard,
             admin: user.is_taskmaster_admin(),
-            message,
+            flash,
         },
     )
 }
@@ -209,9 +221,11 @@ pub fn taskmaster_edit(
         return Err(Redirect::to(uri!(taskmaster_leaderboard)));
     }
 
-    // TODO: Ensure this user is authorised for Taskmaster editing
     let leaderboard = schema::TaskmasterEntry::get_results(&conn.0).unwrap();
-    let message = flash.map(|f| f.msg().to_string());
+    let flash = flash.map(|f| context::Flash {
+        variant: f.name().to_string(),
+        message: f.msg().to_string(),
+    });
 
     let leaderboard_csv: String = leaderboard
         .iter()
@@ -223,7 +237,7 @@ pub fn taskmaster_edit(
         "taskmaster_edit",
         context::TaskmasterEdit {
             leaderboard_csv,
-            message,
+            flash,
         },
     );
 

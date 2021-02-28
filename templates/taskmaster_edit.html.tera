@@ -4,12 +4,6 @@
 
 {{ super() }}
 
-{% if message %}
-
-<p>{{ message }}</p>
-
-{% endif %}
-
 <h2>Personal Bests</h2>
 
 <form accept-charset="utf-8" action="/taskmaster/edit" method="post">
