@@ -85,6 +85,8 @@ pub struct Voting {
     pub nominations: Vec<schema::Nomination>,
     /// The position we are voting for
     pub position_id: i32,
+    /// The message to display to the user, for errors
+    pub message: Option<String>,
 }
 
 /// The result of a single election on a position.

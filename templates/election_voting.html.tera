@@ -10,6 +10,12 @@
 
 		<div class="col-sm m-4">
 
+			{% if message %}
+
+				{{ message }}
+
+			{% endif %}
+
 			<h2>Nominations</h2>
 
 			<form accept-charset="utf-8" action="/election/vote/{{ position_id }}" method="post">

@@ -5,6 +5,7 @@
 
 use std::env;
 
+use itertools::Itertools;
 use rocket::http::{Cookie, Cookies, RawStr};
 use rocket::request::Form;
 use rocket::response::{Flash, Redirect};
@@ -205,11 +206,19 @@ pub fn election_vote(
     conn: DatabaseConnection,
     position_id: i32,
     data: Form<forms::RawMap<i32, i32>>,
-) -> Redirect {
+) -> Flash<Redirect> {
     let data = (*data).into_inner();
+    let redirect = Redirect::to(uri!(frontend::election_voting: position_id));
+
+    // Check all the votes are unique
+    let all_unique = data.values().unique().count() == data.values().count();
+
+    if !all_unique {
+        return Flash::error(redirect, "Make sure your votes are unique!");
+    }
 
     // Record the user's votes
     schema::Vote::insert_all(user.id, position_id, data, &conn.0).unwrap();
 
-    Redirect::to(uri!(frontend::election_voting: position_id))
+    Flash::success(redirect, "Successfully recorded your votes!")
 }

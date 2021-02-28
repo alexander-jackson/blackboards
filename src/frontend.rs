@@ -246,15 +246,18 @@ pub fn elections(_user: AuthorisedUser, conn: DatabaseConnection) -> Result<Temp
 pub fn election_voting(
     _user: AuthorisedUser,
     conn: DatabaseConnection,
+    flash: Option<FlashMessage>,
     position_id: i32,
 ) -> Result<Template, Redirect> {
     let nominations = schema::Nomination::for_position(position_id, &conn.0).unwrap();
+    let message = flash.map(|f| f.msg().to_string());
 
     Ok(Template::render(
         "election_voting",
         context::Voting {
             position_id,
             nominations,
+            message,
         },
     ))
 }
