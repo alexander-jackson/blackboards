@@ -4,29 +4,17 @@
 
 {{ super() }}
 
-<div class="container">
+<h2>Exec Positions</h2>
 
-	<div class="row">
+<div class="list-group">
 
-		<div class="col-sm m-4">
+	{% for position in exec_positions %}
 
-			<h2>Exec Positions</h2>
+	<a href="/elections/voting/{{ position.id }}" class="list-group-item list-group-item-action">
+		{{ position.title }}
+	</a>
 
-			<div class="list-group">
-
-				{% for position in exec_positions %}
-
-				<a href="/elections/voting/{{ position.id }}" class="list-group-item list-group-item-action">
-					{{ position.title }}
-				</a>
-
-				{% endfor %}
-
-			</div>
-
-		</div>
-
-	</div>
+	{% endfor %}
 
 </div>
 

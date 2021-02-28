@@ -26,6 +26,40 @@
 	</head>
 	<body>
 		{% include "navbar" %}
-		{% block content %}{% endblock %}
+
+		{% if flash %}
+
+			{% if flash.variant == "success" %}
+
+			<div class="alert alert-success" role="alert">
+
+			{% else %}
+
+			<div class="alert alert-danger" role="alert">
+
+			{% endif %}
+
+			{{ flash.message }}
+
+			</div>
+
+		{% endif %}
+
+		<div class="container">
+
+			<div class="row">
+
+				<div class="col-sm m-4">
+
+					{% block content %}
+
+					{% endblock %}
+
+				</div>
+
+			</div>
+
+		</div>
+
 	</body>
 </html>

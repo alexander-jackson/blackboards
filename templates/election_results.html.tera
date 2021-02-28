@@ -4,46 +4,34 @@
 
 {{ super() }}
 
-<div class="container">
+<h2>Election Results</h2>
 
-	<div class="row">
+{% for result in results %}
 
-		<div class="col-sm m-4">
+	<h3>{{ result.title }}</h3>
 
-			<h2>Election Results</h2>
+	{% if result.winner %}
 
-			{% for result in results %}
+	<h4>Winner: {{ result.winner }}</h4>
 
-				<h3>{{ result.title }}</h3>
+	{% elif result.tie %}
 
-				{% if result.winner %}
+	<h4>Tie:
 
-				<h4>Winner: {{ result.winner }}</h4>
+		{% for candidate in result.tie %}
 
-				{% elif result.tie %}
+			{{ candidate }}
 
-				<h4>Tie:
+		{% endfor %}
 
-					{% for candidate in result.tie %}
+	</h4>
 
-						{{ candidate }}
+	{% else %}
 
-					{% endfor %}
+	<h4>Undecided</h4>
 
-				</h4>
+	{% endif %}
 
-				{% else %}
-
-				<h4>Undecided</h4>
-
-				{% endif %}
-
-			{% endfor %}
-
-		</div>
-
-	</div>
-
-</div>
+{% endfor %}
 
 {% endblock content %}

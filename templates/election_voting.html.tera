@@ -4,62 +4,32 @@
 
 {{ super() }}
 
-<div class="container">
+<h2>Nominations</h2>
 
-	<div class="row">
+<form accept-charset="utf-8" action="/election/vote/{{ position_id }}" method="post">
 
-		<div class="col-sm m-4">
+	<div class="form-group">
 
-			{% if flash %}
+		{% for _ in nominations %}
 
-				{% if flash.variant == "success" %}
+			<h4>Choice Number: {{ loop.index }}</h4>
 
-				<div class="alert alert-success" role="alert">
+			<select class="form-control" id="{{ loop.index }}" name="{{ loop.index }}">
 
-				{% else %}
+				{% for nomination in nominations %}
 
-				<div class="alert alert-danger" role="alert">
+				<option value="{{ nomination.warwick_id }}">{{ nomination.warwick_id }}</option>
 
-				{% endif %}
+				{% endfor %}
 
-				{{ flash.message }}
+			</select>
 
-				</div>
-
-			{% endif %}
-
-			<h2>Nominations</h2>
-
-			<form accept-charset="utf-8" action="/election/vote/{{ position_id }}" method="post">
-
-				<div class="form-group">
-
-					{% for _ in nominations %}
-
-						<h4>Choice Number: {{ loop.index }}</h4>
-
-						<select class="form-control" id="{{ loop.index }}" name="{{ loop.index }}">
-
-							{% for nomination in nominations %}
-
-							<option value="{{ nomination.warwick_id }}">{{ nomination.warwick_id }}</option>
-
-							{% endfor %}
-
-						</select>
-
-					{% endfor %}
-
-				</div>
-
-				<button type="submit" class="btn btn-primary my-2">Submit</button>
-
-			</form>
-
-		</div>
+		{% endfor %}
 
 	</div>
 
-</div>
+	<button type="submit" class="btn btn-primary my-2">Submit</button>
+
+</form>
 
 {% endblock content %}
