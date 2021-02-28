@@ -18,7 +18,7 @@
 
 				<h4>Winner: {{ result.0 }}</h4>
 
-				{% else %}
+				{% elif result.1 %}
 
 				<h4>Tie:
 
@@ -29,6 +29,10 @@
 					{% endfor %}
 
 				</h4>
+
+				{% else %}
+
+				<h4>Undecided</h4>
 
 				{% endif %}
 

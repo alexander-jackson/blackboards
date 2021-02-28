@@ -2,6 +2,7 @@
 
 use std::collections::{BTreeMap, HashMap};
 
+use rcir::ElectionResult;
 use rocket::request::FlashMessage;
 use rocket::response::Redirect;
 use rocket_contrib::templates::Template;
@@ -261,14 +262,24 @@ pub fn election_voting(
 /// Calculates the results of the elections won so far.
 #[get("/elections/results")]
 pub fn election_results(_user: AuthorisedUser, conn: DatabaseConnection) -> Template {
+    // Get all the available positions
+    let positions: BTreeMap<i32, String> = schema::ExecPosition::get_results(&conn.0)
+        .unwrap()
+        .into_iter()
+        .map(|pos| (pos.id, pos.title))
+        .collect();
+
+    dbg!(&positions);
+
     // Pull all the votes so far
     let votes = schema::Vote::get_results(&conn.0).unwrap();
 
     // Sort all the votes by position they are voting for
-    let mut by_position: BTreeMap<i32, Vec<schema::Vote>> = BTreeMap::new();
+    let mut by_position: BTreeMap<i32, Vec<schema::Vote>> =
+        positions.keys().map(|k| (*k, Vec::new())).collect();
 
     for vote in votes {
-        by_position.entry(vote.position_id).or_default().push(vote);
+        by_position.get_mut(&vote.position_id).unwrap().push(vote);
     }
 
     let results: Vec<_> = by_position
@@ -290,12 +301,17 @@ pub fn election_results(_user: AuthorisedUser, conn: DatabaseConnection) -> Temp
             }
 
             let collected: Vec<_> = map.values().map(Vec::clone).collect();
+            let result = rcir::run_election(&collected, rcir::MajorityMode::RemainingMajority);
 
-            match rcir::run_election(&collected, rcir::MajorityMode::RemainingMajority).unwrap() {
-                rcir::ElectionResult::Winner(winner) => (Some(*winner), None),
-                rcir::ElectionResult::Tie(candidates) => {
-                    (None, Some(candidates.iter().map(|x| **x).collect()))
+            if let Ok(r) = result {
+                match r {
+                    ElectionResult::Winner(winner) => (Some(*winner), None),
+                    ElectionResult::Tie(candidates) => {
+                        (None, Some(candidates.iter().map(|x| **x).collect()))
+                    }
                 }
+            } else {
+                (None, None)
             }
         })
         .collect();
