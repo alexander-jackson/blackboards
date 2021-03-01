@@ -27,9 +27,9 @@
 	<body>
 		{% include "navbar" %}
 
-		{% if flash %}
+		{% if message %}
 
-			{% if flash.variant == "success" %}
+			{% if message.variant == "success" %}
 
 			<div class="alert alert-success" role="alert">
 
@@ -39,7 +39,7 @@
 
 			{% endif %}
 
-			{{ flash.message }}
+			{{ message.message }}
 
 			</div>
 
