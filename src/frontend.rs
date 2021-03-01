@@ -2,10 +2,10 @@
 
 use std::collections::{BTreeMap, HashMap};
 
-use rcir::ElectionResult;
 use rocket::request::FlashMessage;
 use rocket::response::Redirect;
 use rocket_contrib::templates::Template;
+use tallystick::{stv::Tally, Quota};
 
 use crate::context;
 use crate::schema;
@@ -301,18 +301,19 @@ pub fn election_results(_user: AuthorisedUser, conn: DatabaseConnection) -> Temp
             }
 
             let collected: Vec<_> = map.values().map(Vec::clone).collect();
-            let election_result =
-                rcir::run_election(&collected, rcir::MajorityMode::RemainingMajority);
 
-            let outcome = if let Ok(r) = election_result {
-                match r {
-                    ElectionResult::Winner(winner) => (Some(*winner), None),
-                    ElectionResult::Tie(candidates) => {
-                        (None, Some(candidates.iter().map(|x| **x).collect()))
-                    }
-                }
-            } else {
-                (None, None)
+            let mut tally: Tally<i32, f64> = Tally::new(1, Quota::Hagenbach);
+
+            for vote in &collected {
+                tally.add_ref(vote);
+            }
+
+            let winners = tally.winners().all();
+
+            let outcome = match winners.len() {
+                0 => (None, None),
+                1 => (Some(winners[0]), None),
+                _ => (None, Some(winners)),
             };
 
             context::ElectionResult {
