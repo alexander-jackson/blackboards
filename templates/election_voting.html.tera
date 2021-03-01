@@ -18,7 +18,7 @@
 
 				{% for nomination in nominations %}
 
-				<option value="{{ nomination.warwick_id }}">{{ nomination.warwick_id }}</option>
+				<option value="{{ nomination.warwick_id }}">{{ nomination.name }}</option>
 
 				{% endfor %}
 

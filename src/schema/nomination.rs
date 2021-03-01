@@ -9,6 +9,8 @@ table! {
         position_id -> Integer,
         /// The identifier of the candidate.
         warwick_id -> Integer,
+        /// The name of the candidate.
+        name -> Text,
     }
 }
 
@@ -19,6 +21,8 @@ pub struct Nomination {
     pub position_id: i32,
     /// The identifier of the candidate.
     pub warwick_id: i32,
+    /// The name of the candidate.
+    pub name: String,
 }
 
 impl Nomination {

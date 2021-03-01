@@ -56,6 +56,7 @@ DROP TABLE IF EXISTS nominations;
 CREATE TABLE nominations (
 	position_id INTEGER NOT NULL,
 	warwick_id INTEGER NOT NULL,
+	name TEXT NOT NULL,
 	PRIMARY KEY (position_id, warwick_id)
 );
 
