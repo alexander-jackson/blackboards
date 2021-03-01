@@ -942,9 +942,9 @@ checksum = "830d08ce1d1d941e6b30645f1a0eb5643013d835ce3779a5fc208261dbe10f55"
 
 [[package]]
 name = "lettre"
-version = "0.10.0-alpha.5"
+version = "0.10.0-beta.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "34f3dd8d917156976a47ef421a2e771423d6da95e93696f1814e76768625c162"
+checksum = "0f060515ec950723c5482163457b3faad8c088810c4a01a42523bc98e15bcb3e"
 dependencies = [
  "base64 0.13.0",
  "hostname",
@@ -958,8 +958,6 @@ dependencies = [
  "r2d2",
  "rand 0.8.3",
  "regex",
- "serde",
- "serde_json",
  "uuid",
 ]
 
@@ -1898,9 +1896,6 @@ name = "serde"
 version = "1.0.123"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "92d5161132722baa40d802cc70b15262b98258453e85e5d1d365c757c73869ae"
-dependencies = [
- "serde_derive",
-]
 
 [[package]]
 name = "serde_derive"
