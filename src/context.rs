@@ -111,20 +111,20 @@ pub struct Voting {
 
 /// The result of a single election on a position.
 #[derive(Serialize)]
-pub struct ElectionResult {
+pub struct ElectionResult<'a> {
     /// The title of the position
     pub title: String,
     /// The winner, if there was one
-    pub winner: Option<i32>,
+    pub winner: Option<&'a str>,
     /// The candidates who tied, if there was one
-    pub tie: Option<Vec<i32>>,
+    pub tie: Option<Vec<&'a str>>,
 }
 
 /// The context for displaying the election results.
 #[derive(Serialize)]
-pub struct ElectionResults {
+pub struct ElectionResults<'a> {
     /// The results of each election
-    pub results: Vec<ElectionResult>,
+    pub results: Vec<ElectionResult<'a>>,
 }
 
 /// Returns an empty `HashMap` for templates that don't require context.

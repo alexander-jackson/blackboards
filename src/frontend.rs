@@ -271,6 +271,13 @@ pub fn election_results(_user: AuthorisedUser, conn: DatabaseConnection) -> Temp
         .map(|pos| (pos.id, pos.title))
         .collect();
 
+    // Map all the nominees from `warwick_id` -> `name`
+    let nominees: HashMap<_, _> = schema::Nomination::get_results(&conn.0)
+        .unwrap()
+        .into_iter()
+        .map(|n| (n.warwick_id, n.name))
+        .collect();
+
     // Pull all the votes so far
     let votes = schema::Vote::get_results(&conn.0).unwrap();
 
@@ -308,7 +315,12 @@ pub fn election_results(_user: AuthorisedUser, conn: DatabaseConnection) -> Temp
                 tally.add_ref(vote);
             }
 
-            let winners = tally.winners().all();
+            let winners: Vec<_> = tally
+                .winners()
+                .all()
+                .iter()
+                .map(|id| nominees[id].as_str())
+                .collect();
 
             let outcome = match winners.len() {
                 0 => (None, None),
