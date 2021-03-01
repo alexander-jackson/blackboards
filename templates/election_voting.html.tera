@@ -16,6 +16,8 @@
 
 			<select class="form-control" id="{{ loop.index }}" name="{{ loop.index }}">
 
+				<option value="" selected disabled hidden>Choose here</option>
+
 				{% for nomination in nominations %}
 
 				<option value="{{ nomination.warwick_id }}">{{ nomination.name }}</option>

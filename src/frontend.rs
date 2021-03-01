@@ -2,6 +2,7 @@
 
 use std::collections::{BTreeMap, HashMap};
 
+use rand::seq::SliceRandom;
 use rocket::request::FlashMessage;
 use rocket::response::Redirect;
 use rocket_contrib::templates::Template;
@@ -248,8 +249,12 @@ pub fn election_voting(
     flash: Option<FlashMessage>,
     position_id: i32,
 ) -> Result<Template, Redirect> {
-    let nominations = schema::Nomination::for_position(position_id, &conn.0).unwrap();
+    let mut nominations = schema::Nomination::for_position(position_id, &conn.0).unwrap();
     let message = flash.map(context::Message::from);
+
+    // Randomly shuffle the nominations for each person
+    let mut rng = rand::thread_rng();
+    nominations.shuffle(&mut rng);
 
     Ok(Template::render(
         "election_voting",
