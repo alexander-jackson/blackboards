@@ -14,7 +14,7 @@ lettre = "0.10.0-alpha.5"
 dotenv = "0.15"
 rand = "0.8"
 chrono = "0.4.19"
-url = "2.2.0"
+url = "2.2.1"
 
 [dependencies.rocket_contrib]
 version = "0.4"
