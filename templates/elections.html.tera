@@ -10,9 +10,19 @@
 
 	{% for position in exec_positions %}
 
-	<a href="/elections/voting/{{ position.id }}" class="list-group-item list-group-item-action">
+		{% if position.open %}
+
+			<a href="/elections/voting/{{ position.id }}" class="list-group-item list-group-item-action active">
+
+		{% else %}
+
+			<a href="/elections/voting/{{ position.id }}" class="list-group-item list-group-item-action disabled">
+
+		{% endif %}
+
 		{{ position.title }}
-	</a>
+
+		</a>
 
 	{% endfor %}
 

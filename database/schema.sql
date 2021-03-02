@@ -49,7 +49,8 @@ CREATE TABLE taskmaster_entries (
 DROP TABLE IF EXISTS exec_positions;
 CREATE TABLE exec_positions (
 	id INTEGER PRIMARY KEY,
-	title TEXT NOT NULL
+	title TEXT NOT NULL,
+	open BOOLEAN NOT NULL
 );
 
 DROP TABLE IF EXISTS nominations;

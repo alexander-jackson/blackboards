@@ -4,7 +4,7 @@ use std::collections::{BTreeMap, HashMap};
 
 use rand::seq::SliceRandom;
 use rocket::request::FlashMessage;
-use rocket::response::Redirect;
+use rocket::response::{Flash, Redirect};
 use rocket_contrib::templates::Template;
 use tallystick::{stv::Tally, Quota};
 
@@ -232,12 +232,20 @@ pub fn taskmaster_edit(
 
 /// Shows the elections board.
 #[get("/elections")]
-pub fn elections(_user: AuthorisedUser, conn: DatabaseConnection) -> Result<Template, Redirect> {
+pub fn elections(
+    _user: AuthorisedUser,
+    conn: DatabaseConnection,
+    flash: Option<FlashMessage>,
+) -> Result<Template, Redirect> {
     let exec_positions = schema::ExecPosition::get_results(&conn.0).unwrap();
+    let message = flash.map(context::Message::from);
 
     Ok(Template::render(
         "elections",
-        context::Elections { exec_positions },
+        context::Elections {
+            exec_positions,
+            message,
+        },
     ))
 }
 
@@ -248,7 +256,16 @@ pub fn election_voting(
     conn: DatabaseConnection,
     flash: Option<FlashMessage>,
     position_id: i32,
-) -> Result<Template, Redirect> {
+) -> Result<Template, Flash<Redirect>> {
+    // Check whether voting for this position is open
+    if !schema::ExecPosition::voting_is_open(position_id, &conn.0) {
+        // Redirect to the main elections page
+        return Err(Flash::error(
+            Redirect::to(uri!(elections)),
+            "Voting for this position is not open yet.",
+        ));
+    }
+
     let mut nominations = schema::Nomination::for_position(position_id, &conn.0).unwrap();
     let message = flash.map(context::Message::from);
 

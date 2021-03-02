@@ -96,6 +96,8 @@ pub struct TaskmasterEdit {
 pub struct Elections {
     /// The positions to show
     pub exec_positions: Vec<schema::ExecPosition>,
+    /// The message to display to the user, for errors
+    pub message: Option<Message>,
 }
 
 /// The context for displaying the voting page.
