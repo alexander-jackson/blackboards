@@ -262,7 +262,7 @@ pub fn election_voting(
         // Redirect to the main elections page
         return Err(Flash::error(
             Redirect::to(uri!(elections)),
-            "Voting for this position is not open yet.",
+            "Voting for this position either hasn't opened yet or has closed.",
         ));
     }
 

@@ -210,6 +210,15 @@ pub fn election_vote(
     let data = (*data).into_inner();
     let redirect = Redirect::to(uri!(frontend::election_voting: position_id));
 
+    // Check whether voting for this position is open
+    if !schema::ExecPosition::voting_is_open(position_id, &conn.0) {
+        // Redirect to the main elections page
+        return Flash::error(
+            Redirect::to(uri!(frontend::elections)),
+            "Voting for this position either hasn't opened yet or has closed.",
+        );
+    }
+
     // Check all the votes are unique
     let all_unique = data.values().unique().count() == data.values().count();
 
