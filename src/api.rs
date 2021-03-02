@@ -231,3 +231,26 @@ pub fn election_vote(
 
     Flash::success(redirect, "Successfully recorded your votes!")
 }
+
+/// Allows administrators to open and close voting for a position.
+#[get("/elections/settings/toggle/<position_id>")]
+pub fn election_settings_toggle(
+    user: AuthorisedUser,
+    conn: DatabaseConnection,
+    position_id: i32,
+) -> Flash<Redirect> {
+    // Check whether the user can make this change
+    if !user.is_election_admin() {
+        return Flash::error(
+            Redirect::to(uri!(frontend::elections)),
+            "You do not have permission to toggle election voting.",
+        );
+    }
+
+    schema::ExecPosition::toggle_state(position_id, &conn.0).unwrap();
+
+    Flash::success(
+        Redirect::to(uri!(frontend::election_settings)),
+        "Successfully toggled the state.",
+    )
+}

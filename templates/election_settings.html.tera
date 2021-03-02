@@ -1,0 +1,49 @@
+{% extends "base" %}
+
+{% block content %}
+
+{{ super() }}
+
+<h2>
+
+	Election Settings
+
+	<a href="/elections/results" class="badge badge-primary">Results</a>
+
+</h2>
+
+<table class="table table-dark">
+
+	<thead>
+
+		<tr>
+			<th scope="col">Position</th>
+			<th scope="col">Toggle</th>
+		</tr>
+
+	</thead>
+
+	<tbody>
+
+		{% for position in exec_positions %}
+
+		<tr>
+			<td>{{ position.title }} </td>
+			<td>
+				{% if position.open %}
+				<a href="/elections/settings/toggle/{{ position.id }}"
+					class="badge badge-danger">Close voting</a>
+				{% else %}
+				<a href="/elections/settings/toggle/{{ position.id }}"
+					class="badge badge-success">Open voting</a>
+				{% endif %}
+			</td>
+		</tr>
+
+		{% endfor %}
+
+	</tbody>
+
+</table>
+
+{% endblock content %}

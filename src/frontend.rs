@@ -233,7 +233,7 @@ pub fn taskmaster_edit(
 /// Shows the elections board.
 #[get("/elections")]
 pub fn elections(
-    _user: AuthorisedUser,
+    user: AuthorisedUser,
     conn: DatabaseConnection,
     flash: Option<FlashMessage>,
 ) -> Result<Template, Redirect> {
@@ -245,6 +245,7 @@ pub fn elections(
         context::Elections {
             exec_positions,
             message,
+            admin: user.is_election_admin(),
         },
     ))
 }
@@ -285,7 +286,17 @@ pub fn election_voting(
 
 /// Calculates the results of the elections won so far.
 #[get("/elections/results")]
-pub fn election_results(_user: AuthorisedUser, conn: DatabaseConnection) -> Template {
+pub fn election_results(
+    user: AuthorisedUser,
+    conn: DatabaseConnection,
+) -> Result<Template, Flash<Redirect>> {
+    if !user.is_election_admin() {
+        return Err(Flash::error(
+            Redirect::to(uri!(elections)),
+            "You aren't an admin, so you cannot see the results.",
+        ));
+    }
+
     // Get all the available positions
     let positions: BTreeMap<i32, String> = schema::ExecPosition::get_results(&conn.0)
         .unwrap()
@@ -358,5 +369,35 @@ pub fn election_results(_user: AuthorisedUser, conn: DatabaseConnection) -> Temp
         })
         .collect();
 
-    Template::render("election_results", context::ElectionResults { results })
+    Ok(Template::render(
+        "election_results",
+        context::ElectionResults { results },
+    ))
+}
+
+/// Shows the elections settings page.
+#[get("/elections/settings")]
+pub fn election_settings(
+    user: AuthorisedUser,
+    conn: DatabaseConnection,
+    flash: Option<FlashMessage>,
+) -> Result<Template, Flash<Redirect>> {
+    if !user.is_election_admin() {
+        return Err(Flash::error(
+            Redirect::to(uri!(elections)),
+            "You aren't an admin, so you cannot see the settings.",
+        ));
+    }
+
+    let exec_positions = schema::ExecPosition::get_results(&conn.0).unwrap();
+    let message = flash.map(context::Message::from);
+
+    Ok(Template::render(
+        "election_settings",
+        context::Elections {
+            exec_positions,
+            message,
+            admin: user.is_election_admin(),
+        },
+    ))
 }

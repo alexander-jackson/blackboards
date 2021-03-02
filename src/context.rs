@@ -98,6 +98,8 @@ pub struct Elections {
     pub exec_positions: Vec<schema::ExecPosition>,
     /// The message to display to the user, for errors
     pub message: Option<Message>,
+    /// Whether or not the user is an election administrator
+    pub admin: bool,
 }
 
 /// The context for displaying the voting page.

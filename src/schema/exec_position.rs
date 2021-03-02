@@ -46,4 +46,20 @@ impl ExecPosition {
             .map(|row| row.open)
             .unwrap_or_default()
     }
+
+    /// Toggles the state of the position, either opening or closing voting.
+    pub fn toggle_state(position_id: i32, conn: &diesel::SqliteConnection) -> QueryResult<usize> {
+        // Get the current value
+        let current = exec_positions::dsl::exec_positions
+            .filter(exec_positions::dsl::id.eq(position_id))
+            .first::<Self>(conn)?
+            .open;
+
+        // Update with the new value
+        diesel::update(
+            exec_positions::dsl::exec_positions.filter(exec_positions::dsl::id.eq(position_id)),
+        )
+        .set(exec_positions::dsl::open.eq(!current))
+        .execute(conn)
+    }
 }
