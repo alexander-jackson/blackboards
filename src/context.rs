@@ -122,6 +122,8 @@ pub struct ElectionResult<'a> {
     pub winner: Option<&'a str>,
     /// The candidates who tied, if there was one
     pub tie: Option<Vec<&'a str>>,
+    /// The number of people who voted
+    pub voter_count: usize,
 }
 
 /// The context for displaying the election results.

@@ -13,6 +13,7 @@
 		<tr>
 			<th scope="col">Position</th>
 			<th scope="col">Result</th>
+			<th scope="col">Voters</th>
 		</tr>
 
 	</thead>
@@ -51,6 +52,8 @@
 			{% endif %}
 
 			</td>
+
+			<td>{{ result.voter_count }}</td>
 
 		</tr>
 

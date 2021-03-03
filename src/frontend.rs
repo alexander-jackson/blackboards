@@ -340,6 +340,7 @@ pub fn election_results(
                     .push(vote.candidate_id);
             }
 
+            let voter_count = map.len();
             let collected: Vec<_> = map.values().map(Vec::clone).collect();
 
             let mut tally: Tally<i32, f64> = Tally::new(1, Quota::Hagenbach);
@@ -365,6 +366,7 @@ pub fn election_results(
                 title: positions[position_id].clone(),
                 winner: outcome.0,
                 tie: outcome.1,
+                voter_count,
             }
         })
         .collect();
