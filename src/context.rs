@@ -109,6 +109,8 @@ pub struct Voting {
     pub nominations: Vec<schema::Nomination>,
     /// The position we are voting for
     pub position_id: i32,
+    /// The user's current votes for this position, if they have voted
+    pub current_ballot: Option<Vec<String>>,
     /// The message to display to the user, for errors
     pub message: Option<Message>,
 }

@@ -253,7 +253,7 @@ pub fn elections(
 /// Gets the information needed for the session registration and renders the template.
 #[get("/elections/voting/<position_id>")]
 pub fn election_voting(
-    _user: AuthorisedUser,
+    user: AuthorisedUser,
     conn: DatabaseConnection,
     flash: Option<FlashMessage>,
     position_id: i32,
@@ -269,6 +269,7 @@ pub fn election_voting(
 
     let mut nominations = schema::Nomination::for_position(position_id, &conn.0).unwrap();
     let message = flash.map(context::Message::from);
+    let current_ballot = schema::Vote::get_current_ballot(user.id, position_id, &conn.0).unwrap();
 
     // Randomly shuffle the nominations for each person
     let mut rng = rand::thread_rng();
@@ -279,6 +280,7 @@ pub fn election_voting(
         context::Voting {
             position_id,
             nominations,
+            current_ballot,
             message,
         },
     ))

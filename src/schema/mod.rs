@@ -23,3 +23,4 @@ pub use vote::{votes, Vote};
 
 joinable!(registrations -> sessions (session_id));
 allow_tables_to_appear_in_same_query!(registrations, sessions);
+allow_tables_to_appear_in_same_query!(nominations, votes);

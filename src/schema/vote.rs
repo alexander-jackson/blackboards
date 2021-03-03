@@ -2,7 +2,11 @@
 
 use std::collections::HashMap;
 
-use diesel::{BoolExpressionMethods, ExpressionMethods, QueryDsl, QueryResult, RunQueryDsl};
+use diesel::{
+    BoolExpressionMethods, ExpressionMethods, JoinOnDsl, QueryDsl, QueryResult, RunQueryDsl,
+};
+
+use crate::schema::nomination::nominations;
 
 table! {
     /// Represents the schema for `votes`.
@@ -72,5 +76,30 @@ impl Vote {
     /// Gets all [`Vote`] entries in the database.
     pub fn get_results(conn: &diesel::SqliteConnection) -> QueryResult<Vec<Self>> {
         votes::dsl::votes.get_results::<Self>(conn)
+    }
+
+    /// Gets a user's current ballot state, if they have voted.
+    pub fn get_current_ballot(
+        user_id: i32,
+        position_id: i32,
+        conn: &diesel::SqliteConnection,
+    ) -> QueryResult<Option<Vec<String>>> {
+        // Get their votes for this position
+        let votes = votes::dsl::votes
+            .filter(
+                votes::dsl::warwick_id
+                    .eq(user_id)
+                    .and(votes::dsl::position_id.eq(position_id)),
+            )
+            .inner_join(
+                nominations::dsl::nominations.on(nominations::dsl::warwick_id
+                    .eq(votes::dsl::candidate_id)
+                    .and(nominations::dsl::position_id.eq(votes::dsl::position_id))),
+            )
+            .order_by(votes::dsl::ranking)
+            .select(nominations::dsl::name)
+            .get_results(conn);
+
+        votes.map(|v| if v.is_empty() { None } else { Some(v) })
     }
 }
