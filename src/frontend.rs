@@ -1,10 +1,12 @@
 //! Handles the routes that return Templates for the user to view.
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashMap};
 
+use rand::seq::SliceRandom;
 use rocket::request::FlashMessage;
-use rocket::response::Redirect;
+use rocket::response::{Flash, Redirect};
 use rocket_contrib::templates::Template;
+use tallystick::{stv::Tally, Quota};
 
 use crate::context;
 use crate::schema;
@@ -53,7 +55,7 @@ pub fn dashboard(
 ) -> Template {
     let window = SessionWindow::from_current_time();
     let sessions = schema::Session::get_results_between(&conn.0, window).unwrap();
-    let message = flash.map(|f| f.msg().to_string());
+    let message = flash.map(context::Message::from);
     let registrations = get_registrations(&conn.0, window);
 
     Template::render(
@@ -114,7 +116,7 @@ pub fn session_attendance(
 ) -> Result<Template, Redirect> {
     let sessions = schema::Session::get_results(&conn.0).unwrap();
     let current = schema::Session::find(session_id, &conn.0).ok();
-    let message = flash.map(|f| f.msg().to_string());
+    let message = flash.map(context::Message::from);
 
     Ok(Template::render(
         "attendance",
@@ -166,7 +168,7 @@ pub fn personal_bests(
     flash: Option<FlashMessage>,
 ) -> Template {
     let personal_bests = schema::PersonalBest::find(user, &conn.0).unwrap();
-    let message = flash.map(|f| f.msg().to_string());
+    let message = flash.map(context::Message::from);
 
     Template::render(
         "personal_bests",
@@ -185,7 +187,7 @@ pub fn taskmaster_leaderboard(
     flash: Option<FlashMessage>,
 ) -> Template {
     let leaderboard = schema::TaskmasterEntry::get_results(&conn.0).unwrap();
-    let message = flash.map(|f| f.msg().to_string());
+    let message = flash.map(context::Message::from);
 
     Template::render(
         "taskmaster_leaderboard",
@@ -208,9 +210,8 @@ pub fn taskmaster_edit(
         return Err(Redirect::to(uri!(taskmaster_leaderboard)));
     }
 
-    // TODO: Ensure this user is authorised for Taskmaster editing
     let leaderboard = schema::TaskmasterEntry::get_results(&conn.0).unwrap();
-    let message = flash.map(|f| f.msg().to_string());
+    let message = flash.map(context::Message::from);
 
     let leaderboard_csv: String = leaderboard
         .iter()
@@ -227,4 +228,180 @@ pub fn taskmaster_edit(
     );
 
     Ok(template)
+}
+
+/// Shows the elections board.
+#[get("/elections")]
+pub fn elections(
+    user: AuthorisedUser,
+    conn: DatabaseConnection,
+    flash: Option<FlashMessage>,
+) -> Result<Template, Redirect> {
+    let exec_positions = schema::ExecPosition::get_results(&conn.0).unwrap();
+    let message = flash.map(context::Message::from);
+
+    Ok(Template::render(
+        "elections",
+        context::Elections {
+            exec_positions,
+            message,
+            admin: user.is_election_admin(),
+        },
+    ))
+}
+
+/// Gets the information needed for the session registration and renders the template.
+#[get("/elections/voting/<position_id>")]
+pub fn election_voting(
+    user: AuthorisedUser,
+    conn: DatabaseConnection,
+    flash: Option<FlashMessage>,
+    position_id: i32,
+) -> Result<Template, Flash<Redirect>> {
+    // Check whether voting for this position is open
+    if !schema::ExecPosition::voting_is_open(position_id, &conn.0) {
+        // Redirect to the main elections page
+        return Err(Flash::error(
+            Redirect::to(uri!(elections)),
+            "Voting for this position either hasn't opened yet or has closed.",
+        ));
+    }
+
+    let mut nominations = schema::Nomination::for_position(position_id, &conn.0).unwrap();
+    let message = flash.map(context::Message::from);
+    let current_ballot = schema::Vote::get_current_ballot(user.id, position_id, &conn.0).unwrap();
+
+    // Randomly shuffle the nominations for each person
+    let mut rng = rand::thread_rng();
+    nominations.shuffle(&mut rng);
+
+    Ok(Template::render(
+        "election_voting",
+        context::Voting {
+            position_id,
+            nominations,
+            current_ballot,
+            message,
+        },
+    ))
+}
+
+/// Calculates the results of the elections won so far.
+#[get("/elections/results")]
+pub fn election_results(
+    user: AuthorisedUser,
+    conn: DatabaseConnection,
+) -> Result<Template, Flash<Redirect>> {
+    if !user.is_election_admin() {
+        return Err(Flash::error(
+            Redirect::to(uri!(elections)),
+            "You aren't an admin, so you cannot see the results.",
+        ));
+    }
+
+    // Get all the available positions
+    let positions: BTreeMap<i32, String> = schema::ExecPosition::get_results(&conn.0)
+        .unwrap()
+        .into_iter()
+        .map(|pos| (pos.id, pos.title))
+        .collect();
+
+    // Map all the nominees from `warwick_id` -> `name`
+    let nominees: HashMap<_, _> = schema::Nomination::get_results(&conn.0)
+        .unwrap()
+        .into_iter()
+        .map(|n| (n.warwick_id, n.name))
+        .collect();
+
+    // Pull all the votes so far
+    let votes = schema::Vote::get_results(&conn.0).unwrap();
+
+    // Sort all the votes by position they are voting for
+    let mut by_position: BTreeMap<i32, Vec<schema::Vote>> =
+        positions.keys().map(|k| (*k, Vec::new())).collect();
+
+    for vote in votes {
+        by_position.get_mut(&vote.position_id).unwrap().push(vote);
+    }
+
+    let results: Vec<_> = by_position
+        .iter_mut()
+        .map(|(position_id, votes)| {
+            // Sort the votes by `warwick_id` and then `ranking`
+            votes.sort_by(|a, b| {
+                a.warwick_id
+                    .cmp(&b.warwick_id)
+                    .then(a.ranking.cmp(&b.ranking))
+            });
+
+            let mut map: HashMap<i32, Vec<i32>> = HashMap::new();
+
+            for vote in votes {
+                map.entry(vote.warwick_id)
+                    .or_default()
+                    .push(vote.candidate_id);
+            }
+
+            let voter_count = map.len();
+            let collected: Vec<_> = map.values().map(Vec::clone).collect();
+
+            let mut tally: Tally<i32, f64> = Tally::new(1, Quota::Hagenbach);
+
+            for vote in &collected {
+                tally.add_ref(vote);
+            }
+
+            let winners: Vec<_> = tally
+                .winners()
+                .all()
+                .iter()
+                .map(|id| nominees[id].as_str())
+                .collect();
+
+            let outcome = match winners.len() {
+                0 => (None, None),
+                1 => (Some(winners[0]), None),
+                _ => (None, Some(winners)),
+            };
+
+            context::ElectionResult {
+                title: positions[position_id].clone(),
+                winner: outcome.0,
+                tie: outcome.1,
+                voter_count,
+            }
+        })
+        .collect();
+
+    Ok(Template::render(
+        "election_results",
+        context::ElectionResults { results },
+    ))
+}
+
+/// Shows the elections settings page.
+#[get("/elections/settings")]
+pub fn election_settings(
+    user: AuthorisedUser,
+    conn: DatabaseConnection,
+    flash: Option<FlashMessage>,
+) -> Result<Template, Flash<Redirect>> {
+    if !user.is_election_admin() {
+        return Err(Flash::error(
+            Redirect::to(uri!(elections)),
+            "You aren't an admin, so you cannot see the settings.",
+        ));
+    }
+
+    let exec_positions = schema::ExecPosition::get_results(&conn.0).unwrap();
+    let message = flash.map(context::Message::from);
+
+    Ok(Template::render(
+        "election_settings",
+        context::Elections {
+            exec_positions,
+            message,
+            admin: user.is_election_admin(),
+        },
+    ))
 }

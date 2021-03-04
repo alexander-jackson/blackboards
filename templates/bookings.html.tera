@@ -4,53 +4,41 @@
 
 {{ super() }}
 
-<div class="container">
+<h2>Booked Sessions</h2>
 
-	<div class="row">
+<table class="table table-dark">
 
-		<div class="col-sm m-4">
+	<thead>
 
-			<h2>Booked Sessions</h2>
+		<tr>
+			<th scope="col">Title</th>
+			<th scope="col">Start Time</th>
+			<th scope="col">Cancel</th>
+		</tr>
 
-			<table class="table table-dark">
+	</thead>
 
-				<thead>
+	<tbody>
 
-					<tr>
-						<th scope="col">Title</th>
-						<th scope="col">Start Time</th>
-						<th scope="col">Cancel</th>
-					</tr>
+		{% for session in sessions %}
 
-				</thead>
+		<tr>
+			<td>
+				<a class="font-weight-bold" href="/sessions/{{ session.id }}">{{ session.title }}</a>
+			</td>
+			<td>{{ session.start_time }}</td>
+			<td>
+				<form accept-charset="utf-8" action="/session/cancel" method="post">
+					<input name="session_id" type="hidden" value="{{ session.id }}">
+					<button type="submit" class="btn btn-danger btn-sm">Cancel</button>
+				</form>
+			</td>
+		</tr>
 
-				<tbody>
+		{% endfor %}
 
-					{% for session in sessions %}
+	</tbody>
 
-					<tr>
-						<td>
-							<a class="font-weight-bold" href="/sessions/{{ session.id }}">{{ session.title }}</a>
-						</td>
-						<td>{{ session.start_time }}</td>
-						<td>
-							<form accept-charset="utf-8" action="/session/cancel" method="post">
-								<input name="session_id" type="hidden" value="{{ session.id }}">
-								<button type="submit" class="btn btn-danger btn-sm">Cancel</button>
-							</form>
-						</td>
-					</tr>
-
-					{% endfor %}
-
-				</tbody>
-
-			</table>
-
-		</div>
-
-	</div>
-
-</div>
+</table>
 
 {% endblock content %}

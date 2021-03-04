@@ -4,86 +4,68 @@
 
 {{ super() }}
 
-<div class="container">
+{% if current %}
 
-	<div class="row">
+<h2>Register for {{ current.start_time }}</h2>
 
-		<div class="col-sm m-4">
+<form accept-charset="utf-8" action="/session/register" method="post">
 
-			{% if current %}
+	<input name="session_id" type="hidden" value="{{ current.id }}">
 
-			<h2>Register for {{ current.start_time }}</h2>
+	<button type="submit" class="btn btn-primary">Submit</button>
 
-			<form accept-charset="utf-8" action="/session/register" method="post">
+</form>
 
-				<input name="session_id" type="hidden" value="{{ current.id }}">
+{% endif %}
 
-				<button type="submit" class="btn btn-primary">Submit</button>
+<h2>Available Sessions</h2>
 
-			</form>
+<table class="table table-dark">
 
-			{% endif %}
+	<thead>
 
-			{% if message %}
+		<tr>
+			<th scope="col">Title</th>
+			<th scope="col">Start Time</th>
+			<th scope="col">Remaining Spaces</th>
+		</tr>
 
-			<p>{{ message }}</p>
+	</thead>
 
-			{% endif %}
+	<tbody>
 
-			<h2>Available Sessions</h2>
+		{% for session in sessions %}
 
-			<table class="table table-dark">
+		<tr>
+			<td>
+				<a class="font-weight-bold" href="/sessions/{{ session.id }}">{{ session.title }}</a>
+			</td>
+			<td>{{ session.start_time }}</td>
+			<td>{{ session.remaining }}</td>
+		</tr>
 
-				<thead>
+		{% endfor %}
 
-					<tr>
-						<th scope="col">Title</th>
-						<th scope="col">Start Time</th>
-						<th scope="col">Remaining Spaces</th>
-					</tr>
+	</tbody>
 
-				</thead>
+</table>
 
-				<tbody>
+{% if registrations %}
 
-					{% for session in sessions %}
+<h2>Current Registrations</h2>
 
-					<tr>
-						<td>
-							<a class="font-weight-bold" href="/sessions/{{ session.id }}">{{ session.title }}</a>
-						</td>
-						<td>{{ session.start_time }}</td>
-						<td>{{ session.remaining }}</td>
-					</tr>
+{% for session in registrations %}
 
-					{% endfor %}
+<h3>{{ session.0.0 }} - {{ session.0.1 }}</h3>
 
-				</tbody>
+<ul class="list-style">
+	{% for member in session.1 %}
+	<li>{{ member }}</li>
+	{% endfor %}
+</ul>
 
-			</table>
+{% endfor %}
 
-			{% if registrations %}
-
-			<h2>Current Registrations</h2>
-
-			{% for session in registrations %}
-
-			<h3>{{ session.0.0 }} - {{ session.0.1 }}</h3>
-
-			<ul class="list-style">
-				{% for member in session.1 %}
-				<li>{{ member }}</li>
-				{% endfor %}
-			</ul>
-
-			{% endfor %}
-
-			{% endif %}
-
-		</div>
-
-	</div>
-
-</div>
+{% endif %}
 
 {% endblock content %}

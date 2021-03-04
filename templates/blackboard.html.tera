@@ -4,78 +4,66 @@
 
 {{ super() }}
 
-<div class="container">
+<h2>Powerlifting</h2>
 
-	<div class="row">
+<table class="table table-dark">
 
-		<div class="col-sm m-4">
+	<thead>
 
-			<h2>Powerlifting</h2>
+		<tr>
+			<th scope="col">Name</th>
+			<th scope="col">SQ</th>
+			<th scope="col">BP</th>
+			<th scope="col">DL</th>
+		</tr>
 
-			<table class="table table-dark">
+	</thead>
 
-				<thead>
+	<tbody>
 
-					<tr>
-						<th scope="col">Name</th>
-						<th scope="col">SQ</th>
-						<th scope="col">BP</th>
-						<th scope="col">DL</th>
-					</tr>
+		{% for pb in pl %}
 
-				</thead>
+		<tr>
+			<td {% if pb.warwick_id == user_id %} class="text-success" {% endif %}>{{ pb.name }}</td>
+			<td>{% if pb.squat %} {{ pb.squat }} {% else %} {% endif %}</td>
+			<td>{% if pb.bench %} {{ pb.bench }} {% else %} {% endif %}</td>
+			<td>{% if pb.deadlift %} {{ pb.deadlift }} {% else %} {% endif %}</td>
+		</tr>
 
-				<tbody>
+		{% endfor %}
 
-					{% for pb in pl %}
+	</tbody>
 
-					<tr>
-						<td {% if pb.warwick_id == user_id %} class="text-success" {% endif %}>{{ pb.name }}</td>
-						<td>{% if pb.squat %} {{ pb.squat }} {% else %} {% endif %}</td>
-						<td>{% if pb.bench %} {{ pb.bench }} {% else %} {% endif %}</td>
-						<td>{% if pb.deadlift %} {{ pb.deadlift }} {% else %} {% endif %}</td>
-					</tr>
+</table>
 
-					{% endfor %}
+<h2>Weightlifting</h2>
 
-				</tbody>
+<table class="table table-dark">
 
-			</table>
+	<thead>
 
-			<h2>Weightlifting</h2>
+		<tr>
+			<th scope="col">Name</th>
+			<th scope="col">SN</th>
+			<th scope="col">CJ</th>
+		</tr>
 
-			<table class="table table-dark">
+	</thead>
 
-				<thead>
+	<tbody>
 
-					<tr>
-						<th scope="col">Name</th>
-						<th scope="col">SN</th>
-						<th scope="col">CJ</th>
-					</tr>
+		{% for pb in wl %}
 
-				</thead>
+		<tr>
+			<td {% if pb.warwick_id == user_id %} class="text-success" {% endif %}>{{ pb.name }}</td>
+			<td>{% if pb.snatch %} {{ pb.snatch }} {% else %} {% endif %}</td>
+			<td>{% if pb.clean_and_jerk %} {{ pb.clean_and_jerk }} {% else %} {% endif %}</td>
+		</tr>
 
-				<tbody>
+		{% endfor %}
 
-					{% for pb in wl %}
+	</tbody>
 
-					<tr>
-						<td {% if pb.warwick_id == user_id %} class="text-success" {% endif %}>{{ pb.name }}</td>
-						<td>{% if pb.snatch %} {{ pb.snatch }} {% else %} {% endif %}</td>
-						<td>{% if pb.clean_and_jerk %} {{ pb.clean_and_jerk }} {% else %} {% endif %}</td>
-					</tr>
-
-					{% endfor %}
-
-				</tbody>
-
-			</table>
-
-		</div>
-
-	</div>
-
-</div>
+</table>
 
 {% endblock content %}

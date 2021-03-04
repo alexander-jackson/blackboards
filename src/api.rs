@@ -5,6 +5,7 @@
 
 use std::env;
 
+use itertools::Itertools;
 use rocket::http::{Cookie, Cookies, RawStr};
 use rocket::request::Form;
 use rocket::response::{Flash, Redirect};
@@ -196,4 +197,60 @@ pub fn taskmaster_edit(
     }
 
     Redirect::to(uri!(frontend::taskmaster_leaderboard))
+}
+
+/// Allows users to vote on the election.
+#[post("/election/vote/<position_id>", data = "<data>")]
+pub fn election_vote(
+    user: AuthorisedUser,
+    conn: DatabaseConnection,
+    position_id: i32,
+    data: Form<forms::RawMap<i32, i32>>,
+) -> Flash<Redirect> {
+    let data = (*data).into_inner();
+    let redirect = Redirect::to(uri!(frontend::election_voting: position_id));
+
+    // Check whether voting for this position is open
+    if !schema::ExecPosition::voting_is_open(position_id, &conn.0) {
+        // Redirect to the main elections page
+        return Flash::error(
+            Redirect::to(uri!(frontend::elections)),
+            "Voting for this position either hasn't opened yet or has closed.",
+        );
+    }
+
+    // Check all the votes are unique
+    let all_unique = data.values().unique().count() == data.values().count();
+
+    if !all_unique {
+        return Flash::error(redirect, "Make sure your votes are unique!");
+    }
+
+    // Record the user's votes
+    schema::Vote::insert_all(user.id, position_id, data, &conn.0).unwrap();
+
+    Flash::success(redirect, "Successfully recorded your votes!")
+}
+
+/// Allows administrators to open and close voting for a position.
+#[get("/elections/settings/toggle/<position_id>")]
+pub fn election_settings_toggle(
+    user: AuthorisedUser,
+    conn: DatabaseConnection,
+    position_id: i32,
+) -> Flash<Redirect> {
+    // Check whether the user can make this change
+    if !user.is_election_admin() {
+        return Flash::error(
+            Redirect::to(uri!(frontend::elections)),
+            "You do not have permission to toggle election voting.",
+        );
+    }
+
+    schema::ExecPosition::toggle_state(position_id, &conn.0).unwrap();
+
+    Flash::success(
+        Redirect::to(uri!(frontend::election_settings)),
+        "Successfully toggled the state.",
+    )
 }

@@ -45,3 +45,27 @@ CREATE TABLE taskmaster_entries (
 	name TEXT PRIMARY KEY,
 	score INTEGER NOT NULL
 );
+
+DROP TABLE IF EXISTS exec_positions;
+CREATE TABLE exec_positions (
+	id INTEGER PRIMARY KEY,
+	title TEXT NOT NULL,
+	open BOOLEAN NOT NULL
+);
+
+DROP TABLE IF EXISTS nominations;
+CREATE TABLE nominations (
+	position_id INTEGER NOT NULL,
+	warwick_id INTEGER NOT NULL,
+	name TEXT NOT NULL,
+	PRIMARY KEY (position_id, warwick_id)
+);
+
+DROP TABLE IF EXISTS votes;
+CREATE TABLE votes (
+	warwick_id INTEGER NOT NULL,
+	position_id INTEGER NOT NULL,
+	candidate_id INTEGER NOT NULL,
+	ranking INTEGER NOT NULL,
+	PRIMARY KEY (warwick_id, position_id, candidate_id)
+);

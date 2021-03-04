@@ -1,0 +1,38 @@
+{% extends "base" %}
+
+{% block content %}
+
+{{ super() }}
+
+<h2>
+
+Exec Positions
+
+{% if admin %}
+
+	<a href="/elections/results" class="badge badge-primary">Results</a>
+	<a href="/elections/settings" class="badge badge-primary">Settings</a>
+
+{% endif %}
+
+</h2>
+
+<div class="list-group">
+
+	{% for position in exec_positions %}
+
+		<a href="/elections/voting/{{ position.id }}"
+			class="
+				list-group-item
+				list-group-item-action
+				{% if position.open %} active {% else %} disabled {% endif %}">
+
+		{{ position.title }}
+
+		</a>
+
+	{% endfor %}
+
+</div>
+
+{% endblock content %}

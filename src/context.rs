@@ -2,10 +2,30 @@
 
 use std::collections::HashMap;
 
+use rocket::request::FlashMessage;
+
 use crate::schema;
 
 /// Represents the session title, start time and the users' registered for it.
 pub type Registrations = ((String, String), Vec<String>);
+
+/// Represents a flash message, but including the variant.
+#[derive(Serialize)]
+pub struct Message {
+    /// The type of message, such as "error" or "success"
+    pub variant: String,
+    /// The message to display
+    pub message: String,
+}
+
+impl From<FlashMessage<'_, '_>> for Message {
+    fn from(flash: FlashMessage) -> Self {
+        Self {
+            variant: flash.name().to_string(),
+            message: flash.msg().to_string(),
+        }
+    }
+}
 
 /// The context for session registrations.
 #[derive(Serialize)]
@@ -15,7 +35,7 @@ pub struct Context {
     /// The currently selected session if it exists.
     pub current: Option<schema::Session>,
     /// The message to display to the user, for errors.
-    pub message: Option<String>,
+    pub message: Option<Message>,
     /// The registrations for each session.
     pub registrations: Option<Vec<Registrations>>,
 }
@@ -28,7 +48,7 @@ pub struct Attendance {
     /// The currently selected session if it exists.
     pub current: Option<schema::Session>,
     /// The message to display to the user, for errors.
-    pub message: Option<String>,
+    pub message: Option<Message>,
 }
 
 /// The context for the blackboards page.
@@ -48,7 +68,7 @@ pub struct PersonalBests {
     /// The user's personal bests
     pub personal_bests: schema::PersonalBest,
     /// The message to display to the user, for errors
-    pub message: Option<String>,
+    pub message: Option<Message>,
 }
 
 /// The context for displaying the Taskmaster leaderboard.
@@ -59,7 +79,7 @@ pub struct TaskmasterLeaderboard {
     /// Whether the user has permission to edit the board
     pub admin: bool,
     /// The message to display to the user, for errors
-    pub message: Option<String>,
+    pub message: Option<Message>,
 }
 
 /// The context for displaying the Taskmaster leaderboard.
@@ -68,7 +88,51 @@ pub struct TaskmasterEdit {
     /// The state of the leaderboard, as a CSV
     pub leaderboard_csv: String,
     /// The message to display to the user, for errors
-    pub message: Option<String>,
+    pub message: Option<Message>,
+}
+
+/// The context for displaying the exec positions.
+#[derive(Serialize)]
+pub struct Elections {
+    /// The positions to show
+    pub exec_positions: Vec<schema::ExecPosition>,
+    /// The message to display to the user, for errors
+    pub message: Option<Message>,
+    /// Whether or not the user is an election administrator
+    pub admin: bool,
+}
+
+/// The context for displaying the voting page.
+#[derive(Serialize)]
+pub struct Voting {
+    /// The positions to show
+    pub nominations: Vec<schema::Nomination>,
+    /// The position we are voting for
+    pub position_id: i32,
+    /// The user's current votes for this position, if they have voted
+    pub current_ballot: Option<Vec<String>>,
+    /// The message to display to the user, for errors
+    pub message: Option<Message>,
+}
+
+/// The result of a single election on a position.
+#[derive(Serialize)]
+pub struct ElectionResult<'a> {
+    /// The title of the position
+    pub title: String,
+    /// The winner, if there was one
+    pub winner: Option<&'a str>,
+    /// The candidates who tied, if there was one
+    pub tie: Option<Vec<&'a str>>,
+    /// The number of people who voted
+    pub voter_count: usize,
+}
+
+/// The context for displaying the election results.
+#[derive(Serialize)]
+pub struct ElectionResults<'a> {
+    /// The results of each election
+    pub results: Vec<ElectionResult<'a>>,
 }
 
 /// Returns an empty `HashMap` for templates that don't require context.

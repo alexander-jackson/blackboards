@@ -4,35 +4,17 @@
 
 {{ super() }}
 
-<div class="container">
+<h2>Personal Bests</h2>
 
-	<div class="row">
+<form accept-charset="utf-8" action="/taskmaster/edit" method="post">
 
-		<div class="col-sm m-4">
-
-			{% if message %}
-
-			<p>{{ message }}</p>
-
-			{% endif %}
-
-			<h2>Personal Bests</h2>
-
-			<form accept-charset="utf-8" action="/taskmaster/edit" method="post">
-
-				<div class="form-group">
-					<label for="leaderboard">Current Leaderboard State</label>
-					<textarea class="form-control" name="leaderboard" id="leaderboard" rows="10">{{ leaderboard_csv }}</textarea>
-				</div>
-
-				<button type="submit" class="btn btn-primary my-2">Submit</button>
-
-			</form>
-
-		</div>
-
+	<div class="form-group">
+		<label for="leaderboard">Current Leaderboard State</label>
+		<textarea class="form-control" name="leaderboard" id="leaderboard" rows="10">{{ leaderboard_csv }}</textarea>
 	</div>
 
-</div>
+	<button type="submit" class="btn btn-primary my-2">Submit</button>
+
+</form>
 
 {% endblock content %}
