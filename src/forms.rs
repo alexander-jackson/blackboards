@@ -1,7 +1,12 @@
 //! Stores the expected structure of various forms for the user to submit.
 
+use std::collections::HashMap;
+use std::hash::Hash;
+use std::str::FromStr;
+
+use either::Either;
 use rocket::http::RawStr;
-use rocket::request::FromFormValue;
+use rocket::request::{FormItem, FormItems, FromForm, FromFormValue};
 
 /// Defines a custom struct that can only contain a valid Warwick ID.
 #[derive(Copy, Clone, Debug)]
@@ -17,6 +22,43 @@ impl<'v> FromFormValue<'v> for WarwickId {
         }
 
         Ok(Self(form_value.parse::<i32>().unwrap()))
+    }
+}
+
+/// Custom type for recording votes from a form.
+#[derive(Debug)]
+pub struct RawMap<K, V> {
+    inner: HashMap<K, V>,
+}
+
+impl<K, V> RawMap<K, V> {
+    /// Gets a reference to the underlying [`HashMap`].
+    pub fn into_inner(&self) -> &HashMap<K, V> {
+        &self.inner
+    }
+}
+
+impl<'f, K, V> FromForm<'f> for RawMap<K, V>
+where
+    K: FromStr + Hash + Eq,
+    V: FromStr,
+{
+    type Error = Either<<K as FromStr>::Err, <V as FromStr>::Err>;
+
+    fn from_form(items: &mut FormItems<'f>, _strict: bool) -> Result<Self, Self::Error> {
+        let convert = |item: FormItem<'f>| -> Result<(K, V), Self::Error> {
+            let key = item.key.url_decode().unwrap();
+            let value = item.value.url_decode().unwrap();
+
+            Ok((
+                K::from_str(&key).map_err(|e| Either::Left(e))?,
+                V::from_str(&value).map_err(|e| Either::Right(e))?,
+            ))
+        };
+
+        let inner = items.into_iter().map(convert).collect::<Result<_, _>>()?;
+
+        Ok(Self { inner })
     }
 }
 

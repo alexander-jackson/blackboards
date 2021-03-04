@@ -4,20 +4,8 @@
 
 {{ super() }}
 
-<div class="container">
-
-	<div class="row">
-
-		<div class="col-sm m-4">
-
-			<a class="btn btn-primary my-1" href="/sessions" role="button">Sessions</a>
-			<a class="btn btn-secondary my-1" href="/attendance" role="button">Attendance</a>
-			<a class="btn btn-dark my-1" href="/" role="button">Blackboard</a>
-
-		</div>
-
-	</div>
-
-</div>
+<a class="btn btn-primary my-1" href="/sessions" role="button">Sessions</a>
+<a class="btn btn-secondary my-1" href="/attendance" role="button">Attendance</a>
+<a class="btn btn-dark my-1" href="/" role="button">Blackboard</a>
 
 {% endblock content %}

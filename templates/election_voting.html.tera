@@ -1,0 +1,59 @@
+{% extends "base" %}
+
+{% block content %}
+
+{{ super() }}
+
+{% if current_ballot %}
+
+	<div class="alert alert-info" role="alert">
+
+		As it stands, your preference is:
+
+		{% for user in current_ballot %}
+
+			{{ user }}{% if not loop.last %}, {% endif %}
+
+		{% endfor %}
+
+	{% else %}
+
+		<div class="alert alert-warning" role="alert">
+
+		You are yet to vote for this position.
+
+	{% endif %}
+
+</div>
+
+<h2>Nominations</h2>
+
+<form accept-charset="utf-8" action="/election/vote/{{ position_id }}" method="post">
+
+	<div class="form-group">
+
+		{% for _ in nominations %}
+
+			<h4>Choice Number: {{ loop.index }}</h4>
+
+			<select class="form-control" id="{{ loop.index }}" name="{{ loop.index }}">
+
+				<option value="" selected disabled hidden>Choose here</option>
+
+				{% for nomination in nominations %}
+
+				<option value="{{ nomination.warwick_id }}">{{ nomination.name }}</option>
+
+				{% endfor %}
+
+			</select>
+
+		{% endfor %}
+
+	</div>
+
+	<button type="submit" class="btn btn-primary my-2">Submit</button>
+
+</form>
+
+{% endblock content %}

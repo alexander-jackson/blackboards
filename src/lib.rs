@@ -56,6 +56,10 @@ pub fn build_rocket() -> rocket::Rocket {
                 frontend::personal_bests,
                 frontend::taskmaster_leaderboard,
                 frontend::taskmaster_edit,
+                frontend::elections,
+                frontend::election_voting,
+                frontend::election_results,
+                frontend::election_settings,
                 api::register,
                 api::cancel,
                 api::record_attendance,
@@ -64,6 +68,8 @@ pub fn build_rocket() -> rocket::Rocket {
                 api::personal_bests,
                 api::logout,
                 api::taskmaster_edit,
+                api::election_vote,
+                api::election_settings_toggle,
             ],
         )
 }
