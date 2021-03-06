@@ -300,10 +300,10 @@ pub fn election_results(
     }
 
     // Get all the available positions
-    let positions: BTreeMap<i32, String> = schema::ExecPosition::get_results(&conn.0)
+    let positions: BTreeMap<i32, schema::ExecPosition> = schema::ExecPosition::get_results(&conn.0)
         .unwrap()
         .into_iter()
-        .map(|pos| (pos.id, pos.title))
+        .map(|pos| (pos.id, pos))
         .collect();
 
     // Map all the nominees from `warwick_id` -> `name`
@@ -345,7 +345,8 @@ pub fn election_results(
             let voter_count = map.len();
             let collected: Vec<_> = map.values().map(Vec::clone).collect();
 
-            let mut tally: Tally<i32, f64> = Tally::new(1, Quota::Hagenbach);
+            let num_winners = positions[position_id].num_winners as u32;
+            let mut tally: Tally<i32, f64> = Tally::new(num_winners, Quota::Hagenbach);
 
             for vote in &collected {
                 tally.add_ref(vote);
@@ -365,7 +366,7 @@ pub fn election_results(
             };
 
             context::ElectionResult {
-                title: positions[position_id].clone(),
+                title: positions[position_id].title.clone(),
                 winner: outcome.0,
                 tie: outcome.1,
                 voter_count,
