@@ -267,6 +267,14 @@ pub fn election_voting(
         ));
     }
 
+    if !user.is_barbell_member() {
+        // Redirect to the main elections page
+        return Err(Flash::error(
+            Redirect::to(uri!(elections)),
+            "You are not a Barbell member, so you cannot vote in this election.",
+        ));
+    }
+
     let mut nominations = schema::Nomination::for_position(position_id, &conn.0).unwrap();
     let message = flash.map(context::Message::from);
     let current_ballot = schema::Vote::get_current_ballot(user.id, position_id, &conn.0).unwrap();

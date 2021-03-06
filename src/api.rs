@@ -219,6 +219,14 @@ pub fn election_vote(
         );
     }
 
+    if !user.is_barbell_member() {
+        // Redirect to the main elections page
+        return Flash::error(
+            Redirect::to(uri!(frontend::elections)),
+            "You are not a Barbell member, so you cannot vote in this election.",
+        );
+    }
+
     // Check all the votes are unique
     let all_unique = data.values().unique().count() == data.values().count();
 
