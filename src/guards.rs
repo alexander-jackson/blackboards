@@ -44,6 +44,19 @@ impl AuthorisedUser {
             .find(|v| i32::from_str(v) == Ok(self.id))
             .is_some()
     }
+
+    /// Returns true if the user is a member of the club.
+    pub fn is_barbell_member(&self) -> bool {
+        // Get the environment variable and parse it
+        let var = match env::var("BARBELL_MEMBERS") {
+            Ok(value) => value,
+            Err(_) => return false,
+        };
+
+        var.split(',')
+            .find(|v| i32::from_str(v) == Ok(self.id))
+            .is_some()
+    }
 }
 
 impl<'a, 'r> FromRequest<'a, 'r> for AuthorisedUser {

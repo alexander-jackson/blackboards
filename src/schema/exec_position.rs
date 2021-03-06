@@ -9,6 +9,8 @@ table! {
         id -> Integer,
         /// The name of the position.
         title -> Text,
+        /// The number of people who can win in this position
+        num_winners -> Integer,
         /// Whether voting is open for this position or not.
         open -> Bool,
     }
@@ -21,6 +23,8 @@ pub struct ExecPosition {
     pub id: i32,
     /// The title of the position
     pub title: String,
+    /// The number of people who can win in this position
+    pub num_winners: i32,
     /// Whether voting is open for this position or not
     pub open: bool,
 }
