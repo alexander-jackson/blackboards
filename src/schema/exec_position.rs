@@ -39,7 +39,9 @@ impl ExecPosition {
 
     /// Gets all [`ExecPosition`] entries in the database.
     pub fn get_results(conn: &diesel::PgConnection) -> QueryResult<Vec<Self>> {
-        exec_positions::dsl::exec_positions.get_results::<Self>(conn)
+        exec_positions::dsl::exec_positions
+            .order_by(exec_positions::dsl::id)
+            .get_results::<Self>(conn)
     }
 
     /// Checks whether voting is open for a given identifier.
