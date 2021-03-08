@@ -34,7 +34,7 @@ fn format_registrations(
 }
 
 fn get_registrations(
-    conn: &diesel::SqliteConnection,
+    conn: &diesel::PgConnection,
     window: SessionWindow,
 ) -> Option<Vec<context::Registrations>> {
     let unformatted = schema::Registration::get_registration_list(conn, window).unwrap();

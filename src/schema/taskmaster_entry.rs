@@ -26,19 +26,19 @@ pub struct TaskmasterEntry {
 
 impl TaskmasterEntry {
     /// Inserts the [`TaskmasterEntry`] into the database.
-    pub fn insert(&self, conn: &diesel::SqliteConnection) -> QueryResult<usize> {
+    pub fn insert(&self, conn: &diesel::PgConnection) -> QueryResult<usize> {
         diesel::insert_into(taskmaster_entries::table)
             .values(self)
             .execute(conn)
     }
 
     /// Gets all personal bests currently in the database.
-    pub fn get_results(conn: &diesel::SqliteConnection) -> QueryResult<Vec<Self>> {
+    pub fn get_results(conn: &diesel::PgConnection) -> QueryResult<Vec<Self>> {
         taskmaster_entries::dsl::taskmaster_entries.get_results::<Self>(conn)
     }
 
     /// Updates the entire leaderboard based on a CSV structure.
-    pub fn update_all(leaderboard: &str, conn: &diesel::SqliteConnection) -> QueryResult<usize> {
+    pub fn update_all(leaderboard: &str, conn: &diesel::PgConnection) -> QueryResult<usize> {
         // Parse the new contents
         let new_state: Vec<_> = leaderboard
             .trim()

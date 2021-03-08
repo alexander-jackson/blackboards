@@ -31,19 +31,19 @@ pub struct ExecPosition {
 
 impl ExecPosition {
     /// Inserts the [`ExecPosition`] into the database.
-    pub fn insert(&self, conn: &diesel::SqliteConnection) -> QueryResult<usize> {
+    pub fn insert(&self, conn: &diesel::PgConnection) -> QueryResult<usize> {
         diesel::insert_into(exec_positions::table)
             .values(self)
             .execute(conn)
     }
 
     /// Gets all [`ExecPosition`] entries in the database.
-    pub fn get_results(conn: &diesel::SqliteConnection) -> QueryResult<Vec<Self>> {
+    pub fn get_results(conn: &diesel::PgConnection) -> QueryResult<Vec<Self>> {
         exec_positions::dsl::exec_positions.get_results::<Self>(conn)
     }
 
     /// Checks whether voting is open for a given identifier.
-    pub fn voting_is_open(position_id: i32, conn: &diesel::SqliteConnection) -> bool {
+    pub fn voting_is_open(position_id: i32, conn: &diesel::PgConnection) -> bool {
         exec_positions::dsl::exec_positions
             .filter(exec_positions::dsl::id.eq(position_id))
             .first::<Self>(conn)
@@ -52,7 +52,7 @@ impl ExecPosition {
     }
 
     /// Toggles the state of the position, either opening or closing voting.
-    pub fn toggle_state(position_id: i32, conn: &diesel::SqliteConnection) -> QueryResult<usize> {
+    pub fn toggle_state(position_id: i32, conn: &diesel::PgConnection) -> QueryResult<usize> {
         // Get the current value
         let current = exec_positions::dsl::exec_positions
             .filter(exec_positions::dsl::id.eq(position_id))

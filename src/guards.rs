@@ -6,8 +6,8 @@ use std::str::FromStr;
 use rocket::http::Status;
 use rocket::request::{FromRequest, Outcome, Request};
 
-#[database("sqlite_database")]
-pub struct DatabaseConnection(diesel::SqliteConnection);
+#[database("blackboards")]
+pub struct DatabaseConnection(diesel::PgConnection);
 
 /// Represents an authorised user for a given route.
 #[derive(Debug)]

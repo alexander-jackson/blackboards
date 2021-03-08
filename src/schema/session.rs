@@ -34,7 +34,7 @@ pub struct Session {
 
 impl Session {
     /// Gets all available sessions currently in the database.
-    pub fn get_results(conn: &diesel::SqliteConnection) -> QueryResult<Vec<Self>> {
+    pub fn get_results(conn: &diesel::PgConnection) -> QueryResult<Vec<Self>> {
         sessions::dsl::sessions
             .order_by(sessions::dsl::start_time.asc())
             .get_results::<Self>(conn)
@@ -42,7 +42,7 @@ impl Session {
 
     /// Gets all available sessions currently in the database.
     pub fn get_results_between(
-        conn: &diesel::SqliteConnection,
+        conn: &diesel::PgConnection,
         window: SessionWindow,
     ) -> QueryResult<Vec<Self>> {
         let filter = sessions::dsl::start_time
@@ -56,12 +56,12 @@ impl Session {
     }
 
     /// Finds a session in the database given its identifier.
-    pub fn find(id: i32, conn: &diesel::SqliteConnection) -> QueryResult<Self> {
+    pub fn find(id: i32, conn: &diesel::PgConnection) -> QueryResult<Self> {
         sessions::dsl::sessions.find(id).first::<Session>(conn)
     }
 
     /// Decreases the number of remaining places for a session given its identifier.
-    pub fn decrement_remaining(id: i32, conn: &diesel::SqliteConnection) -> QueryResult<usize> {
+    pub fn decrement_remaining(id: i32, conn: &diesel::PgConnection) -> QueryResult<usize> {
         let current = Self::find(id, conn)?.remaining;
 
         diesel::update(sessions::dsl::sessions.filter(sessions::dsl::id.eq(&id)))
@@ -70,7 +70,7 @@ impl Session {
     }
 
     /// Increases the number of remaining places for a session given its identifier.
-    pub fn increment_remaining(id: i32, conn: &diesel::SqliteConnection) -> QueryResult<usize> {
+    pub fn increment_remaining(id: i32, conn: &diesel::PgConnection) -> QueryResult<usize> {
         let current = Self::find(id, conn)?.remaining;
 
         diesel::update(sessions::dsl::sessions.filter(sessions::dsl::id.eq(&id)))

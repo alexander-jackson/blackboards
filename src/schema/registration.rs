@@ -36,7 +36,7 @@ impl Registration {
     ///
     /// This fails if the session has no remaining places, and sends the user a confirmation email
     /// upon success. It also decrements the number of remaining places for the given session.
-    pub fn insert(&self, conn: &diesel::SqliteConnection) -> QueryResult<usize> {
+    pub fn insert(&self, conn: &diesel::PgConnection) -> QueryResult<usize> {
         // Ensure the session has spaces
         let session = Session::find(self.session_id, conn)?;
 
@@ -57,7 +57,7 @@ impl Registration {
     pub fn cancel(
         warwick_id: i32,
         session_id: i32,
-        conn: &diesel::SqliteConnection,
+        conn: &diesel::PgConnection,
     ) -> QueryResult<usize> {
         let filter = registrations::dsl::warwick_id
             .eq(warwick_id)
@@ -69,7 +69,7 @@ impl Registration {
     }
 
     /// Gets the number of registrations for a given session.
-    pub fn count(session_id: i32, conn: &diesel::SqliteConnection) -> QueryResult<i64> {
+    pub fn count(session_id: i32, conn: &diesel::PgConnection) -> QueryResult<i64> {
         registrations::dsl::registrations
             .filter(registrations::dsl::session_id.eq(&session_id))
             .count()
@@ -78,7 +78,7 @@ impl Registration {
 
     /// Gets the session data and names of those registered for all sessions in the database.
     pub fn get_registration_list(
-        conn: &diesel::SqliteConnection,
+        conn: &diesel::PgConnection,
         window: SessionWindow,
     ) -> QueryResult<Vec<(i32, custom_types::DateTime, String, String)>> {
         let columns = (
@@ -104,7 +104,7 @@ impl Registration {
     pub fn get_user_bookings(
         id: i32,
         window: SessionWindow,
-        conn: &diesel::SqliteConnection,
+        conn: &diesel::PgConnection,
     ) -> QueryResult<Vec<Session>> {
         let columns = sessions::all_columns;
         let ordering = (sessions::dsl::start_time, sessions::dsl::id);

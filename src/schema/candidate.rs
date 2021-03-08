@@ -27,14 +27,14 @@ pub struct Candidate {
 
 impl Candidate {
     /// Inserts the [`Candidate`] into the database.
-    pub fn insert(&self, conn: &diesel::SqliteConnection) -> QueryResult<usize> {
+    pub fn insert(&self, conn: &diesel::PgConnection) -> QueryResult<usize> {
         diesel::insert_into(candidates::table)
             .values(self)
             .execute(conn)
     }
 
     /// Gets all [`Candidate`] entries in the database.
-    pub fn get_results(conn: &diesel::SqliteConnection) -> QueryResult<Vec<Self>> {
+    pub fn get_results(conn: &diesel::PgConnection) -> QueryResult<Vec<Self>> {
         candidates::dsl::candidates.get_results::<Self>(conn)
     }
 }

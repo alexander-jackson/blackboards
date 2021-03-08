@@ -54,14 +54,14 @@ pub struct PersonalBest {
 
 impl PersonalBest {
     /// Inserts the [`PersonalBest`] into the database.
-    pub fn insert(&self, conn: &diesel::SqliteConnection) -> QueryResult<usize> {
+    pub fn insert(&self, conn: &diesel::PgConnection) -> QueryResult<usize> {
         diesel::insert_into(personal_bests::table)
             .values(self)
             .execute(conn)
     }
 
     /// Gets all personal bests currently in the database.
-    pub fn get_results(conn: &diesel::SqliteConnection) -> QueryResult<(Vec<Self>, Vec<Self>)> {
+    pub fn get_results(conn: &diesel::PgConnection) -> QueryResult<(Vec<Self>, Vec<Self>)> {
         let pl = Self::get_pl(conn)?;
         let wl = Self::get_wl(conn)?;
 
@@ -69,7 +69,7 @@ impl PersonalBest {
     }
 
     /// Gets all personal bests currently in the database.
-    pub fn get_pl(conn: &diesel::SqliteConnection) -> QueryResult<Vec<Self>> {
+    pub fn get_pl(conn: &diesel::PgConnection) -> QueryResult<Vec<Self>> {
         let filter = personal_bests::dsl::show_pl.eq(true);
 
         personal_bests::dsl::personal_bests
@@ -78,7 +78,7 @@ impl PersonalBest {
     }
 
     /// Gets all personal bests currently in the database.
-    pub fn get_wl(conn: &diesel::SqliteConnection) -> QueryResult<Vec<Self>> {
+    pub fn get_wl(conn: &diesel::PgConnection) -> QueryResult<Vec<Self>> {
         let filter = personal_bests::dsl::show_wl.eq(true);
 
         personal_bests::dsl::personal_bests
@@ -87,7 +87,7 @@ impl PersonalBest {
     }
 
     /// Finds a user's personal bests in the database given their Warwick ID.
-    pub fn find(user: AuthorisedUser, conn: &diesel::SqliteConnection) -> QueryResult<Self> {
+    pub fn find(user: AuthorisedUser, conn: &diesel::PgConnection) -> QueryResult<Self> {
         if let Ok(pbs) = personal_bests::dsl::personal_bests
             .find(user.id)
             .first::<Self>(conn)
@@ -106,7 +106,7 @@ impl PersonalBest {
     pub fn update(
         user: AuthorisedUser,
         data: forms::PersonalBests,
-        conn: &diesel::SqliteConnection,
+        conn: &diesel::PgConnection,
     ) -> QueryResult<usize> {
         let filter = personal_bests::dsl::warwick_id.eq(user.id);
         let current = Self::find(user, conn)?;

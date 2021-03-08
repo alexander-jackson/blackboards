@@ -38,7 +38,7 @@ pub struct Vote {
 
 impl Vote {
     /// Inserts the [`Vote`] into the database.
-    pub fn insert(&self, conn: &diesel::SqliteConnection) -> QueryResult<usize> {
+    pub fn insert(&self, conn: &diesel::PgConnection) -> QueryResult<usize> {
         diesel::insert_into(votes::table).values(self).execute(conn)
     }
 
@@ -47,7 +47,7 @@ impl Vote {
         user_id: i32,
         position_id: i32,
         votes: &HashMap<i32, i32>,
-        conn: &diesel::SqliteConnection,
+        conn: &diesel::PgConnection,
     ) -> QueryResult<usize> {
         // Delete all previous votes to avoid clashes
         diesel::delete(
@@ -75,7 +75,7 @@ impl Vote {
     }
 
     /// Gets all [`Vote`] entries in the database.
-    pub fn get_results(conn: &diesel::SqliteConnection) -> QueryResult<Vec<Self>> {
+    pub fn get_results(conn: &diesel::PgConnection) -> QueryResult<Vec<Self>> {
         votes::dsl::votes.get_results::<Self>(conn)
     }
 
@@ -83,7 +83,7 @@ impl Vote {
     pub fn get_current_ballot(
         user_id: i32,
         position_id: i32,
-        conn: &diesel::SqliteConnection,
+        conn: &diesel::PgConnection,
     ) -> QueryResult<Option<Vec<String>>> {
         // Get their votes for this position
         let votes = votes::dsl::votes
