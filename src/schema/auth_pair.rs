@@ -27,14 +27,14 @@ pub struct AuthPair {
 
 impl AuthPair {
     /// Inserts the data into the appropriate table.
-    pub fn insert(&self, conn: &diesel::SqliteConnection) -> QueryResult<usize> {
+    pub fn insert(&self, conn: &diesel::PgConnection) -> QueryResult<usize> {
         diesel::insert_into(auth_pairs::table)
             .values(self)
             .execute(conn)
     }
 
     /// Finds an [`AuthPair`] given a token.
-    pub fn find(token: &str, conn: &diesel::SqliteConnection) -> QueryResult<Self> {
+    pub fn find(token: &str, conn: &diesel::PgConnection) -> QueryResult<Self> {
         auth_pairs::dsl::auth_pairs.find(token).first::<Self>(conn)
     }
 }

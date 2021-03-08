@@ -1,6 +1,8 @@
 //! Allows modifications of the `nominations` table in the database.
 
-use diesel::{ExpressionMethods, QueryDsl, QueryResult, RunQueryDsl};
+use diesel::{ExpressionMethods, JoinOnDsl, QueryDsl, QueryResult, RunQueryDsl};
+
+use crate::schema::candidate::candidates;
 
 table! {
     /// Represents the schema for `registrations`.
@@ -9,8 +11,6 @@ table! {
         position_id -> Integer,
         /// The identifier of the candidate.
         warwick_id -> Integer,
-        /// The name of the candidate.
-        name -> Text,
     }
 }
 
@@ -21,30 +21,33 @@ pub struct Nomination {
     pub position_id: i32,
     /// The identifier of the candidate.
     pub warwick_id: i32,
-    /// The name of the candidate.
-    pub name: String,
 }
 
 impl Nomination {
     /// Inserts the [`Nomination`] into the database.
-    pub fn insert(&self, conn: &diesel::SqliteConnection) -> QueryResult<usize> {
+    pub fn insert(&self, conn: &diesel::PgConnection) -> QueryResult<usize> {
         diesel::insert_into(nominations::table)
             .values(self)
             .execute(conn)
     }
 
     /// Gets all [`Nomination`] entries in the database.
-    pub fn get_results(conn: &diesel::SqliteConnection) -> QueryResult<Vec<Self>> {
+    pub fn get_results(conn: &diesel::PgConnection) -> QueryResult<Vec<Self>> {
         nominations::dsl::nominations.get_results::<Self>(conn)
     }
 
     /// Gets all the [`Nomination`] entries for a position identifier.
-    pub fn for_position(
+    pub fn for_position_with_names(
         position_id: i32,
-        conn: &diesel::SqliteConnection,
-    ) -> QueryResult<Vec<Self>> {
+        conn: &diesel::PgConnection,
+    ) -> QueryResult<Vec<(i32, String)>> {
         nominations::dsl::nominations
             .filter(nominations::dsl::position_id.eq(position_id))
-            .get_results::<Self>(conn)
+            .inner_join(
+                candidates::dsl::candidates
+                    .on(candidates::dsl::warwick_id.eq(nominations::dsl::warwick_id)),
+            )
+            .select((nominations::dsl::warwick_id, candidates::dsl::name))
+            .get_results::<(i32, String)>(conn)
     }
 }

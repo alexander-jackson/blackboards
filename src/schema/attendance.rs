@@ -25,7 +25,7 @@ pub struct Attendance {
 
 impl Attendance {
     /// Inserts the data into the appropriate table.
-    pub fn insert(&self, conn: &diesel::SqliteConnection) -> QueryResult<usize> {
+    pub fn insert(&self, conn: &diesel::PgConnection) -> QueryResult<usize> {
         diesel::insert_into(attendances::table)
             .values(self)
             .execute(conn)

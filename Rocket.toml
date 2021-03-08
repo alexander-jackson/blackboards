@@ -1,2 +1,2 @@
-[global.databases.sqlite_database]
-url = "database/data.sqlite"
+[global.databases.blackboards]
+url = "postgresql://localhost:5432/blackboards"
