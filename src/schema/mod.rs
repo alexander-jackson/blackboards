@@ -2,6 +2,7 @@
 
 pub mod attendance;
 pub mod auth_pair;
+pub mod candidate;
 pub mod custom_types;
 pub mod exec_position;
 pub mod nomination;
@@ -13,6 +14,7 @@ pub mod vote;
 
 pub use attendance::{attendances, Attendance};
 pub use auth_pair::{auth_pairs, AuthPair};
+pub use candidate::{candidates, Candidate};
 pub use exec_position::{exec_positions, ExecPosition};
 pub use nomination::{nominations, Nomination};
 pub use personal_best::{personal_bests, PersonalBest};
@@ -23,4 +25,4 @@ pub use vote::{votes, Vote};
 
 joinable!(registrations -> sessions (session_id));
 allow_tables_to_appear_in_same_query!(registrations, sessions);
-allow_tables_to_appear_in_same_query!(nominations, votes);
+allow_tables_to_appear_in_same_query!(nominations, votes, candidates);

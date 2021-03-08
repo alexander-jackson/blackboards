@@ -275,7 +275,8 @@ pub fn election_voting(
         ));
     }
 
-    let mut nominations = schema::Nomination::for_position(position_id, &conn.0).unwrap();
+    let mut nominations =
+        schema::Nomination::for_position_with_names(position_id, &conn.0).unwrap();
     let message = flash.map(context::Message::from);
     let current_ballot = schema::Vote::get_current_ballot(user.id, position_id, &conn.0).unwrap();
 
@@ -315,7 +316,7 @@ pub fn election_results(
         .collect();
 
     // Map all the nominees from `warwick_id` -> `name`
-    let nominees: HashMap<_, _> = schema::Nomination::get_results(&conn.0)
+    let nominees: HashMap<_, _> = schema::Candidate::get_results(&conn.0)
         .unwrap()
         .into_iter()
         .map(|n| (n.warwick_id, n.name))

@@ -6,6 +6,7 @@ use diesel::{
     BoolExpressionMethods, ExpressionMethods, JoinOnDsl, QueryDsl, QueryResult, RunQueryDsl,
 };
 
+use crate::schema::candidate::candidates;
 use crate::schema::nomination::nominations;
 
 table! {
@@ -96,8 +97,12 @@ impl Vote {
                     .eq(votes::dsl::candidate_id)
                     .and(nominations::dsl::position_id.eq(votes::dsl::position_id))),
             )
+            .inner_join(
+                candidates::dsl::candidates
+                    .on(candidates::dsl::warwick_id.eq(nominations::dsl::warwick_id)),
+            )
             .order_by(votes::dsl::ranking)
-            .select(nominations::dsl::name)
+            .select(candidates::dsl::name)
             .get_results(conn);
 
         votes.map(|v| if v.is_empty() { None } else { Some(v) })

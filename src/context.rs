@@ -106,7 +106,7 @@ pub struct Elections {
 #[derive(Serialize)]
 pub struct Voting {
     /// The positions to show
-    pub nominations: Vec<schema::Nomination>,
+    pub nominations: Vec<(i32, String)>,
     /// The position we are voting for
     pub position_id: i32,
     /// The user's current votes for this position, if they have voted
