@@ -33,8 +33,8 @@ pub struct RawMap<K, V> {
 
 impl<K, V> RawMap<K, V> {
     /// Gets a reference to the underlying [`HashMap`].
-    pub fn into_inner(&self) -> &HashMap<K, V> {
-        &self.inner
+    pub fn into_inner(self) -> HashMap<K, V> {
+        self.inner
     }
 }
 
@@ -51,8 +51,8 @@ where
             let value = item.value.url_decode().unwrap();
 
             Ok((
-                K::from_str(&key).map_err(|e| Either::Left(e))?,
-                V::from_str(&value).map_err(|e| Either::Right(e))?,
+                K::from_str(&key).map_err(Either::Left)?,
+                V::from_str(&value).map_err(Either::Right)?,
             ))
         };
 

@@ -27,9 +27,7 @@ impl AuthorisedUser {
             Err(_) => return false,
         };
 
-        var.split(',')
-            .find(|v| i32::from_str(v) == Ok(self.id))
-            .is_some()
+        var.split(',').any(|v| i32::from_str(v) == Ok(self.id))
     }
 
     /// Returns true if the user is a election administrator.
@@ -40,9 +38,7 @@ impl AuthorisedUser {
             Err(_) => return false,
         };
 
-        var.split(',')
-            .find(|v| i32::from_str(v) == Ok(self.id))
-            .is_some()
+        var.split(',').any(|v| i32::from_str(v) == Ok(self.id))
     }
 
     /// Returns true if the user is a member of the club.
@@ -53,9 +49,7 @@ impl AuthorisedUser {
             Err(_) => return false,
         };
 
-        var.split(',')
-            .find(|v| i32::from_str(v) == Ok(self.id))
-            .is_some()
+        var.split(',').any(|v| i32::from_str(v) == Ok(self.id))
     }
 }
 

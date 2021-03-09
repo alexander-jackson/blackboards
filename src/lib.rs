@@ -1,7 +1,6 @@
 //! Defines the routes, schema and handlers for the Sessions website.
 
 #![warn(clippy::all)]
-#![warn(clippy::pedantic)]
 #![warn(missing_docs)]
 #![feature(never_type)]
 #![feature(proc_macro_hygiene, decl_macro)]

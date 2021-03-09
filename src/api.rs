@@ -150,16 +150,14 @@ pub fn authenticate(mut cookies: Cookies, conn: DatabaseConnection) -> Redirect 
 /// Gets the parameters from the query string and logs them to the terminal before requesting to
 /// exchange the request token for an access token. If this succeeds, logs the token and displays
 /// it on the frontend to the user.
-#[get("/authorised?<oauth_token>&<user_id>&<oauth_verifier>")]
+#[get("/authorised?<oauth_token>&<oauth_verifier>")]
 pub fn authorised(
     mut cookies: Cookies,
     conn: DatabaseConnection,
     oauth_token: &RawStr,
-    user_id: &RawStr,
     oauth_verifier: &RawStr,
 ) -> Redirect {
     let request_token = oauth_token.as_str();
-    let user_id = user_id.as_str();
     let oauth_verifier = oauth_verifier.as_str();
 
     let consumer_key = env::var("CONSUMER_KEY").unwrap();
@@ -207,7 +205,7 @@ pub fn election_vote(
     position_id: i32,
     data: Form<forms::RawMap<i32, i32>>,
 ) -> Flash<Redirect> {
-    let data = (*data).into_inner();
+    let data = data.into_inner().into_inner();
     let redirect = Redirect::to(uri!(frontend::election_voting: position_id));
 
     // Check whether voting for this position is open
@@ -235,7 +233,7 @@ pub fn election_vote(
     }
 
     // Record the user's votes
-    schema::Vote::insert_all(user.id, position_id, data, &conn.0).unwrap();
+    schema::Vote::insert_all(user.id, position_id, &data, &conn.0).unwrap();
 
     Flash::success(redirect, "Successfully recorded your votes!")
 }
