@@ -376,16 +376,9 @@ pub fn election_results(
                 .filter_map(|(c, r)| (*r <= last_winner_rank).then(|| nominees[c].as_str()))
                 .collect();
 
-            let outcome = match winners.len() {
-                0 => (None, None),
-                1 => (Some(winners[0]), None),
-                _ => (None, Some(winners)),
-            };
-
             context::ElectionResult {
                 title: positions[position_id].title.clone(),
-                winner: outcome.0,
-                tie: outcome.1,
+                winners,
                 voter_count,
             }
         })

@@ -27,13 +27,9 @@
 
 			<td>
 
-			{% if result.winner %}
+			{% if result.winners %}
 
-				{{ result.winner }}
-
-			{% elif result.tie %}
-
-				{% for candidate in result.tie %}
+				{% for candidate in result.winners %}
 
 					{{ candidate }}
 

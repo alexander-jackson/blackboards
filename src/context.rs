@@ -120,10 +120,8 @@ pub struct Voting {
 pub struct ElectionResult<'a> {
     /// The title of the position
     pub title: String,
-    /// The winner, if there was one
-    pub winner: Option<&'a str>,
-    /// The candidates who tied, if there was one
-    pub tie: Option<Vec<&'a str>>,
+    /// The people who won the election
+    pub winners: Vec<&'a str>,
     /// The number of people who voted
     pub voter_count: usize,
 }
