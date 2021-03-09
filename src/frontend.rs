@@ -336,6 +336,14 @@ pub fn election_results(
     let results: Vec<_> = by_position
         .iter_mut()
         .map(|(position_id, votes)| {
+            if votes.is_empty() {
+                return context::ElectionResult {
+                    title: positions[position_id].title.clone(),
+                    winners: Vec::new(),
+                    voter_count: 0,
+                };
+            }
+
             // Sort the votes by `warwick_id` and then `ranking`
             votes.sort_by(|a, b| {
                 a.warwick_id

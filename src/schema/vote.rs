@@ -46,7 +46,7 @@ impl Vote {
     pub fn insert_all(
         user_id: i32,
         position_id: i32,
-        votes: &HashMap<i32, i32>,
+        map: &HashMap<i32, i32>,
         conn: &diesel::PgConnection,
     ) -> QueryResult<usize> {
         // Delete all previous votes to avoid clashes
@@ -59,7 +59,13 @@ impl Vote {
         )
         .execute(conn)?;
 
-        let votes: Vec<Self> = votes
+        log::trace!(
+            "Deleted all votes for user_id={}, position_id={}",
+            user_id,
+            position_id
+        );
+
+        let votes: Vec<Self> = map
             .iter()
             .map(|(ranking, candidate_id)| Vote {
                 warwick_id: user_id,
@@ -68,6 +74,8 @@ impl Vote {
                 ranking: *ranking,
             })
             .collect();
+
+        log::trace!("user_id={} cast the following votes: {:?}", user_id, map);
 
         diesel::insert_into(votes::table)
             .values(votes)

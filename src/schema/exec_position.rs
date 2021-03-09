@@ -61,6 +61,12 @@ impl ExecPosition {
             .first::<Self>(conn)?
             .open;
 
+        log::trace!(
+            "Toggling the state of position_id={} from {}",
+            position_id,
+            current
+        );
+
         // Update with the new value
         diesel::update(
             exec_positions::dsl::exec_positions.filter(exec_positions::dsl::id.eq(position_id)),
