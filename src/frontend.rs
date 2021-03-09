@@ -6,7 +6,7 @@ use rand::seq::SliceRandom;
 use rocket::request::FlashMessage;
 use rocket::response::{Flash, Redirect};
 use rocket_contrib::templates::Template;
-use tallystick::{stv::Tally, Quota};
+use tallystick::{irv::Tally, Transfer};
 
 use crate::context;
 use crate::schema;
@@ -354,18 +354,26 @@ pub fn election_results(
             let voter_count = map.len();
             let collected: Vec<_> = map.values().map(Vec::clone).collect();
 
-            let num_winners = positions[position_id].num_winners as u32;
-            let mut tally: Tally<i32, f64> = Tally::new(num_winners, Quota::Hagenbach);
+            let num_winners = positions[position_id].num_winners as usize;
+            let mut tally: Tally<i32, usize> = Tally::new(Transfer::Meek);
 
             for vote in &collected {
                 tally.add_ref(vote);
             }
 
-            let winners: Vec<_> = tally
-                .winners()
-                .all()
+            // Get the (candidate, rank) pairs
+            let ranked = tally.tally_ranked();
+
+            // Iterate once to find the rank of the last winner
+            let last_winner_rank = ranked
+                .get(num_winners - 1)
+                .map(|r| r.1)
+                .unwrap_or(usize::MAX);
+
+            // Find all people with this rank or less
+            let winners: Vec<_> = ranked
                 .iter()
-                .map(|id| nominees[id].as_str())
+                .filter_map(|(c, r)| (*r <= last_winner_rank).then(|| nominees[c].as_str()))
                 .collect();
 
             let outcome = match winners.len() {
