@@ -105,10 +105,10 @@ pub struct Elections {
 /// The context for displaying the voting page.
 #[derive(Serialize)]
 pub struct Voting {
-    /// The positions to show
-    pub nominations: Vec<(i32, String)>,
     /// The position we are voting for
     pub position_id: i32,
+    /// The positions to show
+    pub nominations: Vec<(i32, String)>,
     /// The user's current votes for this position, if they have voted
     pub current_ballot: Option<Vec<String>>,
     /// The message to display to the user, for errors
