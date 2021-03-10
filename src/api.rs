@@ -243,7 +243,7 @@ pub fn election_vote(
     }
 
     // Check whether the user is a candidate
-    if candidates.iter().find(|(id, _)| *id == user.id).is_some() {
+    if candidates.iter().any(|(id, _)| *id == user.id) {
         return Flash::error(
             redirect,
             "You are a candidate for this position, so you cannot vote.",
