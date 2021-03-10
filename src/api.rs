@@ -232,14 +232,18 @@ pub fn election_vote(
         return Flash::error(redirect, "Make sure your votes are unique!");
     }
 
-    // Check whether the user is a candidate
-    let is_candidate = schema::Nomination::for_position_with_names(position_id, &conn.0)
-        .unwrap()
-        .iter()
-        .find(|(id, _)| *id == user.id)
-        .is_some();
+    // Check that they submitted a full ballot
+    let candidates = schema::Nomination::for_position_with_names(position_id, &conn.0).unwrap();
 
-    if is_candidate {
+    if data.values().count() != candidates.len() {
+        return Flash::error(
+            redirect,
+            "Please submit a full ballot, you need to choose an option for each box.",
+        );
+    }
+
+    // Check whether the user is a candidate
+    if candidates.iter().find(|(id, _)| *id == user.id).is_some() {
         return Flash::error(
             redirect,
             "You are a candidate for this position, so you cannot vote.",
