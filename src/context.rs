@@ -121,7 +121,7 @@ pub struct ElectionResult<'a> {
     /// The title of the position
     pub title: String,
     /// The people who won the election
-    pub winners: Vec<&'a str>,
+    pub winners: Vec<(i32, &'a str)>,
     /// The number of people who voted
     pub voter_count: usize,
 }

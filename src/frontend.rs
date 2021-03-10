@@ -381,7 +381,7 @@ pub fn election_results(
             // Find all people with this rank or less
             let winners: Vec<_> = ranked
                 .iter()
-                .filter_map(|(c, r)| (*r <= last_winner_rank).then(|| nominees[c].as_str()))
+                .filter_map(|(c, r)| (*r <= last_winner_rank).then(|| (*c, nominees[c].as_str())))
                 .collect();
 
             context::ElectionResult {
@@ -391,6 +391,17 @@ pub fn election_results(
             }
         })
         .collect();
+
+    // All ties should have been resolved by the presidential vote, so elect users
+    let all_winners: Vec<_> = results
+        .iter()
+        .map(|r| &r.winners)
+        .flatten()
+        .copied()
+        .map(|w| w.0)
+        .collect();
+
+    schema::Candidate::mark_elected(all_winners, &conn.0).unwrap();
 
     Ok(Template::render(
         "election_results",

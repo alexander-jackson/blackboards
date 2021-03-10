@@ -47,6 +47,7 @@ impl Nomination {
                 candidates::dsl::candidates
                     .on(candidates::dsl::warwick_id.eq(nominations::dsl::warwick_id)),
             )
+            .filter(candidates::dsl::elected.eq(false))
             .select((nominations::dsl::warwick_id, candidates::dsl::name))
             .get_results::<(i32, String)>(conn)
     }

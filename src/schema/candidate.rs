@@ -1,6 +1,6 @@
 //! Allows modifications of the `candidates` table in the database.
 
-use diesel::{QueryResult, RunQueryDsl};
+use diesel::{ExpressionMethods, QueryDsl, QueryResult, RunQueryDsl};
 
 table! {
     /// Represents the schema for `candidates`.
@@ -36,5 +36,19 @@ impl Candidate {
     /// Gets all [`Candidate`] entries in the database.
     pub fn get_results(conn: &diesel::PgConnection) -> QueryResult<Vec<Self>> {
         candidates::dsl::candidates.get_results::<Self>(conn)
+    }
+
+    /// Mark the winning candidates as such.
+    pub fn mark_elected(winners: Vec<i32>, conn: &diesel::PgConnection) -> QueryResult<usize> {
+        // Remove all the existing winners
+        diesel::update(candidates::dsl::candidates)
+            .set(candidates::dsl::elected.eq(false))
+            .execute(conn)?;
+
+        diesel::update(
+            candidates::dsl::candidates.filter(candidates::dsl::warwick_id.eq_any(&winners)),
+        )
+        .set(candidates::dsl::elected.eq(true))
+        .execute(conn)
     }
 }
