@@ -232,6 +232,20 @@ pub fn election_vote(
         return Flash::error(redirect, "Make sure your votes are unique!");
     }
 
+    // Check whether the user is a candidate
+    let is_candidate = schema::Nomination::for_position_with_names(position_id, &conn.0)
+        .unwrap()
+        .iter()
+        .find(|(id, _)| *id == user.id)
+        .is_some();
+
+    if is_candidate {
+        return Flash::error(
+            redirect,
+            "You are a candidate for this position, so you cannot vote.",
+        );
+    }
+
     // Record the user's votes
     schema::Vote::insert_all(user.id, position_id, &data, &conn.0).unwrap();
 
