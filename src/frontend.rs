@@ -2,6 +2,7 @@
 
 use std::collections::{BTreeMap, HashMap};
 
+use itertools::Itertools;
 use rand::seq::SliceRandom;
 use rocket::request::FlashMessage;
 use rocket::response::{Flash, Redirect};
@@ -295,6 +296,65 @@ pub fn election_voting(
     ))
 }
 
+/// Counts all the ballots for a given position.
+fn count_position_ballots<'a>(
+    position_id: i32,
+    votes: &mut Vec<schema::Vote>,
+    positions: &'a BTreeMap<i32, schema::ExecPosition>,
+    nominees: &'a HashMap<i32, String>,
+) -> context::ElectionResult<'a> {
+    if votes.is_empty() {
+        return context::ElectionResult {
+            title: positions[&position_id].title.clone(),
+            winners: Vec::new(),
+            voter_count: 0,
+        };
+    }
+
+    // Sort the votes by `warwick_id` and then `ranking`
+    votes.sort_by(|a, b| {
+        a.warwick_id
+            .cmp(&b.warwick_id)
+            .then(a.ranking.cmp(&b.ranking))
+    });
+
+    let map = votes
+        .into_iter()
+        .map(|v| (v.warwick_id, v.candidate_id))
+        .into_group_map();
+
+    let voter_count = map.len();
+    let collected: Vec<_> = map.values().map(Vec::clone).collect();
+
+    let num_winners = positions[&position_id].num_winners as usize;
+    let mut tally: Tally<i32, usize> = Tally::new(Transfer::Meek);
+
+    for vote in &collected {
+        tally.add_ref(vote);
+    }
+
+    // Get the (candidate, rank) pairs
+    let ranked = tally.tally_ranked();
+
+    // Iterate once to find the rank of the last winner
+    let last_winner_rank = ranked
+        .get(num_winners - 1)
+        .map(|r| r.1)
+        .unwrap_or(usize::MAX);
+
+    // Find all people with this rank or less
+    let winners: Vec<_> = ranked
+        .iter()
+        .filter_map(|(c, r)| (*r <= last_winner_rank).then(|| (*c, nominees[c].as_str())))
+        .collect();
+
+    context::ElectionResult {
+        title: positions[&position_id].title.clone(),
+        winners,
+        voter_count,
+    }
+}
+
 /// Calculates the results of the elections won so far.
 #[get("/elections/results")]
 pub fn election_results(
@@ -335,61 +395,7 @@ pub fn election_results(
 
     let results: Vec<_> = by_position
         .iter_mut()
-        .map(|(position_id, votes)| {
-            if votes.is_empty() {
-                return context::ElectionResult {
-                    title: positions[position_id].title.clone(),
-                    winners: Vec::new(),
-                    voter_count: 0,
-                };
-            }
-
-            // Sort the votes by `warwick_id` and then `ranking`
-            votes.sort_by(|a, b| {
-                a.warwick_id
-                    .cmp(&b.warwick_id)
-                    .then(a.ranking.cmp(&b.ranking))
-            });
-
-            let mut map: HashMap<i32, Vec<i32>> = HashMap::new();
-
-            for vote in votes {
-                map.entry(vote.warwick_id)
-                    .or_default()
-                    .push(vote.candidate_id);
-            }
-
-            let voter_count = map.len();
-            let collected: Vec<_> = map.values().map(Vec::clone).collect();
-
-            let num_winners = positions[position_id].num_winners as usize;
-            let mut tally: Tally<i32, usize> = Tally::new(Transfer::Meek);
-
-            for vote in &collected {
-                tally.add_ref(vote);
-            }
-
-            // Get the (candidate, rank) pairs
-            let ranked = tally.tally_ranked();
-
-            // Iterate once to find the rank of the last winner
-            let last_winner_rank = ranked
-                .get(num_winners - 1)
-                .map(|r| r.1)
-                .unwrap_or(usize::MAX);
-
-            // Find all people with this rank or less
-            let winners: Vec<_> = ranked
-                .iter()
-                .filter_map(|(c, r)| (*r <= last_winner_rank).then(|| (*c, nominees[c].as_str())))
-                .collect();
-
-            context::ElectionResult {
-                title: positions[position_id].title.clone(),
-                winners,
-                voter_count,
-            }
-        })
+        .map(|(id, votes)| count_position_ballots(*id, votes, &positions, &nominees))
         .collect();
 
     // All ties should have been resolved by the presidential vote, so elect users
@@ -397,7 +403,6 @@ pub fn election_results(
         .iter()
         .map(|r| &r.winners)
         .flatten()
-        .copied()
         .map(|w| w.0)
         .collect();
 
