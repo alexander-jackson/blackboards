@@ -15,6 +15,7 @@ extern crate diesel;
 extern crate serde_derive;
 
 use fern::colors::{Color, ColoredLevelConfig};
+use rocket::request::Request;
 use rocket::response::Redirect;
 use rocket_contrib::templates::Template;
 
@@ -30,8 +31,14 @@ pub mod session_window;
 
 /// Catches 401 error codes for redirecting.
 #[catch(401)]
-pub fn unauthorised() -> Redirect {
-    Redirect::to(uri!(api::authenticate))
+pub fn unauthorised(req: &Request) -> Redirect {
+    let uri = req.uri().to_string();
+    log::debug!("Unauthorised user requested: {}", uri);
+
+    // Encode the uri
+    let encoded = base64::encode(&uri);
+
+    Redirect::to(uri!(api::authenticate: encoded))
 }
 
 /// Builds the Rocket object defining the web server.

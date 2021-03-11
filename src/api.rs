@@ -126,8 +126,8 @@ pub fn record_attendance(
 }
 
 /// Begins the OAuth1 authentication process.
-#[get("/authenticate")]
-pub fn authenticate(mut cookies: Cookies, conn: DatabaseConnection) -> Redirect {
+#[get("/authenticate/<uri>")]
+pub fn authenticate(mut cookies: Cookies, uri: String, conn: DatabaseConnection) -> Redirect {
     // Check whether their cookie is already set
     if cookies.get_private("id").is_some() && cookies.get_private("name").is_some() {
         return Redirect::to(uri!(frontend::dashboard));
@@ -136,8 +136,8 @@ pub fn authenticate(mut cookies: Cookies, conn: DatabaseConnection) -> Redirect 
     let consumer_key = env::var("CONSUMER_KEY").unwrap();
     let consumer_secret = env::var("CONSUMER_SECRET").unwrap();
 
-    let pair = auth::obtain_request_token(&consumer_key, &consumer_secret);
-    let callback = auth::build_callback(&pair.token);
+    let pair = auth::obtain_request_token(&consumer_key, &consumer_secret, &uri);
+    let callback = auth::build_callback(&pair.token, &uri);
 
     // Write the secret to the database
     schema::AuthPair::from(pair).insert(&conn.0).unwrap();
@@ -150,9 +150,10 @@ pub fn authenticate(mut cookies: Cookies, conn: DatabaseConnection) -> Redirect 
 /// Gets the parameters from the query string and logs them to the terminal before requesting to
 /// exchange the request token for an access token. If this succeeds, logs the token and displays
 /// it on the frontend to the user.
-#[get("/authorised?<oauth_token>&<oauth_verifier>")]
+#[get("/authorised/<uri>?<oauth_token>&<oauth_verifier>")]
 pub fn authorised(
     mut cookies: Cookies,
+    uri: String,
     conn: DatabaseConnection,
     oauth_token: &RawStr,
     oauth_verifier: &RawStr,
@@ -180,7 +181,7 @@ pub fn authorised(
     cookies.add_private(Cookie::new("id", user_info.id.to_string()));
     cookies.add_private(Cookie::new("name", user_info.name));
 
-    Redirect::to(uri!(frontend::authenticated))
+    Redirect::to(uri!(frontend::authenticated: uri))
 }
 
 /// Allows the Taskmaster leaderboard to be edited.

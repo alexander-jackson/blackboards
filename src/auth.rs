@@ -65,10 +65,13 @@ fn parse_mappings(text: &str) -> HashMap<&str, &str> {
 }
 
 /// Builds the callback url for OAuth1.
-pub fn build_callback(token: &str) -> String {
+pub fn build_callback(token: &str, uri: &str) -> String {
+    let callback = format!("{}/{}", OAUTH_CALLBACK, uri);
+    log::debug!("Callback uri: {}", callback);
+
     format!(
         "{}?oauth_token={}&oauth_callback={}",
-        AUTHORISE_TOKEN_URL, token, OAUTH_CALLBACK
+        AUTHORISE_TOKEN_URL, token, callback
     )
 }
 
@@ -76,14 +79,16 @@ pub fn build_callback(token: &str) -> String {
 ///
 /// Using the `consumer_key` and `consumer_secret`, signs a request to the SSO service and requests
 /// a new request token. This can then be used later on to become an access token.
-pub fn obtain_request_token(consumer_key: &str, consumer_secret: &str) -> TokenPair {
+pub fn obtain_request_token(consumer_key: &str, consumer_secret: &str, uri: &str) -> TokenPair {
     let credentials = Credentials::new(consumer_key, consumer_secret);
     let request = Request {
         scope: SCOPE,
         expiry: EXPIRY,
     };
+
+    let callback = format!("{}/{}", OAUTH_CALLBACK, uri);
     let auth = Builder::<_, _>::new(credentials, oauth::HmacSha1)
-        .callback(OAUTH_CALLBACK)
+        .callback(callback.as_str())
         .post(&REQUEST_TOKEN_URL, &request);
 
     let client = Client::new();

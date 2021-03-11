@@ -130,9 +130,14 @@ pub fn session_attendance(
 }
 
 /// Displays a small splash page after authenticating.
-#[get("/authenticated")]
-pub fn authenticated() -> Template {
-    Template::render("authenticated", context::get_empty())
+#[get("/authenticated/<uri>")]
+pub fn authenticated(uri: String) -> Template {
+    // Decode the uri
+    let bytes = base64::decode(&uri).unwrap();
+    let uri = String::from_utf8(bytes).unwrap();
+    log::debug!("Authenticated user, redirecting to: {}", uri);
+
+    Template::render("authenticated", context::Authenticated { uri })
 }
 
 /// Displays a small splash page after authenticating.

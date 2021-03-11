@@ -18,6 +18,7 @@ url = "2.2.1"
 itertools = "0.10.0"
 either = "1.6.1"
 log = "0.4.14"
+base64 = "0.13.0"
 
 [dependencies.rocket_contrib]
 version = "0.4"

@@ -40,6 +40,13 @@ pub struct Context {
     pub registrations: Option<Vec<Registrations>>,
 }
 
+/// The context for automatically redirecting on authentication.
+#[derive(Serialize)]
+pub struct Authenticated {
+    /// The path to redirect the user to.
+    pub uri: String,
+}
+
 /// The context for attendance registrations.
 #[derive(Serialize)]
 pub struct Attendance {
