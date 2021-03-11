@@ -1,6 +1,8 @@
 //! Handles the routes that return Templates for the user to view.
 
 use std::collections::{BTreeMap, HashMap};
+use std::env;
+use std::str::FromStr;
 
 use itertools::Itertools;
 use rand::seq::SliceRandom;
@@ -301,6 +303,46 @@ pub fn election_voting(
     ))
 }
 
+/// Resolves the winners of a tie based on a presidential vote ballot.
+fn resolve_ties<'a, 'b>(
+    winners: Vec<(i32, &'a str, usize)>,
+    num_winners: usize,
+    ballot: &'b [i32],
+) -> Vec<(i32, &'a str, usize)> {
+    // The given ballot is ordered, so we only need to use it for tie breaks
+    let mut resolved = Vec::new();
+
+    for (_, group) in &winners.into_iter().group_by(|k| k.2) {
+        if num_winners == resolved.len() {
+            break;
+        }
+
+        let mut group: Vec<_> = group.collect();
+        let remaining = num_winners - resolved.len();
+
+        // If we can include everyone here, do so
+        if group.len() <= remaining {
+            resolved.extend(group.into_iter());
+            continue;
+        }
+
+        // Pick from here in order of preference
+        for _ in 0..remaining {
+            for id in ballot {
+                if let Some(pos) = group.iter().position(|x| x.0 == *id) {
+                    resolved.push(group.remove(pos));
+                }
+
+                if num_winners == resolved.len() {
+                    return resolved;
+                }
+            }
+        }
+    }
+
+    resolved
+}
+
 /// Counts all the ballots for a given position.
 fn count_position_ballots<'a>(
     position_id: i32,
@@ -348,10 +390,17 @@ fn count_position_ballots<'a>(
         .unwrap_or(usize::MAX);
 
     // Find all people with this rank or less
-    let winners: Vec<_> = ranked
+    let mut winners: Vec<_> = ranked
         .iter()
-        .filter_map(|(c, r)| (*r <= last_winner_rank).then(|| (*c, nominees[c].as_str())))
+        .filter_map(|(c, r)| (*r <= last_winner_rank).then(|| (*c, nominees[c].as_str(), *r)))
         .collect();
+
+    // Resolve any ties
+    if winners.len() > num_winners {
+        // Get the identifier of the president and resolve the ties
+        let id = i32::from_str(&env::var("PRESIDENT_ID").unwrap()).unwrap();
+        winners = resolve_ties(winners, num_winners, &map[&id]);
+    }
 
     context::ElectionResult {
         title: positions[&position_id].title.clone(),
@@ -444,4 +493,49 @@ pub fn election_settings(
             admin: user.is_election_admin(),
         },
     ))
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::frontend::resolve_ties;
+
+    #[test]
+    fn ties_are_resolved_correctly() {
+        let tie = vec![(1, "Candidate A", 2), (2, "Candidate B", 2)];
+        let num_winners = 1;
+        let ballot = [2, 1];
+
+        let resolved = resolve_ties(tie, num_winners, &ballot);
+        let expected = vec![(2, "Candidate B", 2)];
+
+        assert_eq!(resolved, expected);
+    }
+
+    #[test]
+    fn ties_are_resolved_correctly_with_multiple_winners() {
+        let tie = vec![
+            (1, "Candidate A", 2),
+            (2, "Candidate B", 2),
+            (3, "Candidate C", 3),
+        ];
+        let num_winners = 2;
+        let ballot = [2, 1, 3];
+
+        let resolved = resolve_ties(tie, num_winners, &ballot);
+        let expected = vec![(1, "Candidate A", 2), (2, "Candidate B", 2)];
+
+        assert_eq!(resolved, expected);
+    }
+
+    #[test]
+    fn low_ranked_candidates_cannot_win_in_high_ranked_ties() {
+        let tie = vec![(1, "Candidate A", 2), (2, "Candidate B", 2)];
+        let num_winners = 1;
+        let ballot = [3, 2, 1];
+
+        let resolved = resolve_ties(tie, num_winners, &ballot);
+        let expected = vec![(2, "Candidate B", 2)];
+
+        assert_eq!(resolved, expected);
+    }
 }
