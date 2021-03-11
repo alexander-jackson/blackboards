@@ -324,7 +324,7 @@ fn count_position_ballots<'a>(
     });
 
     let map = votes
-        .into_iter()
+        .iter_mut()
         .map(|v| (v.warwick_id, v.candidate_id))
         .into_group_map();
 
