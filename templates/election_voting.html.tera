@@ -26,7 +26,7 @@
 
 </div>
 
-<h2>Nominations</h2>
+<h2>Voting for: {{ position_title }}</h2>
 
 <form accept-charset="utf-8" action="/election/vote/{{ position_id }}" method="post">
 

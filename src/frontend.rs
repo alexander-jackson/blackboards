@@ -283,6 +283,7 @@ pub fn election_voting(
         ));
     }
 
+    let position_title = schema::ExecPosition::get_title(position_id, &conn.0).unwrap();
     let mut nominations =
         schema::Nomination::for_position_with_names(position_id, &conn.0).unwrap();
     let message = flash.map(context::Message::from);
@@ -296,6 +297,7 @@ pub fn election_voting(
         "election_voting",
         context::Voting {
             position_id,
+            position_title,
             nominations,
             current_ballot,
             message,

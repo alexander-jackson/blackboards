@@ -44,6 +44,14 @@ impl ExecPosition {
             .get_results::<Self>(conn)
     }
 
+    /// Gets the title of a given position.
+    pub fn get_title(position_id: i32, conn: &diesel::PgConnection) -> QueryResult<String> {
+        exec_positions::dsl::exec_positions
+            .filter(exec_positions::dsl::id.eq(position_id))
+            .select(exec_positions::dsl::title)
+            .first(conn)
+    }
+
     /// Checks whether voting is open for a given identifier.
     pub fn voting_is_open(position_id: i32, conn: &diesel::PgConnection) -> bool {
         exec_positions::dsl::exec_positions

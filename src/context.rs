@@ -114,6 +114,8 @@ pub struct Elections {
 pub struct Voting {
     /// The position we are voting for
     pub position_id: i32,
+    /// The title of the position itself.
+    pub position_title: String,
     /// The positions to show
     pub nominations: Vec<(i32, String)>,
     /// The user's current votes for this position, if they have voted
