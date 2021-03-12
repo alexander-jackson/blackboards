@@ -52,6 +52,14 @@ impl ExecPosition {
             .first(conn)
     }
 
+    /// Gets the identifiers of all closed positions.
+    pub fn closed_identifiers(conn: &diesel::PgConnection) -> QueryResult<Vec<i32>> {
+        exec_positions::dsl::exec_positions
+            .filter(exec_positions::dsl::open.eq(false))
+            .select(exec_positions::dsl::id)
+            .get_results(conn)
+    }
+
     /// Checks whether voting is open for a given identifier.
     pub fn voting_is_open(position_id: i32, conn: &diesel::PgConnection) -> bool {
         exec_positions::dsl::exec_positions

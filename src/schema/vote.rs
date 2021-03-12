@@ -75,7 +75,12 @@ impl Vote {
             })
             .collect();
 
-        log::trace!("user_id={} cast the following votes: {:?}", user_id, map);
+        log::trace!(
+            "user_id={} cast the following votes: {:?} for position_id={}",
+            user_id,
+            map,
+            position_id
+        );
 
         diesel::insert_into(votes::table)
             .values(votes)

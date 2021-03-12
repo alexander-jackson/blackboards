@@ -127,6 +127,8 @@ pub struct Voting {
 /// The result of a single election on a position.
 #[derive(Debug, Eq, PartialEq, Serialize)]
 pub struct ElectionResult<'a> {
+    /// The identifier of the position.
+    pub position_id: i32,
     /// The title of the position
     pub title: String,
     /// The people who won the election

@@ -40,6 +40,11 @@ impl Candidate {
 
     /// Mark the winning candidates as such.
     pub fn mark_elected(winners: Vec<i32>, conn: &diesel::PgConnection) -> QueryResult<usize> {
+        log::trace!(
+            "Marking the following identifiers as elected: {:?}",
+            winners
+        );
+
         // Remove all the existing winners
         diesel::update(candidates::dsl::candidates)
             .set(candidates::dsl::elected.eq(false))

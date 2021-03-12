@@ -354,6 +354,7 @@ fn count_position_ballots<'a>(
 ) -> context::ElectionResult<'a> {
     if votes.is_empty() {
         return context::ElectionResult {
+            position_id,
             title: positions[&position_id].title.clone(),
             winners: Vec::new(),
             voter_count: 0,
@@ -404,8 +405,17 @@ fn count_position_ballots<'a>(
         winners = resolve_ties(winners, num_winners, &map[&id]);
     }
 
+    let title = positions[&position_id].title.clone();
+
+    log::debug!(
+        "Voting has decided that {:?} has/have won the nomination for: {}",
+        winners,
+        title
+    );
+
     context::ElectionResult {
-        title: positions[&position_id].title.clone(),
+        position_id,
+        title,
         winners,
         voter_count,
     }
@@ -454,10 +464,21 @@ pub fn election_results(
         .map(|(id, votes)| count_position_ballots(*id, votes, &positions, &nominees))
         .collect();
 
+    let closed_positions: Vec<i32> = schema::ExecPosition::closed_identifiers(&conn.0).unwrap();
+
+    log::trace!(
+        "Only the following positions are closed, ignoring results for all others: {:?}",
+        closed_positions
+    );
+
     // All ties should have been resolved by the presidential vote, so elect users
     let all_winners: Vec<_> = results
         .iter()
-        .map(|r| &r.winners)
+        .filter_map(|r| {
+            closed_positions
+                .contains(&r.position_id)
+                .then(|| &r.winners)
+        })
         .flatten()
         .map(|w| w.0)
         .collect();
@@ -571,6 +592,7 @@ mod tests {
 
         let result = count_position_ballots(position_id, &mut votes, &positions, &nominees);
         let expected = ElectionResult {
+            position_id: 1,
             title: String::from("pos"),
             winners: vec![(2, "Candidate 2", 0)],
             voter_count: 1,
@@ -605,6 +627,7 @@ mod tests {
 
         let result = count_position_ballots(position_id, &mut votes, &positions, &nominees);
         let expected = ElectionResult {
+            position_id: 1,
             title: String::from("pos"),
             winners: vec![(3, "Candidate 3", 0)],
             voter_count: 3,
