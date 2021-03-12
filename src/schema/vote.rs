@@ -116,3 +116,14 @@ impl Vote {
         votes.map(|v| if v.is_empty() { None } else { Some(v) })
     }
 }
+
+impl From<(i32, i32, i32, i32)> for Vote {
+    fn from((position_id, warwick_id, candidate_id, ranking): (i32, i32, i32, i32)) -> Self {
+        Self {
+            position_id,
+            warwick_id,
+            candidate_id,
+            ranking,
+        }
+    }
+}

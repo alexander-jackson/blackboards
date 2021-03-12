@@ -497,7 +497,11 @@ pub fn election_settings(
 
 #[cfg(test)]
 mod tests {
-    use crate::frontend::resolve_ties;
+    use std::collections::{BTreeMap, HashMap};
+
+    use crate::context::ElectionResult;
+    use crate::frontend::{count_position_ballots, resolve_ties};
+    use crate::schema::{ExecPosition, Vote};
 
     #[test]
     fn ties_are_resolved_correctly() {
@@ -537,5 +541,73 @@ mod tests {
         let expected = vec![(2, "Candidate B", 2)];
 
         assert_eq!(resolved, expected);
+    }
+
+    #[test]
+    fn position_ballots_are_calculated_correctly() {
+        let position_id = 1;
+        let mut votes = vec![(1, 1, 2, 1), (1, 1, 3, 2)]
+            .into_iter()
+            .map(Vote::from)
+            .collect();
+
+        let mut positions = BTreeMap::new();
+        positions.insert(
+            1,
+            ExecPosition {
+                id: 1,
+                title: String::from("pos"),
+                num_winners: 1,
+                open: true,
+            },
+        );
+
+        let mut nominees = HashMap::new();
+        nominees.insert(1, String::from("Candidate 1"));
+        nominees.insert(2, String::from("Candidate 2"));
+        nominees.insert(3, String::from("Candidate 3"));
+
+        let result = count_position_ballots(position_id, &mut votes, &positions, &nominees);
+        let expected = ElectionResult {
+            title: String::from("pos"),
+            winners: vec![(2, "Candidate 2", 0)],
+            voter_count: 1,
+        };
+
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn multiple_ballots_are_resolved_correctly() {
+        let position_id = 1;
+        let mut votes = vec![(1, 1, 2, 1), (1, 1, 3, 2), (1, 2, 3, 1), (1, 3, 3, 1)]
+            .into_iter()
+            .map(Vote::from)
+            .collect();
+
+        let mut positions = BTreeMap::new();
+        positions.insert(
+            1,
+            ExecPosition {
+                id: 1,
+                title: String::from("pos"),
+                num_winners: 1,
+                open: true,
+            },
+        );
+
+        let mut nominees = HashMap::new();
+        nominees.insert(1, String::from("Candidate 1"));
+        nominees.insert(2, String::from("Candidate 2"));
+        nominees.insert(3, String::from("Candidate 3"));
+
+        let result = count_position_ballots(position_id, &mut votes, &positions, &nominees);
+        let expected = ElectionResult {
+            title: String::from("pos"),
+            winners: vec![(3, "Candidate 3", 0)],
+            voter_count: 3,
+        };
+
+        assert_eq!(result, expected);
     }
 }

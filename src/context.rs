@@ -123,7 +123,7 @@ pub struct Voting {
 }
 
 /// The result of a single election on a position.
-#[derive(Serialize)]
+#[derive(Debug, Eq, PartialEq, Serialize)]
 pub struct ElectionResult<'a> {
     /// The title of the position
     pub title: String,
