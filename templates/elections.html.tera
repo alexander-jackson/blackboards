@@ -10,8 +10,8 @@ Exec Positions
 
 {% if admin %}
 
-	<a href="/elections/results" class="badge badge-primary">Results</a>
-	<a href="/elections/settings" class="badge badge-primary">Settings</a>
+	<a href="/elections/results" class="badge badge-dark">Results</a>
+	<a href="/elections/settings" class="badge badge-dark">Settings</a>
 
 {% endif %}
 

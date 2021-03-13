@@ -4,7 +4,11 @@
 
 {{ super() }}
 
-<h2>Election Results</h2>
+<h2>
+	Election Results
+
+	<a href="/elections/settings" class="badge badge-dark">Settings</a>
+</h2>
 
 <table class="table table-dark">
 
