@@ -19,37 +19,30 @@ pub struct AuthorisedUser {
 }
 
 impl AuthorisedUser {
-    /// Returns true if the user is a Taskmaster administrator.
-    pub fn is_taskmaster_admin(&self) -> bool {
+    /// Returns true if the user is a member of the given environment variable.
+    fn user_id_in_var(&self, var: &str) -> bool {
         // Get the environment variable and parse it
-        let var = match env::var("TASKMASTER_ADMINS") {
+        let var = match env::var(var) {
             Ok(value) => value,
             Err(_) => return false,
         };
 
         var.split(',').any(|v| i32::from_str(v) == Ok(self.id))
+    }
+
+    /// Returns true if the user is a Taskmaster administrator.
+    pub fn is_taskmaster_admin(&self) -> bool {
+        self.user_id_in_var("TASKMASTER_ADMINS")
     }
 
     /// Returns true if the user is a election administrator.
     pub fn is_election_admin(&self) -> bool {
-        // Get the environment variable and parse it
-        let var = match env::var("ELECTION_ADMINS") {
-            Ok(value) => value,
-            Err(_) => return false,
-        };
-
-        var.split(',').any(|v| i32::from_str(v) == Ok(self.id))
+        self.user_id_in_var("ELECTION_ADMINS")
     }
 
     /// Returns true if the user is a member of the club.
     pub fn is_barbell_member(&self) -> bool {
-        // Get the environment variable and parse it
-        let var = match env::var("BARBELL_MEMBERS") {
-            Ok(value) => value,
-            Err(_) => return false,
-        };
-
-        var.split(',').any(|v| i32::from_str(v) == Ok(self.id))
+        self.user_id_in_var("BARBELL_MEMBERS")
     }
 }
 
