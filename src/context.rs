@@ -18,7 +18,7 @@ pub struct Message {
     pub message: String,
 }
 
-impl From<FlashMessage<'_, '_>> for Message {
+impl From<FlashMessage<'_>> for Message {
     fn from(flash: FlashMessage) -> Self {
         Self {
             variant: flash.name().to_string(),

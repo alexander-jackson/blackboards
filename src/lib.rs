@@ -31,7 +31,7 @@ pub mod session_window;
 
 /// Catches 401 error codes for redirecting.
 #[catch(401)]
-pub fn unauthorised(req: &Request) -> Redirect {
+pub async fn unauthorised(req: &Request<'_>) -> Redirect {
     let uri = req.uri().to_string();
     log::debug!("Unauthorised user requested: {}", uri);
 

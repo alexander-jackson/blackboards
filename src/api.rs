@@ -3,11 +3,12 @@
 //! Deals with processing data into the database from forms and returning error messages to the
 //! frontend to be displayed.
 
+use std::collections::HashMap;
 use std::env;
 
 use itertools::Itertools;
-use rocket::http::{Cookie, Cookies, RawStr};
-use rocket::request::Form;
+use rocket::form::Form;
+use rocket::http::{Cookie, CookieJar};
 use rocket::response::{Flash, Redirect};
 
 use crate::auth;
@@ -19,7 +20,7 @@ use crate::guards::{AuthorisedUser, DatabaseConnection};
 
 /// Registers a user for a session, confirming their email if needed.
 #[post("/session/register", data = "<data>")]
-pub fn register(
+pub async fn register(
     user: AuthorisedUser,
     conn: DatabaseConnection,
     data: Form<forms::Register>,
@@ -27,8 +28,10 @@ pub fn register(
     let data = data.into_inner();
     let registration = schema::Registration::from((user, data));
 
+    let result = conn.run(move |c| registration.insert(&c)).await;
+
     // Check whether they broke the database
-    match registration.insert(&conn.0) {
+    match result {
         Ok(_) => Flash::success(
             Redirect::to(uri!(frontend::dashboard)),
             "Successfully registered for the session!",
@@ -42,13 +45,15 @@ pub fn register(
 
 /// Cancel a user's registration for a session.
 #[post("/session/cancel", data = "<data>")]
-pub fn cancel(
+pub async fn cancel(
     user: AuthorisedUser,
     conn: DatabaseConnection,
     data: Form<forms::Cancel>,
 ) -> Flash<Redirect> {
     let data = data.into_inner();
-    let registration = schema::Registration::cancel(user.id, data.session_id, &conn.0);
+    let registration = conn
+        .run(move |c| schema::Registration::cancel(user.id, data.session_id, &c))
+        .await;
 
     // Check whether they broke the database
     match registration {
@@ -65,7 +70,7 @@ pub fn cancel(
 
 /// Logs the user out and deletes their cookies.
 #[get("/logout")]
-pub fn logout(_user: AuthorisedUser, mut cookies: Cookies) -> &'static str {
+pub fn logout(_user: AuthorisedUser, cookies: &CookieJar<'_>) -> &'static str {
     cookies.remove_private(Cookie::named("id"));
     cookies.remove_private(Cookie::named("name"));
 
@@ -74,13 +79,15 @@ pub fn logout(_user: AuthorisedUser, mut cookies: Cookies) -> &'static str {
 
 /// Updates a user's personal bests.
 #[post("/pbs", data = "<data>")]
-pub fn personal_bests(
+pub async fn personal_bests(
     user: AuthorisedUser,
     conn: DatabaseConnection,
     data: Form<forms::PersonalBests>,
 ) -> Flash<Redirect> {
     let data = data.into_inner();
-    let result = schema::PersonalBest::update(user, data, &conn.0);
+    let result = conn
+        .run(move |c| schema::PersonalBest::update(user, data, &c))
+        .await;
 
     // Check whether they broke the database
     match result {
@@ -97,14 +104,18 @@ pub fn personal_bests(
 
 /// Records the attendance for a given Warwick ID at a session.
 #[post("/attendance/record", data = "<data>")]
-pub fn record_attendance(
+pub async fn record_attendance(
     conn: DatabaseConnection,
     data: Form<forms::Attendance>,
 ) -> Flash<Redirect> {
     let data = data.into_inner();
 
+    let result = conn
+        .run(move |c| schema::Attendance::from(data).insert(&c))
+        .await;
+
     // Record the attendance
-    if let Err(e) = schema::Attendance::from(data).insert(&conn.0) {
+    if let Err(e) = result {
         use diesel::result::{DatabaseErrorKind, Error};
 
         let redirect = Redirect::to(uri!(frontend::session_attendance: data.session_id));
@@ -127,7 +138,11 @@ pub fn record_attendance(
 
 /// Begins the OAuth1 authentication process.
 #[get("/authenticate/<uri>")]
-pub fn authenticate(mut cookies: Cookies, uri: String, conn: DatabaseConnection) -> Redirect {
+pub async fn authenticate(
+    cookies: &CookieJar<'_>,
+    conn: DatabaseConnection,
+    uri: String,
+) -> Redirect {
     // Check whether their cookie is already set
     if cookies.get_private("id").is_some() && cookies.get_private("name").is_some() {
         return Redirect::to(uri!(frontend::dashboard));
@@ -136,11 +151,14 @@ pub fn authenticate(mut cookies: Cookies, uri: String, conn: DatabaseConnection)
     let consumer_key = env::var("CONSUMER_KEY").unwrap();
     let consumer_secret = env::var("CONSUMER_SECRET").unwrap();
 
-    let pair = auth::obtain_request_token(&consumer_key, &consumer_secret, &uri);
+    let pair = auth::obtain_request_token(&consumer_key, &consumer_secret, &uri).await;
     let callback = auth::build_callback(&pair.token, &uri);
 
+    log::debug!("Getting a connection");
+
     // Write the secret to the database
-    schema::AuthPair::from(pair).insert(&conn.0).unwrap();
+    conn.run(move |c| schema::AuthPair::from(pair).insert(&c).unwrap())
+        .await;
 
     Redirect::to(callback)
 }
@@ -151,31 +169,34 @@ pub fn authenticate(mut cookies: Cookies, uri: String, conn: DatabaseConnection)
 /// exchange the request token for an access token. If this succeeds, logs the token and displays
 /// it on the frontend to the user.
 #[get("/authorised/<uri>?<oauth_token>&<oauth_verifier>")]
-pub fn authorised(
-    mut cookies: Cookies,
+pub async fn authorised(
+    cookies: &CookieJar<'_>,
     uri: String,
     conn: DatabaseConnection,
-    oauth_token: &RawStr,
-    oauth_verifier: &RawStr,
+    oauth_token: &str,
+    oauth_verifier: &str,
 ) -> Redirect {
-    let request_token = oauth_token.as_str();
-    let oauth_verifier = oauth_verifier.as_str();
-
     let consumer_key = env::var("CONSUMER_KEY").unwrap();
     let consumer_secret = env::var("CONSUMER_SECRET").unwrap();
-    let auth_pair = schema::AuthPair::find(request_token, &conn.0).unwrap();
+
+    let token = oauth_token.to_owned();
+    let auth_pair = conn
+        .run(move |c| schema::AuthPair::find(&token, &c).unwrap())
+        .await;
 
     let pair = auth::exchange_request_for_access(
         &consumer_key,
         &consumer_secret,
-        request_token,
+        &auth_pair.token,
         &auth_pair.secret,
         oauth_verifier,
-    );
+    )
+    .await;
 
     // Request the user's information
     let user_info =
-        auth::request_user_information(&pair.token, &pair.secret, &consumer_key, &consumer_secret);
+        auth::request_user_information(&pair.token, &pair.secret, &consumer_key, &consumer_secret)
+            .await;
 
     // Set the user's id and name cookies
     cookies.add_private(Cookie::new("id", user_info.id.to_string()));
@@ -186,13 +207,14 @@ pub fn authorised(
 
 /// Allows the Taskmaster leaderboard to be edited.
 #[post("/taskmaster/edit", data = "<data>")]
-pub fn taskmaster_edit(
+pub async fn taskmaster_edit(
     user: AuthorisedUser,
     conn: DatabaseConnection,
     data: Form<forms::TaskmasterUpdate>,
 ) -> Redirect {
     if user.is_taskmaster_admin() {
-        schema::TaskmasterEntry::update_all(&data.leaderboard, &conn.0).unwrap();
+        conn.run(move |c| schema::TaskmasterEntry::update_all(&data.leaderboard, &c).unwrap())
+            .await;
     }
 
     Redirect::to(uri!(frontend::taskmaster_leaderboard))
@@ -200,17 +222,21 @@ pub fn taskmaster_edit(
 
 /// Allows users to vote on the election.
 #[post("/election/vote/<position_id>", data = "<data>")]
-pub fn election_vote(
+pub async fn election_vote(
     user: AuthorisedUser,
     conn: DatabaseConnection,
     position_id: i32,
-    data: Form<forms::RawMap<i32, i32>>,
+    data: Form<HashMap<i32, i32>>,
 ) -> Flash<Redirect> {
-    let data = data.into_inner().into_inner();
+    let data = data.into_inner();
     let redirect = Redirect::to(uri!(frontend::election_voting: position_id));
 
+    let voting_is_open = conn
+        .run(move |c| schema::ExecPosition::voting_is_open(position_id, &c))
+        .await;
+
     // Check whether voting for this position is open
-    if !schema::ExecPosition::voting_is_open(position_id, &conn.0) {
+    if !voting_is_open {
         // Redirect to the main elections page
         return Flash::error(
             Redirect::to(uri!(frontend::elections)),
@@ -234,7 +260,9 @@ pub fn election_vote(
     }
 
     // Check that they submitted a full ballot
-    let candidates = schema::Nomination::for_position_with_names(position_id, &conn.0).unwrap();
+    let candidates = conn
+        .run(move |c| schema::Nomination::for_position_with_names(position_id, &c).unwrap())
+        .await;
 
     if data.values().count() != candidates.len() {
         return Flash::error(
@@ -252,14 +280,15 @@ pub fn election_vote(
     }
 
     // Record the user's votes
-    schema::Vote::insert_all(user.id, position_id, &data, &conn.0).unwrap();
+    conn.run(move |c| schema::Vote::insert_all(user.id, position_id, &data, &c).unwrap())
+        .await;
 
     Flash::success(redirect, "Successfully recorded your votes!")
 }
 
 /// Allows administrators to open and close voting for a position.
 #[get("/elections/settings/toggle/<position_id>")]
-pub fn election_settings_toggle(
+pub async fn election_settings_toggle(
     user: AuthorisedUser,
     conn: DatabaseConnection,
     position_id: i32,
@@ -272,7 +301,8 @@ pub fn election_settings_toggle(
         );
     }
 
-    schema::ExecPosition::toggle_state(position_id, &conn.0).unwrap();
+    conn.run(move |c| schema::ExecPosition::toggle_state(position_id, &c).unwrap())
+        .await;
 
     Flash::success(
         Redirect::to(uri!(frontend::election_settings)),

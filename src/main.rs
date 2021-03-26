@@ -1,4 +1,5 @@
-fn main() {
+#[rocket::main]
+async fn main() {
     dotenv::dotenv().unwrap();
 
     let filters = vec![
@@ -8,5 +9,5 @@ fn main() {
     blackboards::setup_logger_with_filters(filters);
 
     let rocket = blackboards::build_rocket();
-    rocket.launch();
+    rocket.launch().await.expect("Failed to launch");
 }

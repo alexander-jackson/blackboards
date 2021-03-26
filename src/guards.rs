@@ -1,5 +1,8 @@
 //! Stores custom request guards for Rocket routes.
 
+// This is only really for `DatabaseConnection`
+#![allow(missing_docs)]
+
 use std::env;
 use std::str::FromStr;
 
@@ -46,10 +49,11 @@ impl AuthorisedUser {
     }
 }
 
-impl<'a, 'r> FromRequest<'a, 'r> for AuthorisedUser {
+#[rocket::async_trait]
+impl<'r> FromRequest<'r> for AuthorisedUser {
     type Error = ();
 
-    fn from_request(request: &'a Request<'r>) -> Outcome<Self, ()> {
+    async fn from_request(request: &'r Request<'_>) -> Outcome<Self, ()> {
         let failure = Outcome::Failure((Status::Unauthorized, ()));
 
         let id = match request.cookies().get_private("id") {
