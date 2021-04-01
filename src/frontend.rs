@@ -152,7 +152,7 @@ pub async fn session_attendance(
 
 /// Displays a small splash page after authenticating.
 #[get("/authenticated/<uri>")]
-pub fn authenticated(uri: String) -> Template {
+pub fn authenticated(uri: &str) -> Template {
     // Decode the uri
     let bytes = base64::decode(&uri).unwrap();
     let uri = String::from_utf8(bytes).unwrap();
@@ -435,10 +435,7 @@ fn count_position_ballots<'a>(
     let ranked = tally.tally_ranked();
 
     // Iterate once to find the rank of the last winner
-    let last_winner_rank = ranked
-        .get(num_winners - 1)
-        .map(|r| r.1)
-        .unwrap_or(usize::MAX);
+    let last_winner_rank = ranked.get(num_winners - 1).map_or(usize::MAX, |r| r.1);
 
     // Find all people with this rank or less
     let mut winners: Vec<_> = ranked
@@ -539,7 +536,7 @@ pub async fn election_results(
         .map(|w| w.0)
         .collect();
 
-    conn.run(move |c| schema::Candidate::mark_elected(all_winners, &c).unwrap())
+    conn.run(move |c| schema::Candidate::mark_elected(&all_winners, &c).unwrap())
         .await;
 
     Ok(Template::render(

@@ -133,7 +133,7 @@ impl From<AuthorisedUser> for PersonalBest {
         Self {
             warwick_id: user.id,
             name: user.name,
-            ..Default::default()
+            ..Self::default()
         }
     }
 }
