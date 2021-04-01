@@ -2,8 +2,6 @@
 
 #![warn(clippy::all)]
 #![warn(missing_docs)]
-#![feature(never_type)]
-#![feature(proc_macro_hygiene, decl_macro)]
 
 #[macro_use]
 extern crate rocket;
