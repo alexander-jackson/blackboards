@@ -1,4 +1,4 @@
-//! Allows modifications of the `taskmaster_entry` table in the database.
+//! Allows modifications of the `taskmaster_entries` table in the database.
 
 use std::str::FromStr;
 
@@ -14,7 +14,7 @@ table! {
     }
 }
 
-/// Represents a row in the `personal_bests` table.
+/// Represents a row in the `taskmaster_entries` table.
 #[derive(Debug, Default, Insertable, Queryable, Serialize)]
 #[table_name = "taskmaster_entries"]
 pub struct TaskmasterEntry {

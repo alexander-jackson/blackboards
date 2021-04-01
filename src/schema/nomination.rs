@@ -5,7 +5,7 @@ use diesel::{ExpressionMethods, JoinOnDsl, QueryDsl, QueryResult, RunQueryDsl};
 use crate::schema::candidate::candidates;
 
 table! {
-    /// Represents the schema for `registrations`.
+    /// Represents the schema for `nominations`.
     nominations (position_id, warwick_id) {
         /// The identifier of the exec position.
         position_id -> Integer,
