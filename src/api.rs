@@ -12,6 +12,7 @@ use rocket::http::{Cookie, CookieJar};
 use rocket::response::{Flash, Redirect};
 
 use crate::auth;
+use crate::email;
 use crate::forms;
 use crate::frontend;
 use crate::schema;
@@ -27,8 +28,16 @@ pub async fn register(
 ) -> Flash<Redirect> {
     let data = data.into_inner();
     let registration = schema::Registration::from((user, data));
+    let insertable = registration.clone();
+    let session_id = registration.session_id;
 
-    let result = conn.run(move |c| registration.insert(&c)).await;
+    let result = conn.run(move |c| insertable.insert(&c)).await;
+    let session = conn
+        .run(move |c| schema::Session::find(session_id, &c))
+        .await
+        .unwrap();
+
+    email::send_confirmation(&registration, &session).await;
 
     // Check whether they broke the database
     match result {

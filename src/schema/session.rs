@@ -49,6 +49,8 @@ impl Session {
             .gt(window.start)
             .and(sessions::dsl::start_time.lt(window.end));
 
+        log::debug!("Getting all the sessions in window={:?}", window);
+
         sessions::dsl::sessions
             .filter(filter)
             .order_by(sessions::dsl::start_time.asc())

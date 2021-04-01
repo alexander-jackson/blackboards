@@ -2,7 +2,6 @@
 
 use diesel::{BoolExpressionMethods, ExpressionMethods, QueryDsl, QueryResult, RunQueryDsl};
 
-use crate::email;
 use crate::forms;
 use crate::guards::AuthorisedUser;
 use crate::schema::{custom_types, sessions, Session};
@@ -21,7 +20,7 @@ table! {
 }
 
 /// Represents a row in the `registrations` table.
-#[derive(Debug, Insertable, Queryable, Serialize)]
+#[derive(Clone, Debug, Insertable, Queryable, Serialize)]
 pub struct Registration {
     /// The identifier for the session
     pub session_id: i32,
@@ -47,8 +46,6 @@ impl Registration {
         diesel::insert_into(registrations::table)
             .values(self)
             .execute(conn)?;
-
-        email::send_confirmation(&self, &session);
 
         Session::decrement_remaining(self.session_id, conn)
     }

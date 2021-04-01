@@ -3,7 +3,7 @@
 use std::env;
 
 use lettre::transport::smtp::authentication::Credentials;
-use lettre::{Message, SmtpTransport, Transport};
+use lettre::{AsyncSmtpTransport, AsyncTransport, Message, Tokio1Executor};
 
 use crate::schema;
 
@@ -35,7 +35,7 @@ fn format_warwick_email(warwick_id: i32) -> String {
 }
 
 /// Sends an email to the user confirming their booking for a given session.
-pub fn send_confirmation(registration: &schema::Registration, session: &schema::Session) {
+pub async fn send_confirmation(registration: &schema::Registration, session: &schema::Session) {
     // Check whether email settings are on
     if env::var("SEND_EMAILS").is_err() {
         return;
@@ -66,10 +66,13 @@ Your booking for {} at {} has been confirmed, see you there!"#,
     let creds = Credentials::new(config.from_address, config.app_password);
 
     // Open a remote connection to gmail
-    let mailer = SmtpTransport::relay("smtp.gmail.com")
+    let mailer = AsyncSmtpTransport::<Tokio1Executor>::relay("smtp.gmail.com")
         .unwrap()
         .credentials(creds)
         .build();
 
-    mailer.send(&email).unwrap();
+    mailer
+        .send(email)
+        .await
+        .expect("Failed to send an email to the client");
 }
