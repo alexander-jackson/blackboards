@@ -48,9 +48,9 @@ fn get_registrations(
     }
 }
 
-/// Gets the information needed for the general dashboard and renders the template.
+/// Gets the information needed for the sessions page and renders the template.
 #[get("/sessions")]
-pub async fn dashboard(
+pub async fn sessions(
     _user: User<Generic>,
     conn: DatabaseConnection,
     flash: Option<FlashMessage<'_>>,

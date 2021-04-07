@@ -59,7 +59,7 @@ pub fn build_rocket() -> rocket::Rocket {
         .mount(
             "/",
             routes![
-                frontend::dashboard,
+                frontend::sessions,
                 frontend::specific_session,
                 frontend::bookings,
                 frontend::attendance,

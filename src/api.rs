@@ -42,11 +42,11 @@ pub async fn register(
     // Check whether they broke the database
     match result {
         Ok(_) => Flash::success(
-            Redirect::to(uri!(frontend::dashboard)),
+            Redirect::to(uri!(frontend::sessions)),
             "Successfully registered for the session!",
         ),
         Err(_) => Flash::error(
-            Redirect::to(uri!(frontend::dashboard)),
+            Redirect::to(uri!(frontend::sessions)),
             "Failed to register for the session, have you already booked one?",
         ),
     }
@@ -67,11 +67,11 @@ pub async fn cancel(
     // Check whether they broke the database
     match registration {
         Ok(_) => Flash::success(
-            Redirect::to(uri!(frontend::dashboard)),
+            Redirect::to(uri!(frontend::sessions)),
             "Successfully cancelled the session!",
         ),
         Err(_) => Flash::error(
-            Redirect::to(uri!(frontend::dashboard)),
+            Redirect::to(uri!(frontend::sessions)),
             "Failed to cancel the session, try again or let me know if it keeps happening.",
         ),
     }
@@ -154,7 +154,7 @@ pub async fn authenticate(
 ) -> Redirect {
     // Check whether their cookie is already set
     if cookies.get_private("id").is_some() && cookies.get_private("name").is_some() {
-        return Redirect::to(uri!(frontend::dashboard));
+        return Redirect::to(uri!(frontend::sessions));
     }
 
     let consumer_key = env::var("CONSUMER_KEY").unwrap();
