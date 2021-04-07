@@ -2,8 +2,6 @@
 
 use diesel::{BoolExpressionMethods, ExpressionMethods, QueryDsl, QueryResult, RunQueryDsl};
 
-use crate::forms;
-use crate::guards::AuthorisedUser;
 use crate::schema::{custom_types, sessions, Session};
 use crate::session_window::SessionWindow;
 
@@ -31,6 +29,15 @@ pub struct Registration {
 }
 
 impl Registration {
+    /// Creates a new [`Registration`] instance.
+    pub fn new(session_id: i32, warwick_id: i32, name: String) -> Self {
+        Self {
+            session_id,
+            warwick_id,
+            name,
+        }
+    }
+
     /// Inserts the [`Registration`] into the database.
     ///
     /// This fails if the session has no remaining places, and sends the user a confirmation email
@@ -116,16 +123,5 @@ impl Registration {
             .filter(filter)
             .order_by(ordering)
             .load(conn)
-    }
-}
-
-impl From<(AuthorisedUser, forms::Register)> for Registration {
-    /// Creates a new [`Registration`] assuming the user is already verified.
-    fn from(data: (AuthorisedUser, forms::Register)) -> Self {
-        Self {
-            session_id: data.1.session_id,
-            warwick_id: data.0.id,
-            name: data.0.name,
-        }
     }
 }

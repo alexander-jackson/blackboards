@@ -11,10 +11,9 @@ use rocket::response::{Flash, Redirect};
 use rocket_contrib::templates::Template;
 use tallystick::{irv::Tally, Transfer};
 
-use crate::context;
-use crate::schema;
+use crate::{context, schema};
 
-use crate::guards::{AuthorisedUser, DatabaseConnection};
+use crate::guards::{DatabaseConnection, ElectionAdmin, Generic, Member, TaskmasterAdmin, User};
 use crate::session_window::SessionWindow;
 
 fn format_registrations(
@@ -52,7 +51,7 @@ fn get_registrations(
 /// Gets the information needed for the general dashboard and renders the template.
 #[get("/sessions")]
 pub async fn dashboard(
-    _user: AuthorisedUser,
+    _user: User<Generic>,
     conn: DatabaseConnection,
     flash: Option<FlashMessage<'_>>,
 ) -> Template {
@@ -79,7 +78,7 @@ pub async fn dashboard(
 /// Gets the information needed for the session registration and renders the template.
 #[get("/sessions/<session_id>")]
 pub async fn specific_session(
-    _user: AuthorisedUser,
+    _user: User<Generic>,
     conn: DatabaseConnection,
     session_id: i32,
 ) -> Result<Template, Redirect> {
@@ -163,7 +162,7 @@ pub fn authenticated(uri: &str) -> Template {
 
 /// Displays a small splash page after authenticating.
 #[get("/bookings")]
-pub async fn bookings(user: AuthorisedUser, conn: DatabaseConnection) -> Template {
+pub async fn bookings(user: User<Member>, conn: DatabaseConnection) -> Template {
     let window = SessionWindow::from_current_time();
     let sessions = conn
         .run(move |c| schema::Registration::get_user_bookings(user.id, window, &c).unwrap())
@@ -182,12 +181,12 @@ pub async fn bookings(user: AuthorisedUser, conn: DatabaseConnection) -> Templat
 
 /// Displays the PB board for people to view.
 #[get("/")]
-pub async fn blackboard(user: AuthorisedUser, conn: DatabaseConnection) -> Template {
+pub async fn blackboard(user: Option<User<Generic>>, conn: DatabaseConnection) -> Template {
     let (pl, wl) = conn
         .run(move |c| schema::PersonalBest::get_results(&c).unwrap())
         .await;
 
-    let user_id = user.id;
+    let user_id = user.map(|user| user.id);
 
     Template::render("blackboard", context::Blackboard { pl, wl, user_id })
 }
@@ -195,12 +194,12 @@ pub async fn blackboard(user: AuthorisedUser, conn: DatabaseConnection) -> Templ
 /// Allows the user to change their personal bests.
 #[get("/pbs")]
 pub async fn personal_bests(
-    user: AuthorisedUser,
+    user: User<Member>,
     conn: DatabaseConnection,
     flash: Option<FlashMessage<'_>>,
 ) -> Template {
     let personal_bests = conn
-        .run(move |c| schema::PersonalBest::find(user, &c).unwrap())
+        .run(move |c| schema::PersonalBest::find(user.id, user.name, &c).unwrap())
         .await;
 
     let message = flash.map(context::Message::from);
@@ -217,7 +216,7 @@ pub async fn personal_bests(
 /// Displays the state of the Taskmaster leaderboard.
 #[get("/taskmaster")]
 pub async fn taskmaster_leaderboard(
-    user: AuthorisedUser,
+    user: User<Generic>,
     conn: DatabaseConnection,
     flash: Option<FlashMessage<'_>>,
 ) -> Template {
@@ -231,7 +230,7 @@ pub async fn taskmaster_leaderboard(
         "taskmaster_leaderboard",
         context::TaskmasterLeaderboard {
             leaderboard,
-            admin: user.is_taskmaster_admin(),
+            admin: user.is_also::<TaskmasterAdmin>(),
             message,
         },
     )
@@ -240,14 +239,10 @@ pub async fn taskmaster_leaderboard(
 /// Allows authorised users to edit the Taskmaster leaderboard.
 #[get("/taskmaster/edit")]
 pub async fn taskmaster_edit(
-    user: AuthorisedUser,
+    _user: User<TaskmasterAdmin>,
     conn: DatabaseConnection,
     flash: Option<FlashMessage<'_>>,
 ) -> Result<Template, Redirect> {
-    if !user.is_taskmaster_admin() {
-        return Err(Redirect::to(uri!(taskmaster_leaderboard)));
-    }
-
     let leaderboard = conn
         .run(move |c| schema::TaskmasterEntry::get_results(&c).unwrap())
         .await;
@@ -274,7 +269,7 @@ pub async fn taskmaster_edit(
 /// Shows the elections board.
 #[get("/elections")]
 pub async fn elections(
-    user: AuthorisedUser,
+    user: User<Generic>,
     conn: DatabaseConnection,
     flash: Option<FlashMessage<'_>>,
 ) -> Result<Template, Redirect> {
@@ -289,7 +284,7 @@ pub async fn elections(
         context::Elections {
             exec_positions,
             message,
-            admin: user.is_election_admin(),
+            admin: user.is_also::<ElectionAdmin>(),
         },
     ))
 }
@@ -297,7 +292,7 @@ pub async fn elections(
 /// Gets the information needed for the session registration and renders the template.
 #[get("/elections/voting/<position_id>")]
 pub async fn election_voting(
-    user: AuthorisedUser,
+    user: User<Member>,
     conn: DatabaseConnection,
     flash: Option<FlashMessage<'_>>,
     position_id: i32,
@@ -312,14 +307,6 @@ pub async fn election_voting(
         return Err(Flash::error(
             Redirect::to(uri!(elections)),
             "Voting for this position either hasn't opened yet or has closed.",
-        ));
-    }
-
-    if !user.is_barbell_member() {
-        // Redirect to the main elections page
-        return Err(Flash::error(
-            Redirect::to(uri!(elections)),
-            "You are not a Barbell member, so you cannot vote in this election.",
         ));
     }
 
@@ -469,16 +456,9 @@ fn count_position_ballots<'a>(
 /// Calculates the results of the elections won so far.
 #[get("/elections/results")]
 pub async fn election_results(
-    user: AuthorisedUser,
+    _user: User<ElectionAdmin>,
     conn: DatabaseConnection,
 ) -> Result<Template, Flash<Redirect>> {
-    if !user.is_election_admin() {
-        return Err(Flash::error(
-            Redirect::to(uri!(elections)),
-            "You aren't an admin, so you cannot see the results.",
-        ));
-    }
-
     // Get all the available positions
     let positions: BTreeMap<i32, schema::ExecPosition> = conn
         .run(move |c| schema::ExecPosition::get_results(&c))
@@ -548,17 +528,10 @@ pub async fn election_results(
 /// Shows the elections settings page.
 #[get("/elections/settings")]
 pub async fn election_settings(
-    user: AuthorisedUser,
+    _user: User<ElectionAdmin>,
     conn: DatabaseConnection,
     flash: Option<FlashMessage<'_>>,
 ) -> Result<Template, Flash<Redirect>> {
-    if !user.is_election_admin() {
-        return Err(Flash::error(
-            Redirect::to(uri!(elections)),
-            "You aren't an admin, so you cannot see the settings.",
-        ));
-    }
-
     let exec_positions = conn
         .run(move |c| schema::ExecPosition::get_results(&c).unwrap())
         .await;
@@ -570,7 +543,7 @@ pub async fn election_settings(
         context::Elections {
             exec_positions,
             message,
-            admin: user.is_election_admin(),
+            admin: true,
         },
     ))
 }

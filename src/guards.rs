@@ -3,8 +3,8 @@
 // This is only really for `DatabaseConnection`
 #![allow(missing_docs)]
 
-use std::env;
 use std::str::FromStr;
+use std::{env, marker::PhantomData};
 
 use rocket::http::Status;
 use rocket::request::{FromRequest, Outcome, Request};
@@ -12,62 +12,105 @@ use rocket::request::{FromRequest, Outcome, Request};
 #[database("blackboards")]
 pub struct DatabaseConnection(diesel::PgConnection);
 
+/// Represents a generic user who is at Warwick.
+pub struct Generic;
+/// Represents a member of Warwick Barbell.
+pub struct Member;
+/// Represents a Taskmaster administrator.
+pub struct TaskmasterAdmin;
+/// Represents a election administrator.
+pub struct ElectionAdmin;
+
+/// Methods for allowing access control.
+pub trait AccessControl {
+    /// The environment variable to check for this user.
+    fn env_var() -> Option<&'static str>;
+}
+
+macro_rules! control_vars {
+    ($($struct:path => $statement:expr,)*) => {
+        $(impl AccessControl for $struct {
+            fn env_var() -> Option<&'static str> {
+                $statement
+            }
+        })*
+    };
+}
+
+control_vars! {
+    Generic => None,
+    Member => Some("BARBELL_MEMBERS"),
+    TaskmasterAdmin => Some("TASKMASTER_ADMINS"),
+    ElectionAdmin => Some("ELECTION_ADMINS"),
+}
+
 /// Represents an authorised user for a given route.
-#[derive(Debug)]
-pub struct AuthorisedUser {
+#[derive(Debug, Deserialize)]
+pub struct User<T: AccessControl> {
     /// The user's Warwick ID
     pub id: i32,
     /// The user's name
     pub name: String,
+    /// The privilege level of the user.
+    level: PhantomData<T>,
 }
 
-impl AuthorisedUser {
-    /// Returns true if the user is a member of the given environment variable.
-    fn user_id_in_var(&self, var: &str) -> bool {
-        // Get the environment variable and parse it
-        let var = match env::var(var) {
-            Ok(value) => value,
-            Err(_) => return false,
-        };
+impl<T: AccessControl> User<T> {
+    /// Checks whether the given user is also a member of another environment variable.
+    pub fn is_also<U: AccessControl>(&self) -> bool {
+        let id = self.id.to_string();
 
-        var.split(',').any(|v| i32::from_str(v) == Ok(self.id))
-    }
-
-    /// Returns true if the user is a Taskmaster administrator.
-    pub fn is_taskmaster_admin(&self) -> bool {
-        self.user_id_in_var("TASKMASTER_ADMINS")
-    }
-
-    /// Returns true if the user is a election administrator.
-    pub fn is_election_admin(&self) -> bool {
-        self.user_id_in_var("ELECTION_ADMINS")
-    }
-
-    /// Returns true if the user is a member of the club.
-    pub fn is_barbell_member(&self) -> bool {
-        self.user_id_in_var("BARBELL_MEMBERS")
+        U::env_var()
+            .map(|key| env::var(key).expect("Failed to get environment variable"))
+            .map(|value| value.split(',').any(|v| v == id))
+            .unwrap_or_default()
     }
 }
 
 #[rocket::async_trait]
-impl<'r> FromRequest<'r> for AuthorisedUser {
+impl<T: AccessControl, 'r> FromRequest<'r> for User<T> {
     type Error = ();
 
     async fn from_request(request: &'r Request<'_>) -> Outcome<Self, ()> {
-        let failure = Outcome::Failure((Status::Unauthorized, ()));
+        let unauthorised = Outcome::Failure((Status::Unauthorized, ()));
+        let forbidden = Outcome::Failure((Status::Forbidden, ()));
 
         let id = match request.cookies().get_private("id") {
             Some(id) => id,
-            None => return failure,
+            None => return unauthorised,
         };
+
         let name = match request.cookies().get_private("name") {
             Some(name) => name,
-            None => return failure,
+            None => return unauthorised,
         };
+
+        if let Some(key) = T::env_var() {
+            // Get the environment variable and parse it
+            let var = env::var(key).expect("Failed to get environment variable");
+
+            if !var.split(',').any(|v| v == id.value()) {
+                log::warn!(
+                    "user_id={} was not found in the following environment variable: {}",
+                    id.value(),
+                    key
+                );
+
+                return forbidden;
+            }
+
+            log::debug!(
+                target: "blackboards",
+                "user_id={} was found in the following environment variable: {}",
+                id.value(),
+                key
+            );
+        }
 
         Outcome::Success(Self {
             id: i32::from_str(id.value()).unwrap(),
             name: String::from(name.value()),
+            level: PhantomData,
         })
     }
 }

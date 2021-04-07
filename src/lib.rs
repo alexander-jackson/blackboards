@@ -39,6 +39,14 @@ pub async fn unauthorised(req: &Request<'_>) -> Redirect {
     Redirect::to(uri!(api::authenticate: encoded))
 }
 
+/// Catches 403 error codes for displaying a custom page.
+#[catch(403)]
+pub async fn forbidden(req: &Request<'_>) -> Template {
+    let path = req.uri().path().as_str();
+
+    Template::render("forbidden", context::Forbidden { path })
+}
+
 /// Builds the Rocket object defining the web server.
 ///
 /// Adds the database connection and the template handler to the rocket, along with the routes that
@@ -47,7 +55,7 @@ pub fn build_rocket() -> rocket::Rocket {
     rocket::ignite()
         .attach(guards::DatabaseConnection::fairing())
         .attach(Template::fairing())
-        .register(catchers![unauthorised])
+        .register(catchers![unauthorised, forbidden])
         .mount(
             "/",
             routes![

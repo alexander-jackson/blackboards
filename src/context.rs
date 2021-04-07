@@ -65,8 +65,8 @@ pub struct Blackboard {
     pub pl: Vec<schema::PersonalBest>,
     /// The recorded personal bests for each WL user
     pub wl: Vec<schema::PersonalBest>,
-    /// The Warwick ID of the viewer
-    pub user_id: i32,
+    /// The Warwick ID of the viewer if they are logged in
+    pub user_id: Option<i32>,
 }
 
 /// The context for updating personal bests.
@@ -142,6 +142,13 @@ pub struct ElectionResult<'a> {
 pub struct ElectionResults<'a> {
     /// The results of each election
     pub results: Vec<ElectionResult<'a>>,
+}
+
+/// The context for displaying the `403 Forbidden` page.
+#[derive(Serialize)]
+pub struct Forbidden<'a> {
+    /// The path the user was requesting
+    pub path: &'a str,
 }
 
 /// Returns an empty `HashMap` for templates that don't require context.

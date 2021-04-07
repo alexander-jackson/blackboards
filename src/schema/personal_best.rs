@@ -3,7 +3,6 @@
 use diesel::{ExpressionMethods, QueryDsl, QueryResult, RunQueryDsl};
 
 use crate::forms;
-use crate::guards::AuthorisedUser;
 
 table! {
     /// Represents the schema for `personal_bests`.
@@ -53,6 +52,15 @@ pub struct PersonalBest {
 }
 
 impl PersonalBest {
+    /// Creates a new [`PersonalBest`] instance.
+    pub fn new(warwick_id: i32, name: String) -> Self {
+        Self {
+            warwick_id,
+            name,
+            ..Self::default()
+        }
+    }
+
     /// Inserts the [`PersonalBest`] into the database.
     pub fn insert(&self, conn: &diesel::PgConnection) -> QueryResult<usize> {
         diesel::insert_into(personal_bests::table)
@@ -87,16 +95,16 @@ impl PersonalBest {
     }
 
     /// Finds a user's personal bests in the database given their Warwick ID.
-    pub fn find(user: AuthorisedUser, conn: &diesel::PgConnection) -> QueryResult<Self> {
+    pub fn find(user_id: i32, name: String, conn: &diesel::PgConnection) -> QueryResult<Self> {
         if let Ok(pbs) = personal_bests::dsl::personal_bests
-            .find(user.id)
+            .find(user_id)
             .first::<Self>(conn)
         {
             return Ok(pbs);
         }
 
         // Insert a blank one and return that instead
-        let pbs = PersonalBest::from(user);
+        let pbs = Self::new(user_id, name);
         pbs.insert(conn)?;
 
         Ok(pbs)
@@ -104,12 +112,13 @@ impl PersonalBest {
 
     /// Updates a user's personal bests based on their form submission.
     pub fn update(
-        user: AuthorisedUser,
+        user_id: i32,
+        name: String,
         data: forms::PersonalBests,
         conn: &diesel::PgConnection,
     ) -> QueryResult<usize> {
-        let filter = personal_bests::dsl::warwick_id.eq(user.id);
-        let current = Self::find(user, conn)?;
+        let filter = personal_bests::dsl::warwick_id.eq(user_id);
+        let current = Self::find(user_id, name, conn)?;
 
         // Check which columns need updating
         let updates = (
@@ -125,15 +134,5 @@ impl PersonalBest {
         diesel::update(personal_bests::dsl::personal_bests.filter(filter))
             .set(updates)
             .execute(conn)
-    }
-}
-
-impl From<AuthorisedUser> for PersonalBest {
-    fn from(user: AuthorisedUser) -> Self {
-        Self {
-            warwick_id: user.id,
-            name: user.name,
-            ..Self::default()
-        }
     }
 }

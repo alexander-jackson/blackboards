@@ -1,0 +1,11 @@
+{% extends "base" %}
+
+{% block content %}
+
+{{ super() }}
+
+<h2>403 Forbidden</h2>
+
+<p>You tried to request <code>{{ path }}</code> but you do not have permission to view it.</p>
+
+{% endblock content %}

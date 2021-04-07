@@ -17,17 +17,17 @@ use crate::forms;
 use crate::frontend;
 use crate::schema;
 
-use crate::guards::{AuthorisedUser, DatabaseConnection};
+use crate::guards::{DatabaseConnection, ElectionAdmin, Generic, Member, TaskmasterAdmin, User};
 
 /// Registers a user for a session, confirming their email if needed.
 #[post("/session/register", data = "<data>")]
 pub async fn register(
-    user: AuthorisedUser,
+    user: User<Generic>,
     conn: DatabaseConnection,
     data: Form<forms::Register>,
 ) -> Flash<Redirect> {
     let data = data.into_inner();
-    let registration = schema::Registration::from((user, data));
+    let registration = schema::Registration::new(data.session_id, user.id, user.name);
     let insertable = registration.clone();
     let session_id = registration.session_id;
 
@@ -55,7 +55,7 @@ pub async fn register(
 /// Cancel a user's registration for a session.
 #[post("/session/cancel", data = "<data>")]
 pub async fn cancel(
-    user: AuthorisedUser,
+    user: User<Generic>,
     conn: DatabaseConnection,
     data: Form<forms::Cancel>,
 ) -> Flash<Redirect> {
@@ -79,7 +79,7 @@ pub async fn cancel(
 
 /// Logs the user out and deletes their cookies.
 #[get("/logout")]
-pub fn logout(_user: AuthorisedUser, cookies: &CookieJar<'_>) -> &'static str {
+pub fn logout(_user: User<Generic>, cookies: &CookieJar<'_>) -> &'static str {
     cookies.remove_private(Cookie::named("id"));
     cookies.remove_private(Cookie::named("name"));
 
@@ -89,13 +89,13 @@ pub fn logout(_user: AuthorisedUser, cookies: &CookieJar<'_>) -> &'static str {
 /// Updates a user's personal bests.
 #[post("/pbs", data = "<data>")]
 pub async fn personal_bests(
-    user: AuthorisedUser,
+    user: User<Member>,
     conn: DatabaseConnection,
     data: Form<forms::PersonalBests>,
 ) -> Flash<Redirect> {
     let data = data.into_inner();
     let result = conn
-        .run(move |c| schema::PersonalBest::update(user, data, &c))
+        .run(move |c| schema::PersonalBest::update(user.id, user.name, data, &c))
         .await;
 
     // Check whether they broke the database
@@ -217,14 +217,12 @@ pub async fn authorised(
 /// Allows the Taskmaster leaderboard to be edited.
 #[post("/taskmaster/edit", data = "<data>")]
 pub async fn taskmaster_edit(
-    user: AuthorisedUser,
+    _user: User<TaskmasterAdmin>,
     conn: DatabaseConnection,
     data: Form<forms::TaskmasterUpdate>,
 ) -> Redirect {
-    if user.is_taskmaster_admin() {
-        conn.run(move |c| schema::TaskmasterEntry::update_all(&data.leaderboard, &c).unwrap())
-            .await;
-    }
+    conn.run(move |c| schema::TaskmasterEntry::update_all(&data.leaderboard, &c).unwrap())
+        .await;
 
     Redirect::to(uri!(frontend::taskmaster_leaderboard))
 }
@@ -232,7 +230,7 @@ pub async fn taskmaster_edit(
 /// Allows users to vote on the election.
 #[post("/election/vote/<position_id>", data = "<data>")]
 pub async fn election_vote(
-    user: AuthorisedUser,
+    user: User<Member>,
     conn: DatabaseConnection,
     position_id: i32,
     data: Form<HashMap<i32, i32>>,
@@ -250,14 +248,6 @@ pub async fn election_vote(
         return Flash::error(
             Redirect::to(uri!(frontend::elections)),
             "Voting for this position either hasn't opened yet or has closed.",
-        );
-    }
-
-    if !user.is_barbell_member() {
-        // Redirect to the main elections page
-        return Flash::error(
-            Redirect::to(uri!(frontend::elections)),
-            "You are not a Barbell member, so you cannot vote in this election.",
         );
     }
 
@@ -298,18 +288,10 @@ pub async fn election_vote(
 /// Allows administrators to open and close voting for a position.
 #[get("/elections/settings/toggle/<position_id>")]
 pub async fn election_settings_toggle(
-    user: AuthorisedUser,
+    _user: User<ElectionAdmin>,
     conn: DatabaseConnection,
     position_id: i32,
 ) -> Flash<Redirect> {
-    // Check whether the user can make this change
-    if !user.is_election_admin() {
-        return Flash::error(
-            Redirect::to(uri!(frontend::elections)),
-            "You do not have permission to toggle election voting.",
-        );
-    }
-
     conn.run(move |c| schema::ExecPosition::toggle_state(position_id, &c).unwrap())
         .await;
 
