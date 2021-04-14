@@ -4,37 +4,20 @@
 
 {{ super() }}
 
-<h2>Upcoming Sessions</h2>
+{% if current %}
 
-<table class="table table-dark">
+<h2>Selected session: "{{ current.title }}" on {{ current.start_time }}</h2>
 
-	<thead>
+<form accept-charset="utf-8" action="/sessions/delete" method="post">
+	<input name="session_id" type="hidden" value="{{ current.id }}">
+	<button type="submit" class="btn btn-danger">Delete</button>
+</form>
 
-		<tr>
-			<th scope="col">Title</th>
-			<th scope="col">Start Time</th>
-			<th scope="col">Remaining Spaces</th>
-		</tr>
+<br>
 
-	</thead>
+{% endif %}
 
-	<tbody>
-
-		{% for session in sessions %}
-
-		<tr>
-			<td class="font-weight-bold">{{ session.title }}</td>
-			<td>{{ session.start_time }}</td>
-			<td>{{ session.remaining }}</td>
-		</tr>
-
-		{% endfor %}
-
-	</tbody>
-
-</table>
-
-<h4>Create a Session</h4>
+<h2>Create a Session</h2>
 
 <form accept-charset="utf-8" action="/sessions/create" method="post">
 	<div class="form-group">
@@ -65,5 +48,42 @@
 
 	<button type="submit" class="btn btn-primary">Submit</button>
 </form>
+
+<br>
+
+<h2>Upcoming Sessions</h2>
+
+<table class="table table-dark">
+
+	<thead>
+
+		<tr>
+			<th scope="col">Title</th>
+			<th scope="col">Start Time</th>
+			<th scope="col">Remaining Spaces</th>
+		</tr>
+
+	</thead>
+
+	<tbody>
+
+		{% for session in sessions %}
+
+		<tr>
+			<td>
+				<a
+					class="font-weight-bold text-danger"
+					href="/sessions/manage/{{ session.id }}"
+				>{{ session.title }}</a>
+			</td>
+			<td>{{ session.start_time }}</td>
+			<td>{{ session.remaining }}</td>
+		</tr>
+
+		{% endfor %}
+
+	</tbody>
+
+</table>
 
 {% endblock content %}

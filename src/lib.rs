@@ -63,6 +63,7 @@ pub fn build_rocket() -> rocket::Rocket {
             routes![
                 frontend::sessions,
                 frontend::manage_sessions,
+                frontend::manage_specific_session,
                 frontend::specific_session,
                 frontend::bookings,
                 frontend::attendance,
@@ -77,6 +78,7 @@ pub fn build_rocket() -> rocket::Rocket {
                 frontend::election_results,
                 frontend::election_settings,
                 api::sessions_create,
+                api::session_delete,
                 api::register,
                 api::cancel,
                 api::record_attendance,

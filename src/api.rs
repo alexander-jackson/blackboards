@@ -45,6 +45,25 @@ pub async fn sessions_create(
     )
 }
 
+/// Deletes a session in the database.
+#[post("/sessions/delete", data = "<data>")]
+pub async fn session_delete(
+    _user: User<SiteAdmin>,
+    conn: DatabaseConnection,
+    data: Form<forms::SessionDelete>,
+) -> Flash<Redirect> {
+    let data = data.into_inner();
+
+    conn.run(move |c| schema::Session::delete(&c, data.session_id))
+        .await
+        .unwrap();
+
+    Flash::success(
+        Redirect::to(uri!(frontend::manage_sessions)),
+        "Successfully deleted the session!",
+    )
+}
+
 /// Registers a user for a session, confirming their email if needed.
 #[post("/session/register", data = "<data>")]
 pub async fn register(

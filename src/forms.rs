@@ -35,6 +35,13 @@ pub struct SessionCreate {
     pub start_time: String,
 }
 
+/// Defines the information needed to delete a session.
+#[derive(Debug, FromForm)]
+pub struct SessionDelete {
+    /// The session identifier to delete.
+    pub session_id: i32,
+}
+
 /// Defines the contents of the registration form for a session.
 #[derive(Debug, FromForm)]
 pub struct Register {

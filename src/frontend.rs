@@ -94,7 +94,39 @@ pub async fn manage_sessions(
 
     Template::render(
         "sessions_manage",
-        context::ManageSessions { sessions, message },
+        context::ManageSessions {
+            sessions,
+            current: None,
+            message,
+        },
+    )
+}
+
+/// Allows site administrators to manage a specific session.
+#[get("/sessions/manage/<session_id>")]
+pub async fn manage_specific_session(
+    _user: User<SiteAdmin>,
+    conn: DatabaseConnection,
+    flash: Option<FlashMessage<'_>>,
+    session_id: i32,
+) -> Template {
+    let sessions = conn
+        .run(move |c| schema::Session::get_results(&c).unwrap())
+        .await;
+
+    let current = conn
+        .run(move |c| schema::Session::find(session_id, &c).ok())
+        .await;
+
+    let message = flash.map(context::Message::from);
+
+    Template::render(
+        "sessions_manage",
+        context::ManageSessions {
+            sessions,
+            current,
+            message,
+        },
     )
 }
 

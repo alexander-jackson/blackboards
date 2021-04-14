@@ -103,6 +103,13 @@ impl Session {
         sessions::dsl::sessions.find(id).first::<Session>(conn)
     }
 
+    /// Deletes the session with the given identifier.
+    pub fn delete(conn: &diesel::PgConnection, id: i32) -> QueryResult<usize> {
+        log::warn!("Deleting session with id={}, including registrations", id);
+
+        diesel::delete(sessions::dsl::sessions.filter(sessions::dsl::id.eq(id))).execute(conn)
+    }
+
     /// Decreases the number of remaining places for a session given its identifier.
     pub fn decrement_remaining(id: i32, conn: &diesel::PgConnection) -> QueryResult<usize> {
         let current = Self::find(id, conn)?.remaining;

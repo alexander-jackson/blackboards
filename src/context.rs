@@ -47,6 +47,8 @@ pub struct Context {
 pub struct ManageSessions {
     /// The sessions that are available.
     pub sessions: Vec<schema::Session>,
+    /// The session currently being managed, if one is
+    pub current: Option<schema::Session>,
     /// The message to display to the user, for errors.
     pub message: Option<Message>,
 }
