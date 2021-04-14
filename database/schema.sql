@@ -1,4 +1,16 @@
+DROP TABLE IF EXISTS registrations;
+DROP TABLE IF EXISTS attendances;
+DROP TABLE IF EXISTS auth_pairs;
+DROP TABLE IF EXISTS personal_bests;
+DROP TABLE IF EXISTS taskmaster_entries;
+DROP TABLE IF EXISTS exec_positions;
+DROP TABLE IF EXISTS candidates;
+DROP TABLE IF EXISTS nominations;
+DROP TABLE IF EXISTS votes;
+
+/* Drop this last as it has constraints */
 DROP TABLE IF EXISTS sessions;
+
 CREATE TABLE sessions (
 	id INTEGER PRIMARY KEY,
 	title TEXT,
@@ -6,28 +18,32 @@ CREATE TABLE sessions (
 	remaining INTEGER
 );
 
-DROP TABLE IF EXISTS registrations;
 CREATE TABLE registrations (
 	session_id INTEGER,
 	warwick_id INTEGER,
 	name TEXT NOT NULL,
-	PRIMARY KEY (session_id, warwick_id)
+	PRIMARY KEY (session_id, warwick_id),
+	CONSTRAINT fk_sessions
+	FOREIGN KEY(session_id)
+	REFERENCES sessions(id)
+	ON DELETE CASCADE
 );
 
-DROP TABLE IF EXISTS attendances;
 CREATE TABLE attendances (
 	session_id INTEGER,
 	warwick_id INTEGER,
-	PRIMARY KEY (session_id, warwick_id)
+	PRIMARY KEY (session_id, warwick_id),
+	CONSTRAINT fk_sessions
+	FOREIGN KEY(session_id)
+	REFERENCES sessions(id)
+	ON DELETE CASCADE
 );
 
-DROP TABLE IF EXISTS auth_pairs;
 CREATE TABLE auth_pairs (
 	token TEXT PRIMARY KEY,
 	secret TEXT
 );
 
-DROP TABLE IF EXISTS personal_bests;
 CREATE TABLE personal_bests (
 	warwick_id INTEGER PRIMARY KEY,
 	name TEXT NOT NULL,
@@ -40,13 +56,11 @@ CREATE TABLE personal_bests (
 	show_wl BOOLEAN
 );
 
-DROP TABLE IF EXISTS taskmaster_entries;
 CREATE TABLE taskmaster_entries (
 	name TEXT PRIMARY KEY,
 	score INTEGER NOT NULL
 );
 
-DROP TABLE IF EXISTS exec_positions;
 CREATE TABLE exec_positions (
 	id INTEGER PRIMARY KEY,
 	title TEXT NOT NULL,
@@ -54,21 +68,18 @@ CREATE TABLE exec_positions (
 	open BOOLEAN NOT NULL
 );
 
-DROP TABLE IF EXISTS candidates;
 CREATE TABLE candidates (
 	warwick_id INTEGER PRIMARY KEY,
 	name TEXT NOT NULL,
 	elected BOOLEAN NOT NULL
 );
 
-DROP TABLE IF EXISTS nominations;
 CREATE TABLE nominations (
 	position_id INTEGER NOT NULL,
 	warwick_id INTEGER NOT NULL,
 	PRIMARY KEY (position_id, warwick_id)
 );
 
-DROP TABLE IF EXISTS votes;
 CREATE TABLE votes (
 	warwick_id INTEGER NOT NULL,
 	position_id INTEGER NOT NULL,
