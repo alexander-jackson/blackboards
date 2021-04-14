@@ -1,6 +1,7 @@
 //! Allows modifications of the `sessions` table in the database.
 
 use diesel::{BoolExpressionMethods, ExpressionMethods, QueryDsl, QueryResult, RunQueryDsl};
+use rand::Rng;
 
 use crate::schema::custom_types;
 use crate::session_window::SessionWindow;
@@ -33,6 +34,46 @@ pub struct Session {
 }
 
 impl Session {
+    /// Creates a new instance of a [`Session`].
+    pub fn create_and_insert(
+        conn: &diesel::PgConnection,
+        title: String,
+        start_time: i64,
+        remaining: u32,
+    ) -> QueryResult<usize> {
+        // Generate a random identifier and check it
+        let id = loop {
+            let potential = rand::thread_rng().gen::<i32>().abs();
+            let exists = diesel::select(diesel::dsl::exists(
+                sessions::dsl::sessions.filter(sessions::dsl::id.eq(potential)),
+            ))
+            .get_result(conn);
+
+            if let Ok(false) = exists {
+                break potential;
+            }
+        };
+
+        log::info!(
+            "Creating a new session with id={}, title='{}', timestamp={} and remaining={}",
+            id,
+            title,
+            start_time,
+            remaining
+        );
+
+        let session = Self {
+            id,
+            title,
+            start_time: custom_types::DateTime::new(start_time),
+            remaining: remaining as i32,
+        };
+
+        diesel::insert_into(sessions::table)
+            .values(session)
+            .execute(conn)
+    }
+
     /// Gets all available sessions currently in the database.
     pub fn get_results(conn: &diesel::PgConnection) -> QueryResult<Vec<Self>> {
         sessions::dsl::sessions

@@ -6,6 +6,7 @@
 use std::collections::HashMap;
 use std::env;
 
+use chrono::TimeZone;
 use itertools::Itertools;
 use rocket::form::Form;
 use rocket::http::{Cookie, CookieJar};
@@ -17,7 +18,32 @@ use crate::forms;
 use crate::frontend;
 use crate::schema;
 
-use crate::guards::{DatabaseConnection, ElectionAdmin, Generic, Member, TaskmasterAdmin, User};
+use crate::guards::{
+    DatabaseConnection, ElectionAdmin, Generic, Member, SiteAdmin, TaskmasterAdmin, User,
+};
+
+/// Creates a new session in the database.
+#[post("/sessions/create", data = "<data>")]
+pub async fn sessions_create(
+    _user: User<SiteAdmin>,
+    conn: DatabaseConnection,
+    data: Form<forms::SessionCreate>,
+) -> Flash<Redirect> {
+    let data = data.into_inner();
+    let formatted = format!("{} {}", data.date, data.start_time);
+
+    let datetime = chrono::Local.datetime_from_str(&formatted, "%Y-%m-%d %H:%M");
+    let timestamp = datetime.unwrap().timestamp();
+
+    conn.run(move |c| schema::Session::create_and_insert(&c, data.title, timestamp, data.spaces))
+        .await
+        .unwrap();
+
+    Flash::success(
+        Redirect::to(uri!(frontend::manage_sessions)),
+        "Successfully created the session!",
+    )
+}
 
 /// Registers a user for a session, confirming their email if needed.
 #[post("/session/register", data = "<data>")]

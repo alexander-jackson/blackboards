@@ -20,6 +20,8 @@ pub struct Member;
 pub struct TaskmasterAdmin;
 /// Represents a election administrator.
 pub struct ElectionAdmin;
+/// Represents a site administrator.
+pub struct SiteAdmin;
 
 /// Methods for allowing access control.
 pub trait AccessControl {
@@ -42,6 +44,7 @@ control_vars! {
     Member => Some("BARBELL_MEMBERS"),
     TaskmasterAdmin => Some("TASKMASTER_ADMINS"),
     ElectionAdmin => Some("ELECTION_ADMINS"),
+    SiteAdmin => Some("SITE_ADMINS"),
 }
 
 /// Represents an authorised user for a given route.

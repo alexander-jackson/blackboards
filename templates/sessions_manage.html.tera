@@ -1,0 +1,69 @@
+{% extends "base" %}
+
+{% block content %}
+
+{{ super() }}
+
+<h2>Upcoming Sessions</h2>
+
+<table class="table table-dark">
+
+	<thead>
+
+		<tr>
+			<th scope="col">Title</th>
+			<th scope="col">Start Time</th>
+			<th scope="col">Remaining Spaces</th>
+		</tr>
+
+	</thead>
+
+	<tbody>
+
+		{% for session in sessions %}
+
+		<tr>
+			<td class="font-weight-bold">{{ session.title }}</td>
+			<td>{{ session.start_time }}</td>
+			<td>{{ session.remaining }}</td>
+		</tr>
+
+		{% endfor %}
+
+	</tbody>
+
+</table>
+
+<h4>Create a Session</h4>
+
+<form accept-charset="utf-8" action="/sessions/create" method="post">
+	<div class="form-group">
+		<div class="row">
+			<div class="col">
+				<label for="title">Title</label>
+				<input type="text" class="form-control" id="title" name="title" required>
+			</div>
+			<div class="col">
+				<label for="spaces">Available Spaces</label>
+				<input type="number" class="form-control" id="spaces" name="spaces">
+			</div>
+		</div>
+	</div>
+
+	<div class="form-group">
+		<div class="row">
+			<div class="col">
+				<label for="date">Date</label>
+				<input type="date" class="form-control" id="date" name="date">
+			</div>
+			<div class="col">
+				<label for="startTime">Start Time</label>
+				<input type="time" class="form-control" id="startTime" name="start_time">
+			</div>
+		</div>
+	</div>
+
+	<button type="submit" class="btn btn-primary">Submit</button>
+</form>
+
+{% endblock content %}

@@ -18,7 +18,10 @@
 
 {% endif %}
 
-<h2>Available Sessions</h2>
+<h2>
+	Available Sessions
+	<a href="/sessions/manage" class="badge badge-dark">Manage</a>
+</h2>
 
 <table class="table table-dark">
 

@@ -12,13 +12,27 @@ impl<'r> FromFormField<'r> for WarwickId {
         let value = field.value;
 
         if !(value.chars().all(char::is_numeric) && value.len() == 7) {
-            return Err(
-                form::Error::validation("Value was either not numeric or incorrect length").into(),
-            );
+            return Err(form::Error::validation(
+                "Value was either not numeric or incorrect length",
+            )
+            .into());
         }
 
         Ok(Self(value.parse::<i32>().unwrap()))
     }
+}
+
+/// Defines the information needed to create a new session.
+#[derive(Debug, FromForm)]
+pub struct SessionCreate {
+    /// The title of the session.
+    pub title: String,
+    /// The number of available spaces.
+    pub spaces: u32,
+    /// The date of the session.
+    pub date: String,
+    /// The starting time of the session.
+    pub start_time: String,
 }
 
 /// Defines the contents of the registration form for a session.

@@ -13,7 +13,9 @@ use tallystick::{irv::Tally, Transfer};
 
 use crate::{context, schema};
 
-use crate::guards::{DatabaseConnection, ElectionAdmin, Generic, Member, TaskmasterAdmin, User};
+use crate::guards::{
+    DatabaseConnection, ElectionAdmin, Generic, Member, SiteAdmin, TaskmasterAdmin, User,
+};
 use crate::session_window::SessionWindow;
 
 fn format_registrations(
@@ -51,7 +53,7 @@ fn get_registrations(
 /// Gets the information needed for the sessions page and renders the template.
 #[get("/sessions")]
 pub async fn sessions(
-    _user: User<Generic>,
+    user: User<Generic>,
     conn: DatabaseConnection,
     flash: Option<FlashMessage<'_>>,
 ) -> Template {
@@ -63,6 +65,7 @@ pub async fn sessions(
 
     let message = flash.map(context::Message::from);
     let registrations = conn.run(move |c| get_registrations(&c, window)).await;
+    let is_site_admin = user.is_also::<SiteAdmin>();
 
     Template::render(
         "sessions",
@@ -71,14 +74,34 @@ pub async fn sessions(
             current: None,
             message,
             registrations,
+            is_site_admin,
         },
+    )
+}
+
+/// Allows site administrators to manage the upcoming sessions.
+#[get("/sessions/manage")]
+pub async fn manage_sessions(
+    _user: User<SiteAdmin>,
+    conn: DatabaseConnection,
+    flash: Option<FlashMessage<'_>>,
+) -> Template {
+    let sessions = conn
+        .run(move |c| schema::Session::get_results(&c).unwrap())
+        .await;
+
+    let message = flash.map(context::Message::from);
+
+    Template::render(
+        "sessions_manage",
+        context::ManageSessions { sessions, message },
     )
 }
 
 /// Gets the information needed for the session registration and renders the template.
 #[get("/sessions/<session_id>")]
 pub async fn specific_session(
-    _user: User<Generic>,
+    user: User<Generic>,
     conn: DatabaseConnection,
     session_id: i32,
 ) -> Result<Template, Redirect> {
@@ -93,6 +116,7 @@ pub async fn specific_session(
         .await;
 
     let registrations = conn.run(move |c| get_registrations(&c, window)).await;
+    let is_site_admin = user.is_also::<SiteAdmin>();
 
     Ok(Template::render(
         "sessions",
@@ -101,6 +125,7 @@ pub async fn specific_session(
             current,
             message: None,
             registrations,
+            is_site_admin,
         },
     ))
 }
@@ -163,6 +188,8 @@ pub fn authenticated(uri: &str) -> Template {
 /// Displays a small splash page after authenticating.
 #[get("/bookings")]
 pub async fn bookings(user: User<Member>, conn: DatabaseConnection) -> Template {
+    let is_site_admin = user.is_also::<SiteAdmin>();
+
     let window = SessionWindow::from_current_time();
     let sessions = conn
         .run(move |c| schema::Registration::get_user_bookings(user.id, window, &c).unwrap())
@@ -175,6 +202,7 @@ pub async fn bookings(user: User<Member>, conn: DatabaseConnection) -> Template 
             current: None,
             message: None,
             registrations: None,
+            is_site_admin,
         },
     )
 }

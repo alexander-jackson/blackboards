@@ -11,6 +11,8 @@ extern crate rocket_contrib;
 extern crate diesel;
 #[macro_use]
 extern crate serde_derive;
+#[macro_use]
+extern crate diesel_derive_newtype;
 
 use fern::colors::{Color, ColoredLevelConfig};
 use rocket::request::Request;
@@ -60,6 +62,7 @@ pub fn build_rocket() -> rocket::Rocket {
             "/",
             routes![
                 frontend::sessions,
+                frontend::manage_sessions,
                 frontend::specific_session,
                 frontend::bookings,
                 frontend::attendance,
@@ -73,6 +76,7 @@ pub fn build_rocket() -> rocket::Rocket {
                 frontend::election_voting,
                 frontend::election_results,
                 frontend::election_settings,
+                api::sessions_create,
                 api::register,
                 api::cancel,
                 api::record_attendance,

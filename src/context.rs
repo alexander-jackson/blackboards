@@ -38,6 +38,17 @@ pub struct Context {
     pub message: Option<Message>,
     /// The registrations for each session.
     pub registrations: Option<Vec<Registrations>>,
+    /// Whether or not the user is a site administrator.
+    pub is_site_admin: bool,
+}
+
+/// The context for managing upcoming sessions.
+#[derive(Serialize)]
+pub struct ManageSessions {
+    /// The sessions that are available.
+    pub sessions: Vec<schema::Session>,
+    /// The message to display to the user, for errors.
+    pub message: Option<Message>,
 }
 
 /// The context for automatically redirecting on authentication.
