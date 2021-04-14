@@ -104,7 +104,7 @@ pub async fn specific_session(
     user: User<Generic>,
     conn: DatabaseConnection,
     session_id: i32,
-) -> Result<Template, Redirect> {
+) -> Template {
     let window = SessionWindow::from_current_time();
 
     let sessions = conn
@@ -118,7 +118,7 @@ pub async fn specific_session(
     let registrations = conn.run(move |c| get_registrations(&c, window)).await;
     let is_site_admin = user.is_also::<SiteAdmin>();
 
-    Ok(Template::render(
+    Template::render(
         "sessions",
         context::Context {
             sessions,
@@ -127,24 +127,24 @@ pub async fn specific_session(
             registrations,
             is_site_admin,
         },
-    ))
+    )
 }
 
 /// Gets the information needed for the attendance recording dashboard and renders the template.
 #[get("/attendance")]
-pub async fn attendance(conn: DatabaseConnection) -> Result<Template, Redirect> {
+pub async fn attendance(conn: DatabaseConnection) -> Template {
     let sessions = conn
         .run(move |c| schema::Session::get_results(&c).unwrap())
         .await;
 
-    Ok(Template::render(
+    Template::render(
         "attendance",
         context::Attendance {
             sessions,
             current: None,
             message: None,
         },
-    ))
+    )
 }
 
 /// Gets the information needed for the attendance recording and renders the template.
@@ -153,7 +153,7 @@ pub async fn session_attendance(
     conn: DatabaseConnection,
     flash: Option<FlashMessage<'_>>,
     session_id: i32,
-) -> Result<Template, Redirect> {
+) -> Template {
     let sessions = conn
         .run(move |c| schema::Session::get_results(&c).unwrap())
         .await;
@@ -164,14 +164,14 @@ pub async fn session_attendance(
 
     let message = flash.map(context::Message::from);
 
-    Ok(Template::render(
+    Template::render(
         "attendance",
         context::Attendance {
             sessions,
             current,
             message,
         },
-    ))
+    )
 }
 
 /// Displays a small splash page after authenticating.
@@ -270,7 +270,7 @@ pub async fn taskmaster_edit(
     _user: User<TaskmasterAdmin>,
     conn: DatabaseConnection,
     flash: Option<FlashMessage<'_>>,
-) -> Result<Template, Redirect> {
+) -> Template {
     let leaderboard = conn
         .run(move |c| schema::TaskmasterEntry::get_results(&c).unwrap())
         .await;
@@ -283,15 +283,13 @@ pub async fn taskmaster_edit(
         .collect::<Vec<String>>()
         .join("\n");
 
-    let template = Template::render(
+    Template::render(
         "taskmaster_edit",
         context::TaskmasterEdit {
             leaderboard_csv,
             message,
         },
-    );
-
-    Ok(template)
+    )
 }
 
 /// Shows the elections board.
@@ -300,21 +298,21 @@ pub async fn elections(
     user: User<Generic>,
     conn: DatabaseConnection,
     flash: Option<FlashMessage<'_>>,
-) -> Result<Template, Redirect> {
+) -> Template {
     let exec_positions = conn
         .run(move |c| schema::ExecPosition::get_results(&c).unwrap())
         .await;
 
     let message = flash.map(context::Message::from);
 
-    Ok(Template::render(
+    Template::render(
         "elections",
         context::Elections {
             exec_positions,
             message,
             admin: user.is_also::<ElectionAdmin>(),
         },
-    ))
+    )
 }
 
 /// Gets the information needed for the session registration and renders the template.
@@ -483,10 +481,7 @@ fn count_position_ballots<'a>(
 
 /// Calculates the results of the elections won so far.
 #[get("/elections/results")]
-pub async fn election_results(
-    _user: User<ElectionAdmin>,
-    conn: DatabaseConnection,
-) -> Result<Template, Flash<Redirect>> {
+pub async fn election_results(_user: User<ElectionAdmin>, conn: DatabaseConnection) -> Template {
     // Get all the available positions
     let positions: BTreeMap<i32, schema::ExecPosition> = conn
         .run(move |c| schema::ExecPosition::get_results(&c))
@@ -547,10 +542,7 @@ pub async fn election_results(
     conn.run(move |c| schema::Candidate::mark_elected(&all_winners, &c).unwrap())
         .await;
 
-    Ok(Template::render(
-        "election_results",
-        context::ElectionResults { results },
-    ))
+    Template::render("election_results", context::ElectionResults { results })
 }
 
 /// Shows the elections settings page.
@@ -559,21 +551,21 @@ pub async fn election_settings(
     _user: User<ElectionAdmin>,
     conn: DatabaseConnection,
     flash: Option<FlashMessage<'_>>,
-) -> Result<Template, Flash<Redirect>> {
+) -> Template {
     let exec_positions = conn
         .run(move |c| schema::ExecPosition::get_results(&c).unwrap())
         .await;
 
     let message = flash.map(context::Message::from);
 
-    Ok(Template::render(
+    Template::render(
         "election_settings",
         context::Elections {
             exec_positions,
             message,
             admin: true,
         },
-    ))
+    )
 }
 
 #[cfg(test)]
