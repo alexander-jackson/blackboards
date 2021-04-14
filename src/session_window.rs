@@ -1,6 +1,6 @@
 //! Contains the [`SessionWindow`] type, that defines what sessions should be shown when.
 
-use chrono::offset::Utc;
+use chrono::offset::Local;
 use chrono::{DateTime, Datelike, Duration, Weekday};
 
 /// Represents the sessions that should be shown.
@@ -15,11 +15,11 @@ pub struct SessionWindow {
 impl SessionWindow {
     /// Gets the window for the current time.
     pub fn from_current_time() -> Self {
-        let now = Utc::now() + Duration::hours(6);
+        let now = Local::now() + Duration::hours(6);
         Self::from_time(now)
     }
 
-    fn from_time(time: DateTime<Utc>) -> Self {
+    fn from_time(time: DateTime<Local>) -> Self {
         let one_week_prior = time - Duration::weeks(1);
 
         let last_sunday = (0..7)
@@ -45,11 +45,11 @@ mod tests {
 
     #[test]
     fn basic_time_inference() {
-        let time = Utc.ymd(2020, 11, 16).and_hms(10, 28, 0);
+        let time = Local.ymd(2020, 11, 16).and_hms(10, 28, 0);
         let window = SessionWindow::from_time(time);
 
-        let start = Utc.ymd(2020, 11, 15).and_hms(18, 0, 0);
-        let end = Utc.ymd(2020, 11, 22).and_hms(18, 0, 0);
+        let start = Local.ymd(2020, 11, 15).and_hms(18, 0, 0);
+        let end = Local.ymd(2020, 11, 22).and_hms(18, 0, 0);
 
         assert_eq!(start.timestamp(), window.start);
         assert_eq!(end.timestamp(), window.end);
@@ -57,11 +57,11 @@ mod tests {
 
     #[test]
     fn start_of_week() {
-        let time = Utc.ymd(2020, 11, 16).and_hms(0, 0, 0);
+        let time = Local.ymd(2020, 11, 16).and_hms(0, 0, 0);
         let window = SessionWindow::from_time(time);
 
-        let start = Utc.ymd(2020, 11, 15).and_hms(18, 0, 0);
-        let end = Utc.ymd(2020, 11, 22).and_hms(18, 0, 0);
+        let start = Local.ymd(2020, 11, 15).and_hms(18, 0, 0);
+        let end = Local.ymd(2020, 11, 22).and_hms(18, 0, 0);
 
         assert_eq!(start.timestamp(), window.start);
         assert_eq!(end.timestamp(), window.end);
@@ -69,11 +69,11 @@ mod tests {
 
     #[test]
     fn end_of_week() {
-        let time = Utc.ymd(2020, 11, 22).and_hms(23, 59, 59);
+        let time = Local.ymd(2020, 11, 22).and_hms(23, 59, 59);
         let window = SessionWindow::from_time(time);
 
-        let start = Utc.ymd(2020, 11, 15).and_hms(18, 0, 0);
-        let end = Utc.ymd(2020, 11, 22).and_hms(18, 0, 0);
+        let start = Local.ymd(2020, 11, 15).and_hms(18, 0, 0);
+        let end = Local.ymd(2020, 11, 22).and_hms(18, 0, 0);
 
         assert_eq!(start.timestamp(), window.start);
         assert_eq!(end.timestamp(), window.end);
@@ -81,11 +81,11 @@ mod tests {
 
     #[test]
     fn start_of_year() {
-        let time = Utc.ymd(2020, 1, 1).and_hms(0, 0, 0);
+        let time = Local.ymd(2020, 1, 1).and_hms(0, 0, 0);
         let window = SessionWindow::from_time(time);
 
-        let start = Utc.ymd(2019, 12, 29).and_hms(18, 0, 0);
-        let end = Utc.ymd(2020, 1, 5).and_hms(18, 0, 0);
+        let start = Local.ymd(2019, 12, 29).and_hms(18, 0, 0);
+        let end = Local.ymd(2020, 1, 5).and_hms(18, 0, 0);
 
         assert_eq!(start.timestamp(), window.start);
         assert_eq!(end.timestamp(), window.end);
@@ -93,11 +93,11 @@ mod tests {
 
     #[test]
     fn end_of_year() {
-        let time = Utc.ymd(2020, 12, 31).and_hms(0, 0, 0);
+        let time = Local.ymd(2020, 12, 31).and_hms(0, 0, 0);
         let window = SessionWindow::from_time(time);
 
-        let start = Utc.ymd(2020, 12, 27).and_hms(18, 0, 0);
-        let end = Utc.ymd(2021, 1, 3).and_hms(18, 0, 0);
+        let start = Local.ymd(2020, 12, 27).and_hms(18, 0, 0);
+        let end = Local.ymd(2021, 1, 3).and_hms(18, 0, 0);
 
         assert_eq!(start.timestamp(), window.start);
         assert_eq!(end.timestamp(), window.end);
