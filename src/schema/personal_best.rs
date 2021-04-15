@@ -95,7 +95,7 @@ impl PersonalBest {
     }
 
     /// Finds a user's personal bests in the database given their Warwick ID.
-    pub fn find(user_id: i32, name: String, conn: &diesel::PgConnection) -> QueryResult<Self> {
+    pub fn find(user_id: i32, name: &str, conn: &diesel::PgConnection) -> QueryResult<Self> {
         if let Ok(pbs) = personal_bests::dsl::personal_bests
             .find(user_id)
             .first::<Self>(conn)
@@ -103,8 +103,14 @@ impl PersonalBest {
             return Ok(pbs);
         }
 
+        log::info!(
+            "User ({}, {}) has no personal bests, inserting defaults",
+            user_id,
+            name
+        );
+
         // Insert a blank one and return that instead
-        let pbs = Self::new(user_id, name);
+        let pbs = Self::new(user_id, String::from(name));
         pbs.insert(conn)?;
 
         Ok(pbs)
@@ -118,7 +124,14 @@ impl PersonalBest {
         conn: &diesel::PgConnection,
     ) -> QueryResult<usize> {
         let filter = personal_bests::dsl::warwick_id.eq(user_id);
-        let current = Self::find(user_id, name, conn)?;
+        let current = Self::find(user_id, &name, conn)?;
+
+        log::info!(
+            "Updating personal bests for ({}, {}) to: {:?}",
+            user_id,
+            name,
+            data
+        );
 
         // Check which columns need updating
         let updates = (

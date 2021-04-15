@@ -47,8 +47,18 @@ impl Registration {
         let session = Session::find(self.session_id, conn)?;
 
         if session.remaining == 0 {
+            log::warn!("Session with id={} has no remaining spaces", session.id);
+
             return Err(diesel::result::Error::NotFound);
         }
+
+        log::debug!(
+            "Attempting to register ({}, {}) for session_id={}, {} remaining spaces",
+            self.warwick_id,
+            self.name,
+            self.session_id,
+            session.remaining,
+        );
 
         diesel::insert_into(registrations::table)
             .values(self)
@@ -66,6 +76,12 @@ impl Registration {
         let filter = registrations::dsl::warwick_id
             .eq(warwick_id)
             .and(registrations::dsl::session_id.eq(session_id));
+
+        log::debug!(
+            "Cancelling registration for session_id={} from warwick_id={}",
+            session_id,
+            warwick_id
+        );
 
         Session::increment_remaining(session_id, conn)?;
 

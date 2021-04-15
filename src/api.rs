@@ -208,8 +208,6 @@ pub async fn authenticate(
     let pair = auth::obtain_request_token(&consumer_key, &consumer_secret, &uri).await;
     let callback = auth::build_callback(&pair.token, &uri);
 
-    log::debug!("Getting a connection");
-
     // Write the secret to the database
     conn.run(move |c| schema::AuthPair::from(pair).insert(&c).unwrap())
         .await;

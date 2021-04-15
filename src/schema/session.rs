@@ -114,6 +114,12 @@ impl Session {
     pub fn decrement_remaining(id: i32, conn: &diesel::PgConnection) -> QueryResult<usize> {
         let current = Self::find(id, conn)?.remaining;
 
+        log::debug!(
+            "Decrementing remaining places for session_id={}, currently has {}",
+            id,
+            current
+        );
+
         diesel::update(sessions::dsl::sessions.filter(sessions::dsl::id.eq(&id)))
             .set(sessions::dsl::remaining.eq(current - 1))
             .execute(conn)
@@ -122,6 +128,12 @@ impl Session {
     /// Increases the number of remaining places for a session given its identifier.
     pub fn increment_remaining(id: i32, conn: &diesel::PgConnection) -> QueryResult<usize> {
         let current = Self::find(id, conn)?.remaining;
+
+        log::debug!(
+            "Incrementing remaining places for session_id={}, currently has {}",
+            id,
+            current
+        );
 
         diesel::update(sessions::dsl::sessions.filter(sessions::dsl::id.eq(&id)))
             .set(sessions::dsl::remaining.eq(current + 1))

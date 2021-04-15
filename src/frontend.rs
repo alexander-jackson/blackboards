@@ -259,7 +259,7 @@ pub async fn personal_bests(
     flash: Option<FlashMessage<'_>>,
 ) -> Template {
     let personal_bests = conn
-        .run(move |c| schema::PersonalBest::find(user.id, user.name, &c).unwrap())
+        .run(move |c| schema::PersonalBest::find(user.id, &user.name, &c).unwrap())
         .await;
 
     let message = flash.map(context::Message::from);
