@@ -59,10 +59,10 @@
 
 {% for session in registrations %}
 
-<h3>{{ session.0.0 }} - {{ session.0.1 }}</h3>
+<h4>{{ session.start_time }} - {{ session.title }}</h4>
 
 <ul class="list-style">
-	{% for member in session.1 %}
+	{% for member in session.members %}
 	<li>{{ member }}</li>
 	{% endfor %}
 </ul>

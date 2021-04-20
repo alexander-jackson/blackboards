@@ -21,20 +21,20 @@ use crate::session_window::SessionWindow;
 fn format_registrations(
     unformatted: Vec<(i32, schema::custom_types::DateTime, String, String)>,
 ) -> Vec<context::Registrations> {
-    let mut map: BTreeMap<(i32, schema::custom_types::DateTime, String), Vec<String>> =
+    let mut map: BTreeMap<(schema::custom_types::DateTime, i32, String), Vec<String>> =
         BTreeMap::new();
 
     for (id, start_time, title, name) in unformatted {
-        map.entry((id, start_time, title)).or_default().push(name);
+        map.entry((start_time, id, title)).or_default().push(name);
     }
 
-    let mut registrations = Vec::new();
-
-    for (key, value) in map {
-        registrations.push(((key.1.to_string(), key.2), value))
-    }
-
-    registrations
+    map.into_iter()
+        .map(|(key, value)| context::Registrations {
+            start_time: key.0,
+            title: key.2,
+            members: value,
+        })
+        .collect()
 }
 
 fn get_registrations(

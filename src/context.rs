@@ -6,8 +6,16 @@ use rocket::request::FlashMessage;
 
 use crate::schema;
 
-/// Represents the session title, start time and the users' registered for it.
-pub type Registrations = ((String, String), Vec<String>);
+/// Represents the registrations for a given session.
+#[derive(Debug, Serialize)]
+pub struct Registrations {
+    /// The starting time of the session
+    pub start_time: schema::custom_types::DateTime,
+    /// The title of the session
+    pub title: String,
+    /// The names of the members signed up for it
+    pub members: Vec<String>,
+}
 
 /// Represents a flash message, but including the variant.
 #[derive(Serialize)]
