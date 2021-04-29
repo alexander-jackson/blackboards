@@ -1,0 +1,17 @@
+version: 2
+updates:
+- package-ecosystem: cargo
+  directory: "/"
+  schedule:
+    interval: monthly
+  open-pull-requests-limit: 10
+  target-branch: develop
+  reviewers:
+  - alexander-jackson
+  ignore:
+  - dependency-name: lettre
+    versions:
+    - 0.10.0-beta.1
+  - dependency-name: rand
+    versions:
+    - 0.8.3
