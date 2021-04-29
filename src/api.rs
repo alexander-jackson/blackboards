@@ -82,17 +82,19 @@ pub async fn register(
         .await
         .unwrap();
 
-    email::send_confirmation(&registration, &session).await;
-
     // Check whether they broke the database
     match result {
-        Ok(_) => Flash::success(
-            Redirect::to(uri!(frontend::sessions)),
-            "Successfully registered for the session!",
-        ),
+        Ok(_) => {
+            email::send_confirmation(&registration, &session).await;
+
+            Flash::success(
+                Redirect::to(uri!(frontend::sessions)),
+                "Successfully registered for the session!",
+            )
+        }
         Err(_) => Flash::error(
             Redirect::to(uri!(frontend::sessions)),
-            "Failed to register for the session, have you already booked one?",
+            "Failed to register for the session, have you already booked one or is it full?",
         ),
     }
 }
