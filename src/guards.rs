@@ -25,16 +25,14 @@ pub struct SiteAdmin;
 
 /// Methods for allowing access control.
 pub trait AccessControl {
-    /// The environment variable to check for this user.
-    fn env_var() -> Option<&'static str>;
+    /// The name of the environment variable to check for this user.
+    const KEY: Option<&'static str>;
 }
 
 macro_rules! control_vars {
     ($($struct:path => $statement:expr,)*) => {
         $(impl AccessControl for $struct {
-            fn env_var() -> Option<&'static str> {
-                $statement
-            }
+            const KEY: Option<&'static str> = $statement;
         })*
     };
 }
@@ -63,14 +61,14 @@ impl<T: AccessControl> User<T> {
     pub fn is_also<U: AccessControl>(&self) -> bool {
         let id = self.id.to_string();
 
-        U::env_var()
+        U::KEY
             .map(|key| env::var(key).expect("Failed to get environment variable"))
             .map(|value| value.split(',').any(|v| v == id))
             .unwrap_or_default()
     }
 
     fn environment_contains(value: &str) -> bool {
-        T::env_var()
+        T::KEY
             .map(|key| {
                 // Get the environment variable and parse it
                 let var = env::var(key).expect("Failed to get environment variable");
