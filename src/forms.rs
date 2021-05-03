@@ -90,3 +90,38 @@ pub struct TaskmasterUpdate {
     /// The CSV representing the new board state.
     pub leaderboard: String,
 }
+
+#[cfg(test)]
+mod tests {
+    use rocket::form::name::NameView;
+
+    use super::*;
+
+    #[test]
+    fn invalid_identifiers_are_not_parsed() {
+        let identifiers = vec!["170250", "strings", "170250p"];
+
+        for ident in identifiers {
+            let value_field = ValueField {
+                name: NameView::new("id"),
+                value: ident,
+            };
+
+            assert!(WarwickId::from_value(value_field).is_err());
+        }
+    }
+
+    #[test]
+    fn valid_identifiers_are_parsed() {
+        let identifiers = vec!["1702502", "1820900"];
+
+        for ident in identifiers {
+            let value_field = ValueField {
+                name: NameView::new("id"),
+                value: ident,
+            };
+
+            assert!(WarwickId::from_value(value_field).is_ok());
+        }
+    }
+}

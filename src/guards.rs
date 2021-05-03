@@ -68,6 +68,26 @@ impl<T: AccessControl> User<T> {
             .map(|value| value.split(',').any(|v| v == id))
             .unwrap_or_default()
     }
+
+    fn environment_contains(value: &str) -> bool {
+        T::env_var()
+            .map(|key| {
+                // Get the environment variable and parse it
+                let var = env::var(key).expect("Failed to get environment variable");
+                let contains = var.split(',').any(|v| v == value);
+
+                if !contains {
+                    log::warn!(
+                        "user_id={} was not found in the following environment variable: {}",
+                        value,
+                        key
+                    );
+                }
+
+                contains
+            })
+            .unwrap_or(true)
+    }
 }
 
 #[rocket::async_trait]
@@ -88,26 +108,8 @@ impl<T: AccessControl, 'r> FromRequest<'r> for User<T> {
             None => return unauthorised,
         };
 
-        if let Some(key) = T::env_var() {
-            // Get the environment variable and parse it
-            let var = env::var(key).expect("Failed to get environment variable");
-
-            if !var.split(',').any(|v| v == id.value()) {
-                log::warn!(
-                    "user_id={} was not found in the following environment variable: {}",
-                    id.value(),
-                    key
-                );
-
-                return forbidden;
-            }
-
-            log::debug!(
-                target: "blackboards",
-                "user_id={} was found in the following environment variable: {}",
-                id.value(),
-                key
-            );
+        if !Self::environment_contains(id.value()) {
+            return forbidden;
         }
 
         Outcome::Success(Self {
@@ -115,5 +117,35 @@ impl<T: AccessControl, 'r> FromRequest<'r> for User<T> {
             name: String::from(name.value()),
             level: PhantomData,
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn site_admins_can_be_checked() {
+        // Place the values in the environment variable
+        env::set_var("SITE_ADMINS", "1702502");
+
+        assert!(User::<SiteAdmin>::environment_contains("1702502"));
+    }
+
+    #[test]
+    fn multiple_users_can_be_within_environment_variables() {
+        // Place the values in the environment variable
+        env::set_var("BARBELL_MEMBERS", "1820900,1701229");
+
+        assert!(User::<Member>::environment_contains("1820900"));
+        assert!(User::<Member>::environment_contains("1701229"));
+    }
+
+    #[test]
+    fn users_can_be_rejected_from_environment_variables() {
+        // Place the values in the environment variable
+        env::set_var("TASKMASTER_ADMINS", "1707704");
+
+        assert!(!User::<TaskmasterAdmin>::environment_contains("1702502"));
     }
 }
