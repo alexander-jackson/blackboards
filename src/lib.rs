@@ -14,9 +14,12 @@ extern crate serde_derive;
 #[macro_use]
 extern crate diesel_derive_newtype;
 
+use std::collections::HashMap;
+use std::env;
+
 use fern::colors::{Color, ColoredLevelConfig};
-use rocket::request::Request;
-use rocket::response::Redirect;
+use rocket::{figment::providers::Env, request::Request};
+use rocket::{figment::Figment, response::Redirect, Config};
 use rocket_contrib::templates::Template;
 
 pub mod api;
@@ -49,12 +52,29 @@ pub async fn forbidden(req: &Request<'_>) -> Template {
     Template::render("forbidden", context::Forbidden { path })
 }
 
+/// Builds the configuration for the Rocket instance.
+fn config_from_env() -> Figment {
+    let mut databases = HashMap::new();
+    let mut urls = HashMap::new();
+
+    let database_url =
+        env::var("DATABASE_URL").expect("Failed to find `DATABASE_URL` in the environment");
+
+    urls.insert("url", database_url);
+    databases.insert("blackboards", urls);
+
+    Figment::from(Config::default())
+        .merge(Env::prefixed("ROCKET_").global())
+        .merge(("log_level", "off"))
+        .merge(("databases", databases))
+}
+
 /// Builds the Rocket object defining the web server.
 ///
 /// Adds the database connection and the template handler to the rocket, along with the routes that
 /// are supported and returns the Rocket object ready to be launched.
 pub fn build_rocket() -> rocket::Rocket {
-    rocket::ignite()
+    rocket::custom(config_from_env())
         .attach(guards::DatabaseConnection::fairing())
         .attach(Template::fairing())
         .register(catchers![unauthorised, forbidden])

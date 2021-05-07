@@ -1,2 +1,0 @@
-[global.databases.blackboards]
-url = "postgresql://localhost:5432/blackboards"
