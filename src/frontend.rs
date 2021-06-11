@@ -13,9 +13,7 @@ use tallystick::{irv::Tally, Transfer};
 
 use crate::{context, schema};
 
-use crate::guards::{
-    DatabaseConnection, ElectionAdmin, Generic, Member, SiteAdmin, TaskmasterAdmin, User,
-};
+use crate::guards::{DatabaseConnection, ElectionAdmin, Generic, Member, SiteAdmin, User};
 use crate::session_window::SessionWindow;
 
 fn format_registrations(
@@ -268,57 +266,6 @@ pub async fn personal_bests(
         "personal_bests",
         context::PersonalBests {
             personal_bests,
-            message,
-        },
-    )
-}
-
-/// Displays the state of the Taskmaster leaderboard.
-#[get("/taskmaster")]
-pub async fn taskmaster_leaderboard(
-    user: User<Generic>,
-    conn: DatabaseConnection,
-    flash: Option<FlashMessage<'_>>,
-) -> Template {
-    let leaderboard = conn
-        .run(move |c| schema::TaskmasterEntry::get_results(&c).unwrap())
-        .await;
-
-    let message = flash.map(context::Message::from);
-
-    Template::render(
-        "taskmaster_leaderboard",
-        context::TaskmasterLeaderboard {
-            leaderboard,
-            admin: user.is_also::<TaskmasterAdmin>(),
-            message,
-        },
-    )
-}
-
-/// Allows authorised users to edit the Taskmaster leaderboard.
-#[get("/taskmaster/edit")]
-pub async fn taskmaster_edit(
-    _user: User<TaskmasterAdmin>,
-    conn: DatabaseConnection,
-    flash: Option<FlashMessage<'_>>,
-) -> Template {
-    let leaderboard = conn
-        .run(move |c| schema::TaskmasterEntry::get_results(&c).unwrap())
-        .await;
-
-    let message = flash.map(context::Message::from);
-
-    let leaderboard_csv: String = leaderboard
-        .iter()
-        .map(|entry| format!("{},{}", entry.name, entry.score))
-        .collect::<Vec<String>>()
-        .join("\n");
-
-    Template::render(
-        "taskmaster_edit",
-        context::TaskmasterEdit {
-            leaderboard_csv,
             message,
         },
     )

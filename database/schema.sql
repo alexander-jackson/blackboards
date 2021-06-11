@@ -2,7 +2,6 @@ DROP TABLE IF EXISTS registrations;
 DROP TABLE IF EXISTS attendances;
 DROP TABLE IF EXISTS auth_pairs;
 DROP TABLE IF EXISTS personal_bests;
-DROP TABLE IF EXISTS taskmaster_entries;
 DROP TABLE IF EXISTS exec_positions;
 DROP TABLE IF EXISTS candidates;
 DROP TABLE IF EXISTS nominations;
@@ -54,11 +53,6 @@ CREATE TABLE personal_bests (
 	clean_and_jerk REAL,
 	show_pl BOOLEAN,
 	show_wl BOOLEAN
-);
-
-CREATE TABLE taskmaster_entries (
-	name TEXT PRIMARY KEY,
-	score INTEGER NOT NULL
 );
 
 CREATE TABLE exec_positions (

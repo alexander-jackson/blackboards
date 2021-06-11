@@ -9,7 +9,6 @@ pub mod nomination;
 pub mod personal_best;
 pub mod registration;
 pub mod session;
-pub mod taskmaster_entry;
 pub mod vote;
 
 pub use attendance::{attendances, Attendance};
@@ -20,7 +19,6 @@ pub use nomination::{nominations, Nomination};
 pub use personal_best::{personal_bests, PersonalBest};
 pub use registration::{registrations, Registration};
 pub use session::{sessions, Session};
-pub use taskmaster_entry::{taskmaster_entries, TaskmasterEntry};
 pub use vote::{votes, Vote};
 
 joinable!(registrations -> sessions (session_id));

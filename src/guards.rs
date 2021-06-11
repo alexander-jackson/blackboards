@@ -16,8 +16,6 @@ pub struct DatabaseConnection(diesel::PgConnection);
 pub struct Generic;
 /// Represents a member of Warwick Barbell.
 pub struct Member;
-/// Represents a Taskmaster administrator.
-pub struct TaskmasterAdmin;
 /// Represents a election administrator.
 pub struct ElectionAdmin;
 /// Represents a site administrator.
@@ -40,7 +38,6 @@ macro_rules! control_vars {
 control_vars! {
     Generic => None,
     Member => Some("BARBELL_MEMBERS"),
-    TaskmasterAdmin => Some("TASKMASTER_ADMINS"),
     ElectionAdmin => Some("ELECTION_ADMINS"),
     SiteAdmin => Some("SITE_ADMINS"),
 }
@@ -142,8 +139,8 @@ mod tests {
     #[test]
     fn users_can_be_rejected_from_environment_variables() {
         // Place the values in the environment variable
-        env::set_var("TASKMASTER_ADMINS", "1707704");
+        env::set_var("ELECTION_ADMINS", "1707704");
 
-        assert!(!User::<TaskmasterAdmin>::environment_contains("1702502"));
+        assert!(!User::<ElectionAdmin>::environment_contains("1702502"));
     }
 }

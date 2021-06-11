@@ -18,9 +18,7 @@ use crate::forms;
 use crate::frontend;
 use crate::schema;
 
-use crate::guards::{
-    DatabaseConnection, ElectionAdmin, Generic, Member, SiteAdmin, TaskmasterAdmin, User,
-};
+use crate::guards::{DatabaseConnection, ElectionAdmin, Generic, Member, SiteAdmin, User};
 
 /// Creates a new session in the database.
 #[post("/sessions/create", data = "<data>")]
@@ -257,19 +255,6 @@ pub async fn authorised(
     cookies.add_private(Cookie::new("name", user_info.name));
 
     Redirect::to(uri!(frontend::authenticated: uri))
-}
-
-/// Allows the Taskmaster leaderboard to be edited.
-#[post("/taskmaster/edit", data = "<data>")]
-pub async fn taskmaster_edit(
-    _user: User<TaskmasterAdmin>,
-    conn: DatabaseConnection,
-    data: Form<forms::TaskmasterUpdate>,
-) -> Redirect {
-    conn.run(move |c| schema::TaskmasterEntry::update_all(&data.leaderboard, &c).unwrap())
-        .await;
-
-    Redirect::to(uri!(frontend::taskmaster_leaderboard))
 }
 
 /// Allows users to vote on the election.

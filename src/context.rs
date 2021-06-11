@@ -99,26 +99,6 @@ pub struct PersonalBests {
     pub message: Option<Message>,
 }
 
-/// The context for displaying the Taskmaster leaderboard.
-#[derive(Serialize)]
-pub struct TaskmasterLeaderboard {
-    /// The state of the leaderboard
-    pub leaderboard: Vec<schema::TaskmasterEntry>,
-    /// Whether the user has permission to edit the board
-    pub admin: bool,
-    /// The message to display to the user, for errors
-    pub message: Option<Message>,
-}
-
-/// The context for displaying the Taskmaster leaderboard.
-#[derive(Serialize)]
-pub struct TaskmasterEdit {
-    /// The state of the leaderboard, as a CSV
-    pub leaderboard_csv: String,
-    /// The message to display to the user, for errors
-    pub message: Option<Message>,
-}
-
 /// The context for displaying the exec positions.
 #[derive(Serialize)]
 pub struct Elections {
