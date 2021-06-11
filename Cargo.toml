@@ -7,17 +7,17 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-serde = "1.0.125"
-serde_derive = "1.0.125"
+serde = "1.0.126"
+serde_derive = "1.0.126"
 dotenv = "0.15.0"
 rand = "0.8.3"
 chrono = "0.4.19"
-url = "2.2.1"
-itertools = "0.10.0"
+url = "2.2.2"
+itertools = "0.10.1"
 either = "1.6.1"
 log = "0.4.14"
 base64 = "0.13.0"
-reqwest = "0.11.2"
+reqwest = "0.11.3"
 diesel-derive-newtype = "0.1.2"
 
 [dependencies.rocket]
@@ -31,11 +31,11 @@ branch = "master"
 features = ["tera_templates", "diesel_postgres_pool"]
 
 [dependencies.diesel]
-version = "1.4.6"
+version = "1.4.7"
 features = ["postgres", "r2d2"]
 
 [dependencies.lettre]
-version = "0.10.0-beta.3"
+version = "0.10.0-rc.3"
 features = ["smtp-transport", "tokio1", "tokio1-native-tls"]
 
 [dependencies.oauth]
