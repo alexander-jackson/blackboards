@@ -239,14 +239,27 @@ pub async fn bookings(user: User<Member>, conn: DatabaseConnection) -> Template 
 
 /// Displays the PB board for people to view.
 #[get("/")]
-pub async fn blackboard(user: Option<User<Generic>>, conn: DatabaseConnection) -> Template {
+pub async fn blackboard(
+    user: Option<User<Generic>>,
+    conn: DatabaseConnection,
+    flash: Option<FlashMessage<'_>>,
+) -> Template {
     let (pl, wl) = conn
         .run(move |c| schema::PersonalBest::get_results(&c).unwrap())
         .await;
 
     let user_id = user.map(|user| user.id);
+    let message = flash.map(context::Message::from);
 
-    Template::render("blackboard", context::Blackboard { pl, wl, user_id })
+    Template::render(
+        "blackboard",
+        context::Blackboard {
+            pl,
+            wl,
+            user_id,
+            message,
+        },
+    )
 }
 
 /// Allows the user to change their personal bests.

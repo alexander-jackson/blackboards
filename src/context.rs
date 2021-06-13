@@ -88,6 +88,8 @@ pub struct Blackboard {
     pub wl: Vec<schema::PersonalBest>,
     /// The Warwick ID of the viewer if they are logged in
     pub user_id: Option<i32>,
+    /// The message to display to the user, for errors
+    pub message: Option<Message>,
 }
 
 /// The context for updating personal bests.

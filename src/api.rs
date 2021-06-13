@@ -124,11 +124,16 @@ pub async fn cancel(
 
 /// Logs the user out and deletes their cookies.
 #[get("/logout")]
-pub fn logout(_user: User<Generic>, cookies: &CookieJar<'_>) -> &'static str {
+pub fn logout(user: User<Generic>, cookies: &CookieJar<'_>) -> Flash<Redirect> {
+    log::info!("Logging out user ({}, {})", user.id, user.name);
+
     cookies.remove_private(Cookie::named("id"));
     cookies.remove_private(Cookie::named("name"));
 
-    "Logged out"
+    Flash::success(
+        Redirect::to(uri!(frontend::blackboard)),
+        "Successfully logged you out!",
+    )
 }
 
 /// Updates a user's personal bests.
