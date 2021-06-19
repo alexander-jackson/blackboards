@@ -33,7 +33,7 @@ pub async fn sessions_create(
     let datetime = chrono::Local.datetime_from_str(&formatted, "%Y-%m-%d %H:%M");
     let timestamp = datetime.unwrap().timestamp();
 
-    conn.run(move |c| schema::Session::create_and_insert(&c, data.title, timestamp, data.spaces))
+    conn.run(move |c| schema::Session::create_and_insert(c, data.title, timestamp, data.spaces))
         .await
         .unwrap();
 
@@ -52,7 +52,7 @@ pub async fn session_delete(
 ) -> Flash<Redirect> {
     let data = data.into_inner();
 
-    conn.run(move |c| schema::Session::delete(&c, data.session_id))
+    conn.run(move |c| schema::Session::delete(c, data.session_id))
         .await
         .unwrap();
 
@@ -74,9 +74,9 @@ pub async fn register(
     let insertable = registration.clone();
     let session_id = registration.session_id;
 
-    let result = conn.run(move |c| insertable.insert(&c)).await;
+    let result = conn.run(move |c| insertable.insert(c)).await;
     let session = conn
-        .run(move |c| schema::Session::find(session_id, &c))
+        .run(move |c| schema::Session::find(session_id, c))
         .await
         .unwrap();
 
@@ -106,7 +106,7 @@ pub async fn cancel(
 ) -> Flash<Redirect> {
     let data = data.into_inner();
     let registration = conn
-        .run(move |c| schema::Registration::cancel(user.id, data.session_id, &c))
+        .run(move |c| schema::Registration::cancel(user.id, data.session_id, c))
         .await;
 
     // Check whether they broke the database
@@ -145,7 +145,7 @@ pub async fn personal_bests(
 ) -> Flash<Redirect> {
     let data = data.into_inner();
     let result = conn
-        .run(move |c| schema::PersonalBest::update(user.id, user.name, data, &c))
+        .run(move |c| schema::PersonalBest::update(user.id, user.name, data, c))
         .await;
 
     // Check whether they broke the database
@@ -170,7 +170,7 @@ pub async fn record_attendance(
     let data = data.into_inner();
 
     let result = conn
-        .run(move |c| schema::Attendance::from(data).insert(&c))
+        .run(move |c| schema::Attendance::from(data).insert(c))
         .await;
 
     // Record the attendance
@@ -214,7 +214,7 @@ pub async fn authenticate(
     let callback = auth::build_callback(&pair.token, &uri);
 
     // Write the secret to the database
-    conn.run(move |c| schema::AuthPair::from(pair).insert(&c).unwrap())
+    conn.run(move |c| schema::AuthPair::from(pair).insert(c).unwrap())
         .await;
 
     Redirect::to(callback)
@@ -238,7 +238,7 @@ pub async fn authorised(
 
     let token = oauth_token.to_owned();
     let auth_pair = conn
-        .run(move |c| schema::AuthPair::find(&token, &c).unwrap())
+        .run(move |c| schema::AuthPair::find(&token, c).unwrap())
         .await;
 
     let pair = auth::exchange_request_for_access(
@@ -274,7 +274,7 @@ pub async fn election_vote(
     let redirect = Redirect::to(uri!(frontend::election_voting: position_id));
 
     let voting_is_open = conn
-        .run(move |c| schema::ExecPosition::voting_is_open(position_id, &c))
+        .run(move |c| schema::ExecPosition::voting_is_open(position_id, c))
         .await;
 
     // Check whether voting for this position is open
@@ -295,7 +295,7 @@ pub async fn election_vote(
 
     // Check that they submitted a full ballot
     let candidates = conn
-        .run(move |c| schema::Nomination::for_position_with_names(position_id, &c).unwrap())
+        .run(move |c| schema::Nomination::for_position_with_names(position_id, c).unwrap())
         .await;
 
     if data.values().count() != candidates.len() {
@@ -314,7 +314,7 @@ pub async fn election_vote(
     }
 
     // Record the user's votes
-    conn.run(move |c| schema::Vote::insert_all(user.id, position_id, &data, &c).unwrap())
+    conn.run(move |c| schema::Vote::insert_all(user.id, position_id, &data, c).unwrap())
         .await;
 
     Flash::success(redirect, "Successfully recorded your votes!")
@@ -327,7 +327,7 @@ pub async fn election_settings_toggle(
     conn: DatabaseConnection,
     position_id: i32,
 ) -> Flash<Redirect> {
-    conn.run(move |c| schema::ExecPosition::toggle_state(position_id, &c).unwrap())
+    conn.run(move |c| schema::ExecPosition::toggle_state(position_id, c).unwrap())
         .await;
 
     Flash::success(

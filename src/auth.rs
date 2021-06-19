@@ -105,7 +105,7 @@ pub async fn obtain_request_token(
     let response = request.send().await.unwrap();
     let text = response.text().await.unwrap();
 
-    let query_params: HashMap<_, _> = form_urlencoded::parse(&text.as_bytes()).collect();
+    let query_params: HashMap<_, _> = form_urlencoded::parse(text.as_bytes()).collect();
     let token = query_params["oauth_token"].to_string();
     let secret = query_params["oauth_token_secret"].to_string();
 
@@ -141,7 +141,7 @@ pub async fn exchange_request_for_access(
     let response = request.send().await.unwrap();
     let text = response.text().await.unwrap();
 
-    let query_params: HashMap<_, _> = form_urlencoded::parse(&text.as_bytes()).collect();
+    let query_params: HashMap<_, _> = form_urlencoded::parse(text.as_bytes()).collect();
     let token = query_params["oauth_token"].to_string();
     let secret = query_params["oauth_token_secret"].to_string();
 
