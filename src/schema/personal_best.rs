@@ -79,18 +79,22 @@ impl PersonalBest {
     /// Gets all personal bests currently in the database.
     pub fn get_pl(conn: &diesel::PgConnection) -> QueryResult<Vec<Self>> {
         let filter = personal_bests::dsl::show_pl.eq(true);
+        let order = personal_bests::dsl::warwick_id.asc();
 
         personal_bests::dsl::personal_bests
             .filter(filter)
+            .order_by(order)
             .get_results::<Self>(conn)
     }
 
     /// Gets all personal bests currently in the database.
     pub fn get_wl(conn: &diesel::PgConnection) -> QueryResult<Vec<Self>> {
         let filter = personal_bests::dsl::show_wl.eq(true);
+        let order = personal_bests::dsl::warwick_id.asc();
 
         personal_bests::dsl::personal_bests
             .filter(filter)
+            .order_by(order)
             .get_results::<Self>(conn)
     }
 
