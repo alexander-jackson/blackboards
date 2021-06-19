@@ -274,11 +274,13 @@ pub async fn personal_bests(
         .await;
 
     let message = flash.map(context::Message::from);
+    let warning = personal_bests.check_for_show_without_values();
 
     Template::render(
         "personal_bests",
         context::PersonalBests {
             personal_bests,
+            warning,
             message,
         },
     )

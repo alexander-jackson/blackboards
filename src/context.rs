@@ -97,6 +97,8 @@ pub struct Blackboard {
 pub struct PersonalBests {
     /// The user's personal bests
     pub personal_bests: schema::PersonalBest,
+    /// Any warning message to display to the user
+    pub warning: Option<String>,
     /// The message to display to the user, for errors
     pub message: Option<Message>,
 }

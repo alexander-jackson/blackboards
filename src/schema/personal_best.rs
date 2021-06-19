@@ -1,6 +1,6 @@
 //! Allows modifications of the `personal_bests` table in the database.
 
-use diesel::{ExpressionMethods, QueryDsl, QueryResult, RunQueryDsl};
+use diesel::{BoolExpressionMethods, ExpressionMethods, QueryDsl, QueryResult, RunQueryDsl};
 
 use crate::forms;
 
@@ -78,7 +78,13 @@ impl PersonalBest {
 
     /// Gets all personal bests currently in the database.
     pub fn get_pl(conn: &diesel::PgConnection) -> QueryResult<Vec<Self>> {
-        let filter = personal_bests::dsl::show_pl.eq(true);
+        let filter = personal_bests::dsl::show_pl.eq(true).and(
+            personal_bests::dsl::squat
+                .is_not_null()
+                .or(personal_bests::dsl::bench
+                    .is_not_null()
+                    .or(personal_bests::dsl::deadlift.is_not_null())),
+        );
         let order = personal_bests::dsl::warwick_id.asc();
 
         personal_bests::dsl::personal_bests
@@ -89,7 +95,11 @@ impl PersonalBest {
 
     /// Gets all personal bests currently in the database.
     pub fn get_wl(conn: &diesel::PgConnection) -> QueryResult<Vec<Self>> {
-        let filter = personal_bests::dsl::show_wl.eq(true);
+        let filter = personal_bests::dsl::show_wl.eq(true).and(
+            personal_bests::dsl::snatch
+                .is_not_null()
+                .or(personal_bests::dsl::clean_and_jerk.is_not_null()),
+        );
         let order = personal_bests::dsl::warwick_id.asc();
 
         personal_bests::dsl::personal_bests
@@ -151,5 +161,59 @@ impl PersonalBest {
         diesel::update(personal_bests::dsl::personal_bests.filter(filter))
             .set(updates)
             .execute(conn)
+    }
+
+    /// Checks whether the personal bests warrant a warning message.
+    pub fn check_for_show_without_values(&self) -> Option<String> {
+        if self.show_pl
+            && !(self.squat.is_some() || self.bench.is_some() || self.deadlift.is_some())
+        {
+            return Some(String::from("You have checked to be shown for powerlifting but have no personal bests, so you have been hidden from this board"));
+        }
+
+        if self.show_wl && !(self.snatch.is_some() || self.clean_and_jerk.is_some()) {
+            return Some(String::from("You have checked to be shown for weightlifting but have no personal bests, so you have been hidden from this board"));
+        }
+
+        None
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn show_pl_with_no_pl_lifts_shows_a_warning() {
+        let mut personal_bests = PersonalBest::new(1702502, String::from("Alex Jackson"));
+        personal_bests.show_pl = true;
+
+        assert!(personal_bests.check_for_show_without_values().is_some());
+    }
+
+    #[test]
+    fn show_wl_with_no_wl_lifts_shows_a_warning() {
+        let mut personal_bests = PersonalBest::new(1702502, String::from("Alex Jackson"));
+        personal_bests.show_wl = true;
+
+        assert!(personal_bests.check_for_show_without_values().is_some());
+    }
+
+    #[test]
+    fn show_pl_with_some_pl_lifts_shows_no_warning() {
+        let mut personal_bests = PersonalBest::new(1702502, String::from("Alex Jackson"));
+        personal_bests.show_pl = true;
+        personal_bests.squat = Some(100.0);
+
+        assert!(personal_bests.check_for_show_without_values().is_none());
+    }
+
+    #[test]
+    fn show_wl_with_some_wl_lifts_shows_no_warning() {
+        let mut personal_bests = PersonalBest::new(1702502, String::from("Alex Jackson"));
+        personal_bests.show_wl = true;
+        personal_bests.snatch = Some(50.0);
+
+        assert!(personal_bests.check_for_show_without_values().is_none());
     }
 }

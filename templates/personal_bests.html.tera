@@ -4,6 +4,16 @@
 
 {{ super() }}
 
+{% if warning %}
+
+	<div class="alert alert-warning" role="alert">
+
+	{{ warning }}
+
+	</div>
+
+{% endif %}
+
 <h2>Personal Bests</h2>
 
 <form accept-charset="utf-8" action="/pbs" method="post">
