@@ -20,6 +20,7 @@ use std::env;
 use fern::colors::{Color, ColoredLevelConfig};
 use rocket::{figment::providers::Env, request::Request};
 use rocket::{figment::Figment, response::Redirect, Config};
+use rocket_contrib::serve::StaticFiles;
 use rocket_contrib::templates::Template;
 
 pub mod api;
@@ -78,6 +79,10 @@ pub fn build_rocket() -> rocket::Rocket {
         .attach(guards::DatabaseConnection::fairing())
         .attach(Template::fairing())
         .register(catchers![unauthorised, forbidden])
+        .mount(
+            "/assets",
+            StaticFiles::from(concat!(env!("CARGO_MANIFEST_DIR"), "/assets")),
+        )
         .mount(
             "/",
             routes![
