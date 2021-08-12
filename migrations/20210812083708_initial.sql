@@ -1,15 +1,3 @@
-DROP TABLE IF EXISTS registrations;
-DROP TABLE IF EXISTS attendances;
-DROP TABLE IF EXISTS auth_pairs;
-DROP TABLE IF EXISTS personal_bests;
-DROP TABLE IF EXISTS exec_positions;
-DROP TABLE IF EXISTS candidates;
-DROP TABLE IF EXISTS nominations;
-DROP TABLE IF EXISTS votes;
-
-/* Drop this last as it has constraints */
-DROP TABLE IF EXISTS sessions;
-
 CREATE TABLE sessions (
 	id INTEGER PRIMARY KEY,
 	title TEXT,

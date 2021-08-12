@@ -12,12 +12,14 @@ as much space as possible.
 
 ## Dependencies
 
-Blackboards runs on the nightly version of Rust and requires `sqlite3` to be
-installed currently.
+Blackboards runs on the nightly version of Rust and requires `postgresql` to be
+installed currently. The database itself is managed with `sqlx-cli` so this
+should be installed too.
 
-Rust can be installed from `https://www.rust-lang.org/learn/get-started`, at
-which point you can run `rustup default nightly` to get the latest nightly
-compiler.
+Rust can be installed from `https://www.rust-lang.org/learn/get-started`. You
+can then swap to the nightly version using `rustup override set nightly` for
+this project. `sqlx-cli` can then be installed with `cargo install sqlx-cli
+--no-default-features --features postgres`.
 
 ## Usage
 
@@ -32,7 +34,7 @@ cd blackboards
 Then set up the database and run the project:
 
 ```bash
-make database
+sqlx database create
 cargo run
 ```
 
