@@ -84,8 +84,10 @@ pub async fn manage_sessions(
     conn: DatabaseConnection,
     flash: Option<FlashMessage<'_>>,
 ) -> Template {
+    let window = SessionWindow::from_current_time();
+
     let sessions = conn
-        .run(move |c| schema::Session::get_results(c).unwrap())
+        .run(move |c| schema::Session::get_results_within_and_after(c, window).unwrap())
         .await;
 
     let message = flash.map(context::Message::from);

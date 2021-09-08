@@ -98,6 +98,21 @@ impl Session {
             .get_results::<Self>(conn)
     }
 
+    /// Gets all available sessions in the window or after.
+    pub fn get_results_within_and_after(
+        conn: &diesel::PgConnection,
+        window: SessionWindow,
+    ) -> QueryResult<Vec<Self>> {
+        let filter = sessions::dsl::start_time.gt(window.start);
+
+        log::debug!("Getting all the sessions after time={}", window.start);
+
+        sessions::dsl::sessions
+            .filter(filter)
+            .order_by(sessions::dsl::start_time.asc())
+            .get_results::<Self>(conn)
+    }
+
     /// Finds a session in the database given its identifier.
     pub fn find(id: i32, conn: &diesel::PgConnection) -> QueryResult<Self> {
         sessions::dsl::sessions.find(id).first::<Session>(conn)
