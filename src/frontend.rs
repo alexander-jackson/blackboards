@@ -110,8 +110,10 @@ pub async fn manage_specific_session(
     flash: Option<FlashMessage<'_>>,
     session_id: i32,
 ) -> Template {
+    let window = SessionWindow::from_current_time();
+
     let sessions = conn
-        .run(move |c| schema::Session::get_results(c).unwrap())
+        .run(move |c| schema::Session::get_results_within_and_after(c, window).unwrap())
         .await;
 
     let current = conn
