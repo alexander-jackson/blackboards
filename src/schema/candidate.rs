@@ -1,21 +1,9 @@
 //! Allows modifications of the `candidates` table in the database.
 
-use diesel::{ExpressionMethods, QueryDsl, QueryResult, RunQueryDsl};
-
-table! {
-    /// Represents the schema for `candidates`.
-    candidates (warwick_id) {
-        /// The identifier of the candidate.
-        warwick_id -> Integer,
-        /// The name of the candidate.
-        name -> Text,
-        /// Whether they have been elected to the exec yet.
-        elected -> Bool,
-    }
-}
+use crate::schema::Pool;
 
 /// Represents a row in the `candidates` table.
-#[derive(Debug, Insertable, Queryable, Serialize)]
+#[derive(Debug, Serialize)]
 pub struct Candidate {
     /// The identifier of the candidate.
     pub warwick_id: i32,
@@ -27,33 +15,48 @@ pub struct Candidate {
 
 impl Candidate {
     /// Inserts the [`Candidate`] into the database.
-    pub fn insert(&self, conn: &diesel::PgConnection) -> QueryResult<usize> {
-        diesel::insert_into(candidates::table)
-            .values(self)
-            .execute(conn)
+    pub async fn insert(&self, pool: &mut Pool) -> sqlx::Result<()> {
+        sqlx::query!(
+            "INSERT INTO candidates (warwick_id, name, elected) VALUES ($1, $2, $3)",
+            self.warwick_id,
+            self.name,
+            self.elected
+        )
+        .execute(pool)
+        .await?;
+
+        Ok(())
     }
 
     /// Gets all [`Candidate`] entries in the database.
-    pub fn get_results(conn: &diesel::PgConnection) -> QueryResult<Vec<Self>> {
-        candidates::dsl::candidates.get_results::<Self>(conn)
+    pub async fn get_results(pool: &mut Pool) -> sqlx::Result<Vec<Self>> {
+        sqlx::query_as!(Self, "SELECT * FROM candidates")
+            .fetch_all(pool)
+            .await
     }
 
     /// Mark the winning candidates as such.
-    pub fn mark_elected(winners: &[i32], conn: &diesel::PgConnection) -> QueryResult<usize> {
-        log::trace!(
+    pub async fn mark_elected(winners: &[i32], pool: &mut Pool) -> sqlx::Result<()> {
+        log::info!(
             "Marking the following identifiers as elected: {:?}",
             winners
         );
 
         // Remove all the existing winners
-        diesel::update(candidates::dsl::candidates)
-            .set(candidates::dsl::elected.eq(false))
-            .execute(conn)?;
+        sqlx::query!("UPDATE candidates SET elected = FALSE")
+            .execute(&mut *pool)
+            .await?;
 
-        diesel::update(
-            candidates::dsl::candidates.filter(candidates::dsl::warwick_id.eq_any(winners)),
-        )
-        .set(candidates::dsl::elected.eq(true))
-        .execute(conn)
+        // Set each candidate to be elected TODO: this could use `IN`
+        for candidate in winners {
+            sqlx::query!(
+                "UPDATE candidates SET elected = TRUE WHERE warwick_id = $1",
+                candidate
+            )
+            .execute(&mut *pool)
+            .await?;
+        }
+
+        Ok(())
     }
 }

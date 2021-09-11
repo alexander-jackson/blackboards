@@ -1,27 +1,12 @@
 //! Allows modifications of the `sessions` table in the database.
 
-use diesel::{BoolExpressionMethods, ExpressionMethods, QueryDsl, QueryResult, RunQueryDsl};
 use rand::Rng;
 
-use crate::schema::custom_types;
+use crate::schema::{custom_types, Pool};
 use crate::session_window::SessionWindow;
 
-table! {
-    /// Represents the schema for `sessions`.
-    sessions {
-        /// The identifier for the session.
-        id -> Integer,
-        /// The title for the session.
-        title -> Text,
-        /// The starting time for the session.
-        start_time -> BigInt,
-        /// The number of remaining places.
-        remaining -> Integer,
-    }
-}
-
 /// Represents a session in the database.
-#[derive(Debug, Insertable, Queryable, Serialize)]
+#[derive(Clone, Debug, Serialize)]
 pub struct Session {
     /// The identifier for the session.
     pub id: i32,
@@ -34,124 +19,163 @@ pub struct Session {
 }
 
 impl Session {
-    /// Creates a new instance of a [`Session`].
-    pub fn create_and_insert(
-        conn: &diesel::PgConnection,
-        title: String,
-        start_time: i64,
-        remaining: u32,
-    ) -> QueryResult<usize> {
-        // Generate a random identifier and check it
+    /// Creates a new session with a unique database identifier.
+    pub async fn new(title: String, start_time: i64, remaining: u32, pool: &mut Pool) -> Self {
+        // Generate a new identifier for the session
         let id = loop {
-            let potential = rand::thread_rng().gen::<i32>().abs();
-            let exists = diesel::select(diesel::dsl::exists(
-                sessions::dsl::sessions.filter(sessions::dsl::id.eq(potential)),
-            ))
-            .get_result(conn);
+            let potential = rand::thread_rng().gen::<i32>();
 
-            if let Ok(false) = exists {
+            let exists = sqlx::query!("SELECT * FROM sessions WHERE id = $1", potential)
+                .fetch_optional(&mut *pool)
+                .await
+                .unwrap()
+                .is_some();
+
+            if !exists {
                 break potential;
             }
         };
 
-        log::info!(
-            "Creating a new session with id={}, title='{}', timestamp={} and remaining={}",
-            id,
-            title,
-            start_time,
-            remaining
-        );
-
-        let session = Self {
+        Self {
             id,
             title,
             start_time: custom_types::DateTime::new(start_time),
             remaining: remaining as i32,
-        };
+        }
+    }
 
-        diesel::insert_into(sessions::table)
-            .values(session)
-            .execute(conn)
+    /// Inserts the [`Session`] into the database.
+    pub async fn insert(&self, pool: &mut Pool) {
+        sqlx::query!(
+            "INSERT INTO sessions (id, title, start_time, remaining) VALUES ($1, $2, $3, $4)",
+            self.id,
+            self.title,
+            self.start_time.inner(),
+            self.remaining
+        )
+        .execute(pool)
+        .await
+        .unwrap();
     }
 
     /// Gets all available sessions currently in the database.
-    pub fn get_results(conn: &diesel::PgConnection) -> QueryResult<Vec<Self>> {
-        sessions::dsl::sessions
-            .order_by(sessions::dsl::start_time.asc())
-            .get_results::<Self>(conn)
+    pub async fn get_results(pool: &mut Pool) -> sqlx::Result<Vec<Self>> {
+        sqlx::query_as!(
+            Self,
+            r#"SELECT
+                sessions.id,
+                sessions.title,
+                sessions.start_time AS "start_time: custom_types::DateTime",
+                sessions.remaining
+            FROM sessions
+            ORDER BY start_time"#
+        )
+        .fetch_all(pool)
+        .await
     }
 
     /// Gets all available sessions currently in the database.
-    pub fn get_results_between(
-        conn: &diesel::PgConnection,
+    pub async fn get_results_between(
+        pool: &mut Pool,
         window: SessionWindow,
-    ) -> QueryResult<Vec<Self>> {
-        let filter = sessions::dsl::start_time
-            .gt(window.start)
-            .and(sessions::dsl::start_time.lt(window.end));
-
+    ) -> sqlx::Result<Vec<Self>> {
         log::debug!("Getting all the sessions in window={:?}", window);
 
-        sessions::dsl::sessions
-            .filter(filter)
-            .order_by(sessions::dsl::start_time.asc())
-            .get_results::<Self>(conn)
+        sqlx::query_as!(
+            Self,
+            r#"SELECT
+                sessions.id,
+                sessions.title,
+                sessions.start_time AS "start_time: custom_types::DateTime",
+                sessions.remaining
+            FROM sessions
+            WHERE $1 < start_time AND start_time < $2
+            ORDER BY start_time"#,
+            window.start,
+            window.end,
+        )
+        .fetch_all(pool)
+        .await
     }
 
     /// Gets all available sessions in the window or after.
-    pub fn get_results_within_and_after(
-        conn: &diesel::PgConnection,
+    pub async fn get_results_within_and_after(
+        pool: &mut Pool,
         window: SessionWindow,
-    ) -> QueryResult<Vec<Self>> {
-        let filter = sessions::dsl::start_time.gt(window.start);
-
+    ) -> sqlx::Result<Vec<Self>> {
         log::debug!("Getting all the sessions after time={}", window.start);
 
-        sessions::dsl::sessions
-            .filter(filter)
-            .order_by(sessions::dsl::start_time.asc())
-            .get_results::<Self>(conn)
+        sqlx::query_as!(
+            Self,
+            r#"SELECT
+                sessions.id,
+                sessions.title,
+                sessions.start_time AS "start_time: custom_types::DateTime",
+                sessions.remaining
+            FROM sessions
+            WHERE $1 < start_time
+            ORDER BY start_time"#,
+            window.start,
+        )
+        .fetch_all(pool)
+        .await
     }
 
     /// Finds a session in the database given its identifier.
-    pub fn find(id: i32, conn: &diesel::PgConnection) -> QueryResult<Self> {
-        sessions::dsl::sessions.find(id).first::<Session>(conn)
+    pub async fn find(id: i32, pool: &mut Pool) -> sqlx::Result<Option<Self>> {
+        log::debug!("Querying the database for session_id={}", id);
+
+        sqlx::query_as!(
+            Self,
+            r#"SELECT
+                sessions.id,
+                sessions.title,
+                sessions.start_time AS "start_time: custom_types::DateTime",
+                sessions.remaining
+            FROM sessions
+            WHERE id = $1"#,
+            id,
+        )
+        .fetch_optional(pool)
+        .await
     }
 
     /// Deletes the session with the given identifier.
-    pub fn delete(conn: &diesel::PgConnection, id: i32) -> QueryResult<usize> {
+    pub async fn delete(id: i32, pool: &mut Pool) -> sqlx::Result<()> {
         log::warn!("Deleting session with id={}, including registrations", id);
 
-        diesel::delete(sessions::dsl::sessions.filter(sessions::dsl::id.eq(id))).execute(conn)
+        sqlx::query!("DELETE FROM sessions WHERE id = $1", id)
+            .execute(pool)
+            .await?;
+
+        Ok(())
     }
 
     /// Decreases the number of remaining places for a session given its identifier.
-    pub fn decrement_remaining(id: i32, conn: &diesel::PgConnection) -> QueryResult<usize> {
-        let current = Self::find(id, conn)?.remaining;
+    pub async fn decrement_remaining(id: i32, pool: &mut Pool) -> sqlx::Result<()> {
+        log::debug!("Decrementing remaining places for session_id={}", id);
 
-        log::debug!(
-            "Decrementing remaining places for session_id={}, currently has {}",
-            id,
-            current
-        );
+        sqlx::query!(
+            "UPDATE sessions SET remaining = remaining - 1 WHERE id = $1",
+            id
+        )
+        .execute(pool)
+        .await?;
 
-        diesel::update(sessions::dsl::sessions.filter(sessions::dsl::id.eq(&id)))
-            .set(sessions::dsl::remaining.eq(current - 1))
-            .execute(conn)
+        Ok(())
     }
 
     /// Increases the number of remaining places for a session given its identifier.
-    pub fn increment_remaining(id: i32, conn: &diesel::PgConnection) -> QueryResult<usize> {
-        let current = Self::find(id, conn)?.remaining;
+    pub async fn increment_remaining(id: i32, pool: &mut Pool) -> sqlx::Result<()> {
+        log::debug!("Incrementing remaining places for session_id={}", id);
 
-        log::debug!(
-            "Incrementing remaining places for session_id={}, currently has {}",
-            id,
-            current
-        );
+        sqlx::query!(
+            "UPDATE sessions SET remaining = remaining + 1 WHERE id = $1",
+            id
+        )
+        .execute(pool)
+        .await?;
 
-        diesel::update(sessions::dsl::sessions.filter(sessions::dsl::id.eq(&id)))
-            .set(sessions::dsl::remaining.eq(current + 1))
-            .execute(conn)
+        Ok(())
     }
 }

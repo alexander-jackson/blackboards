@@ -1,0 +1,992 @@
+{
+  "db": "PostgreSQL",
+  "02d36d76b7da471bcdb83971a69afd9fbe6516ddda82d1b58ed6f21ef6ee77fa": {
+    "query": "SELECT\n                sessions.id,\n                sessions.title,\n                sessions.start_time AS \"start_time: custom_types::DateTime\",\n                sessions.remaining\n            FROM sessions\n            WHERE id = $1",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Int4"
+        },
+        {
+          "ordinal": 1,
+          "name": "title",
+          "type_info": "Text"
+        },
+        {
+          "ordinal": 2,
+          "name": "start_time: custom_types::DateTime",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 3,
+          "name": "remaining",
+          "type_info": "Int4"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Int4"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        false
+      ]
+    }
+  },
+  "09552bf3169aee27f4cc3e72e1f8c501a2d50b6d0a454e859efd3123e9382ffa": {
+    "query": "DELETE FROM registrations WHERE session_id = $1 AND warwick_id = $2",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Int4",
+          "Int4"
+        ]
+      },
+      "nullable": []
+    }
+  },
+  "0c7c54f15a48b73d10876c09fbe445fca491aabff312a72f81b0832b4384743b": {
+    "query": "SELECT * FROM nominations",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "position_id",
+          "type_info": "Int4"
+        },
+        {
+          "ordinal": 1,
+          "name": "warwick_id",
+          "type_info": "Int4"
+        }
+      ],
+      "parameters": {
+        "Left": []
+      },
+      "nullable": [
+        false,
+        false
+      ]
+    }
+  },
+  "10315f052f4c1ceb6908646b6f2a294ade80d7b17d297875aef673975e42bbb6": {
+    "query": "INSERT INTO registrations (session_id, warwick_id, name) VALUES ($1, $2, $3)",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Int4",
+          "Int4",
+          "Text"
+        ]
+      },
+      "nullable": []
+    }
+  },
+  "11e96cfd8c2736f13ce55975ea910dd68640f6f14e38a4b3342d514804e3de27": {
+    "query": "DELETE FROM sessions WHERE id = $1",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Int4"
+        ]
+      },
+      "nullable": []
+    }
+  },
+  "240c3ceab97d25d40df1f5a5480c7280ed19c8f81ddf30fee8392ad51ed9e4d1": {
+    "query": "SELECT * FROM candidates",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "warwick_id",
+          "type_info": "Int4"
+        },
+        {
+          "ordinal": 1,
+          "name": "name",
+          "type_info": "Text"
+        },
+        {
+          "ordinal": 2,
+          "name": "elected",
+          "type_info": "Bool"
+        }
+      ],
+      "parameters": {
+        "Left": []
+      },
+      "nullable": [
+        false,
+        false,
+        false
+      ]
+    }
+  },
+  "2515736a8005d6a03cbc041bb3617237246005708b0f1407b22826694ea82447": {
+    "query": "SELECT\n                sessions.id,\n                sessions.title,\n                sessions.start_time AS \"start_time: custom_types::DateTime\",\n                sessions.remaining\n            FROM sessions\n            WHERE $1 < start_time\n            ORDER BY start_time",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Int4"
+        },
+        {
+          "ordinal": 1,
+          "name": "title",
+          "type_info": "Text"
+        },
+        {
+          "ordinal": 2,
+          "name": "start_time: custom_types::DateTime",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 3,
+          "name": "remaining",
+          "type_info": "Int4"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Int8"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        false
+      ]
+    }
+  },
+  "2b91afc77554d48423f71935dbd38171443de58699362e55bbbc33988039c0e1": {
+    "query": "SELECT * FROM personal_bests WHERE show_pl AND (squat IS NOT NULL OR bench IS NOT NULL OR deadlift IS NOT NULL) ORDER BY warwick_id",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "warwick_id",
+          "type_info": "Int4"
+        },
+        {
+          "ordinal": 1,
+          "name": "name",
+          "type_info": "Text"
+        },
+        {
+          "ordinal": 2,
+          "name": "squat",
+          "type_info": "Float4"
+        },
+        {
+          "ordinal": 3,
+          "name": "bench",
+          "type_info": "Float4"
+        },
+        {
+          "ordinal": 4,
+          "name": "deadlift",
+          "type_info": "Float4"
+        },
+        {
+          "ordinal": 5,
+          "name": "snatch",
+          "type_info": "Float4"
+        },
+        {
+          "ordinal": 6,
+          "name": "clean_and_jerk",
+          "type_info": "Float4"
+        },
+        {
+          "ordinal": 7,
+          "name": "show_pl",
+          "type_info": "Bool"
+        },
+        {
+          "ordinal": 8,
+          "name": "show_wl",
+          "type_info": "Bool"
+        }
+      ],
+      "parameters": {
+        "Left": []
+      },
+      "nullable": [
+        false,
+        false,
+        true,
+        true,
+        true,
+        true,
+        true,
+        false,
+        false
+      ]
+    }
+  },
+  "3c07e68f505a2ce4e529e1002cb0d6db7c4c893c3930ddf750226f467b3d1cea": {
+    "query": "INSERT INTO personal_bests (warwick_id, name, squat, bench, deadlift, snatch, clean_and_jerk, show_pl, show_wl) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Int4",
+          "Text",
+          "Float4",
+          "Float4",
+          "Float4",
+          "Float4",
+          "Float4",
+          "Bool",
+          "Bool"
+        ]
+      },
+      "nullable": []
+    }
+  },
+  "46b7e2b84b369bc61e656de4d76688662f4d2adfdc0734cf8b8f16070b9b30b8": {
+    "query": "UPDATE personal_bests SET squat = COALESCE(squat, $1), bench = COALESCE(bench, $2), deadlift = COALESCE(deadlift, $3), snatch = COALESCE(snatch, $4), clean_and_jerk = COALESCE(clean_and_jerk, $5), show_pl = $6, show_wl = $7",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Float4",
+          "Float4",
+          "Float4",
+          "Float4",
+          "Float4",
+          "Bool",
+          "Bool"
+        ]
+      },
+      "nullable": []
+    }
+  },
+  "497534f52bd6f1348b19827a53ffa75e028cf0b7e3ba70873213dab52ee80d95": {
+    "query": "UPDATE candidates SET elected = TRUE WHERE warwick_id = $1",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Int4"
+        ]
+      },
+      "nullable": []
+    }
+  },
+  "4d0526fde2ef6ce929acd244e1be144b0a7fef5410e0ab446cf9398386e40e29": {
+    "query": "SELECT title FROM exec_positions WHERE id = $1",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "title",
+          "type_info": "Text"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Int4"
+        ]
+      },
+      "nullable": [
+        false
+      ]
+    }
+  },
+  "4ef84fefdbec3dfa623adf3f87e88253b40b4d3d679c6b3b65ff813837867001": {
+    "query": "\n            SELECT\n                sessions.id AS session_id,\n                sessions.start_time AS \"start_time: custom_types::DateTime\",\n                sessions.title AS title,\n                registrations.name AS name\n            FROM registrations\n            INNER JOIN sessions\n            ON registrations.session_id = sessions.id\n            WHERE $1 < sessions.start_time AND sessions.start_time < $2\n            ORDER BY sessions.start_time, sessions.title\n            ",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "session_id",
+          "type_info": "Int4"
+        },
+        {
+          "ordinal": 1,
+          "name": "start_time: custom_types::DateTime",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 2,
+          "name": "title",
+          "type_info": "Text"
+        },
+        {
+          "ordinal": 3,
+          "name": "name",
+          "type_info": "Text"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Int8",
+          "Int8"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        false
+      ]
+    }
+  },
+  "67773bb97fcc93b0161acd98ac990a59d100d571dbdf88c82ed3e623879f600f": {
+    "query": "SELECT * FROM exec_positions",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Int4"
+        },
+        {
+          "ordinal": 1,
+          "name": "title",
+          "type_info": "Text"
+        },
+        {
+          "ordinal": 2,
+          "name": "num_winners",
+          "type_info": "Int4"
+        },
+        {
+          "ordinal": 3,
+          "name": "open",
+          "type_info": "Bool"
+        }
+      ],
+      "parameters": {
+        "Left": []
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        false
+      ]
+    }
+  },
+  "6d13e350d0da075c7ba8d806a71255aff9382ff5dbfd469c4c1a0d6b1b3ffded": {
+    "query": "SELECT * FROM votes",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "warwick_id",
+          "type_info": "Int4"
+        },
+        {
+          "ordinal": 1,
+          "name": "position_id",
+          "type_info": "Int4"
+        },
+        {
+          "ordinal": 2,
+          "name": "candidate_id",
+          "type_info": "Int4"
+        },
+        {
+          "ordinal": 3,
+          "name": "ranking",
+          "type_info": "Int4"
+        }
+      ],
+      "parameters": {
+        "Left": []
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        false
+      ]
+    }
+  },
+  "73e96da624e3f43f7139fc11f7251367ac2fe88ea1f75d7c2b403539b8b1201d": {
+    "query": "SELECT id FROM exec_positions WHERE open IS NOT TRUE",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Int4"
+        }
+      ],
+      "parameters": {
+        "Left": []
+      },
+      "nullable": [
+        false
+      ]
+    }
+  },
+  "763644001062e385901941cb69f78eb27f638a72376a1c95b84395db61cfbdc4": {
+    "query": "INSERT INTO auth_pairs (token, secret) VALUES ($1, $2)",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Text",
+          "Text"
+        ]
+      },
+      "nullable": []
+    }
+  },
+  "8026984292aa2905d2a1f441e60ecbaef5c3716cdca4d483ebcb7d201d2f71e9": {
+    "query": "INSERT INTO candidates (warwick_id, name, elected) VALUES ($1, $2, $3)",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Int4",
+          "Text",
+          "Bool"
+        ]
+      },
+      "nullable": []
+    }
+  },
+  "80d49ce9e0cd96c2290db77bba885e718f411a316a69dcc0f88382855192f9cf": {
+    "query": "UPDATE sessions SET remaining = remaining - 1 WHERE id = $1",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Int4"
+        ]
+      },
+      "nullable": []
+    }
+  },
+  "817ccfd1225d25c24d0dca262c7e0bb571e4e47240f6b6ce8a731ff7cc541032": {
+    "query": "SELECT * FROM auth_pairs WHERE token = $1",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "token",
+          "type_info": "Text"
+        },
+        {
+          "ordinal": 1,
+          "name": "secret",
+          "type_info": "Text"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      },
+      "nullable": [
+        false,
+        true
+      ]
+    }
+  },
+  "985f963070aec1a5d5e403b8f2be0468c5bb3f8444034f62976cd604811cfcab": {
+    "query": "SELECT * FROM exec_positions WHERE id = $1",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Int4"
+        },
+        {
+          "ordinal": 1,
+          "name": "title",
+          "type_info": "Text"
+        },
+        {
+          "ordinal": 2,
+          "name": "num_winners",
+          "type_info": "Int4"
+        },
+        {
+          "ordinal": 3,
+          "name": "open",
+          "type_info": "Bool"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Int4"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        false
+      ]
+    }
+  },
+  "98bbf33baa135d0162382e62243b1455c2577df4ce973f6166a77e4f838819a3": {
+    "query": "\n                SELECT n.warwick_id AS warwick_id, name\n                FROM nominations n\n                INNER JOIN candidates c ON n.warwick_id = c.warwick_id\n                WHERE c.elected IS false AND n.position_id = $1\n            ",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "warwick_id",
+          "type_info": "Int4"
+        },
+        {
+          "ordinal": 1,
+          "name": "name",
+          "type_info": "Text"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Int4"
+        ]
+      },
+      "nullable": [
+        false,
+        false
+      ]
+    }
+  },
+  "9913e589b473f8e35342d4e65885c0222de43654425e4a5aad9728e39ef0183a": {
+    "query": "UPDATE candidates SET elected = FALSE",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": []
+      },
+      "nullable": []
+    }
+  },
+  "9d7f5e1a29681201ae4f66eb48099dba9100422af6b31d54d90c8fd2119ef2a3": {
+    "query": "INSERT INTO nominations (position_id, warwick_id) VALUES ($1, $2)",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Int4",
+          "Int4"
+        ]
+      },
+      "nullable": []
+    }
+  },
+  "a1e2515cf958fe5b624b4e83a11393a64b89f2889fa2d39ee905760b81bbce05": {
+    "query": "SELECT * FROM personal_bests WHERE show_wl AND (snatch IS NOT NULL OR clean_and_jerk IS NOT NULL) ORDER BY warwick_id",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "warwick_id",
+          "type_info": "Int4"
+        },
+        {
+          "ordinal": 1,
+          "name": "name",
+          "type_info": "Text"
+        },
+        {
+          "ordinal": 2,
+          "name": "squat",
+          "type_info": "Float4"
+        },
+        {
+          "ordinal": 3,
+          "name": "bench",
+          "type_info": "Float4"
+        },
+        {
+          "ordinal": 4,
+          "name": "deadlift",
+          "type_info": "Float4"
+        },
+        {
+          "ordinal": 5,
+          "name": "snatch",
+          "type_info": "Float4"
+        },
+        {
+          "ordinal": 6,
+          "name": "clean_and_jerk",
+          "type_info": "Float4"
+        },
+        {
+          "ordinal": 7,
+          "name": "show_pl",
+          "type_info": "Bool"
+        },
+        {
+          "ordinal": 8,
+          "name": "show_wl",
+          "type_info": "Bool"
+        }
+      ],
+      "parameters": {
+        "Left": []
+      },
+      "nullable": [
+        false,
+        false,
+        true,
+        true,
+        true,
+        true,
+        true,
+        false,
+        false
+      ]
+    }
+  },
+  "a1f54ed1b77add9a428d62287bee411a127569ef325593630da141c6d29b4cce": {
+    "query": "SELECT * FROM personal_bests WHERE warwick_id = $1",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "warwick_id",
+          "type_info": "Int4"
+        },
+        {
+          "ordinal": 1,
+          "name": "name",
+          "type_info": "Text"
+        },
+        {
+          "ordinal": 2,
+          "name": "squat",
+          "type_info": "Float4"
+        },
+        {
+          "ordinal": 3,
+          "name": "bench",
+          "type_info": "Float4"
+        },
+        {
+          "ordinal": 4,
+          "name": "deadlift",
+          "type_info": "Float4"
+        },
+        {
+          "ordinal": 5,
+          "name": "snatch",
+          "type_info": "Float4"
+        },
+        {
+          "ordinal": 6,
+          "name": "clean_and_jerk",
+          "type_info": "Float4"
+        },
+        {
+          "ordinal": 7,
+          "name": "show_pl",
+          "type_info": "Bool"
+        },
+        {
+          "ordinal": 8,
+          "name": "show_wl",
+          "type_info": "Bool"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Int4"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        true,
+        true,
+        true,
+        true,
+        true,
+        false,
+        false
+      ]
+    }
+  },
+  "a5560e548c75ae7019c192b783da53a8ce30449cd28dba2ad89dee53cfe4df01": {
+    "query": "INSERT INTO votes (warwick_id, position_id, candidate_id, ranking) VALUES ($1, $2, $3, $4)",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Int4",
+          "Int4",
+          "Int4",
+          "Int4"
+        ]
+      },
+      "nullable": []
+    }
+  },
+  "b2f3c3380b484a8d352a42e1b01ae7a6d091c85fd3f2008572c3c9b02f0a43a7": {
+    "query": "INSERT INTO sessions (id, title, start_time, remaining) VALUES ($1, $2, $3, $4)",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Int4",
+          "Text",
+          "Int8",
+          "Int4"
+        ]
+      },
+      "nullable": []
+    }
+  },
+  "b531e3808c0ec48ffa0f6e0f6289cbf9c4c852a04fb2004e237bd764a2150d92": {
+    "query": "SELECT\n                sessions.id,\n                sessions.title,\n                sessions.start_time AS \"start_time: custom_types::DateTime\",\n                sessions.remaining\n            FROM sessions\n            ORDER BY start_time",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Int4"
+        },
+        {
+          "ordinal": 1,
+          "name": "title",
+          "type_info": "Text"
+        },
+        {
+          "ordinal": 2,
+          "name": "start_time: custom_types::DateTime",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 3,
+          "name": "remaining",
+          "type_info": "Int4"
+        }
+      ],
+      "parameters": {
+        "Left": []
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        false
+      ]
+    }
+  },
+  "b61377101cd65dbd8c97702fe3a76f791c43849b84d5e16e4e3d98cbde9f7a17": {
+    "query": "SELECT * FROM sessions WHERE id = $1",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Int4"
+        },
+        {
+          "ordinal": 1,
+          "name": "title",
+          "type_info": "Text"
+        },
+        {
+          "ordinal": 2,
+          "name": "start_time",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 3,
+          "name": "remaining",
+          "type_info": "Int4"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Int4"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        false
+      ]
+    }
+  },
+  "b9349cdc248eb794408836087913d6454d5ae11cd95ab065a6c581ff24b7a06c": {
+    "query": "INSERT INTO attendances (session_id, warwick_id) VALUES ($1, $2)",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Int4",
+          "Int4"
+        ]
+      },
+      "nullable": []
+    }
+  },
+  "c7b9d887ea9166f7b96ae756b8a46b4a88e074d0018ba4ca21131199d920467a": {
+    "query": "SELECT\n                sessions.id,\n                sessions.title,\n                sessions.start_time AS \"start_time: custom_types::DateTime\",\n                sessions.remaining\n            FROM sessions\n            WHERE $1 < start_time AND start_time < $2\n            ORDER BY start_time",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Int4"
+        },
+        {
+          "ordinal": 1,
+          "name": "title",
+          "type_info": "Text"
+        },
+        {
+          "ordinal": 2,
+          "name": "start_time: custom_types::DateTime",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 3,
+          "name": "remaining",
+          "type_info": "Int4"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Int8",
+          "Int8"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        false
+      ]
+    }
+  },
+  "cabce0bcddeff8f8f03074caf9c4a8d684b5a37ee72ab62c51ca6537c589a389": {
+    "query": "\n            SELECT\n                sessions.id,\n                sessions.title,\n                sessions.start_time AS \"start_time: custom_types::DateTime\",\n                sessions.remaining\n            FROM registrations\n            INNER JOIN sessions ON registrations.session_id = sessions.id\n            WHERE $1 < sessions.start_time AND sessions.start_time < $2 AND registrations.warwick_id = $3\n            ORDER BY sessions.start_time, sessions.title\n            ",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Int4"
+        },
+        {
+          "ordinal": 1,
+          "name": "title",
+          "type_info": "Text"
+        },
+        {
+          "ordinal": 2,
+          "name": "start_time: custom_types::DateTime",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 3,
+          "name": "remaining",
+          "type_info": "Int4"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Int8",
+          "Int8",
+          "Int4"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        false
+      ]
+    }
+  },
+  "d04664423b5306417febd5ea08814ea6d9713a58bd47810cf5a901f458d4c353": {
+    "query": "\n            SELECT c.name AS name\n            FROM votes v\n            INNER JOIN nominations n ON n.warwick_id = v.candidate_id AND n.position_id = v.position_id\n            INNER JOIN candidates c ON c.warwick_id = n.warwick_id\n            WHERE v.warwick_id = $1 AND v.position_id = $2 ORDER BY v.ranking\n        ",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "name",
+          "type_info": "Text"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Int4",
+          "Int4"
+        ]
+      },
+      "nullable": [
+        false
+      ]
+    }
+  },
+  "dc07fb867564e9af7ee9eeb66cdf435b365f2fc3e77edbe9fb643531d5f2c521": {
+    "query": "UPDATE exec_positions SET open = NOT open WHERE id = $1",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Int4"
+        ]
+      },
+      "nullable": []
+    }
+  },
+  "e46bc1871233f5998003f4df17876486b60195c9c3233a3cae4362de51f8e590": {
+    "query": "UPDATE sessions SET remaining = remaining + 1 WHERE id = $1",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Int4"
+        ]
+      },
+      "nullable": []
+    }
+  },
+  "ed4eb05613fc1fdbc7e8606ea168bea272f2e586488f15ae47b3d086a6f56202": {
+    "query": "DELETE FROM votes WHERE warwick_id = $1 AND position_id = $2",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Int4",
+          "Int4"
+        ]
+      },
+      "nullable": []
+    }
+  },
+  "ee0a6f39eb80497ce3d3257883a03e1d9f3034140385206137d143b9881d01b0": {
+    "query": "INSERT INTO exec_positions (id, title, num_winners, open) VALUES ($1, $2, $3, $4)",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Int4",
+          "Text",
+          "Int4",
+          "Bool"
+        ]
+      },
+      "nullable": []
+    }
+  }
+}

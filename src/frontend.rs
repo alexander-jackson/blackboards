@@ -8,22 +8,25 @@ use itertools::Itertools;
 use rand::seq::SliceRandom;
 use rocket::request::FlashMessage;
 use rocket::response::{Flash, Redirect};
-use rocket_contrib::templates::Template;
+use rocket_db_pools::Connection;
+use rocket_dyn_templates::Template;
 use tallystick::{irv::Tally, Transfer};
 
 use crate::{context, schema};
 
-use crate::guards::{DatabaseConnection, ElectionAdmin, Generic, Member, SiteAdmin, User};
+use crate::guards::{Db, ElectionAdmin, Generic, Member, SiteAdmin, User};
 use crate::session_window::SessionWindow;
 
 fn format_registrations(
-    unformatted: Vec<(i32, schema::custom_types::DateTime, String, String)>,
+    unformatted: Vec<schema::registration::SessionRegistration>,
 ) -> Vec<context::Registrations> {
     let mut map: BTreeMap<(schema::custom_types::DateTime, i32, String), Vec<String>> =
         BTreeMap::new();
 
-    for (id, start_time, title, name) in unformatted {
-        map.entry((start_time, id, title)).or_default().push(name);
+    for sr in unformatted {
+        map.entry((sr.start_time, sr.session_id, sr.title))
+            .or_default()
+            .push(sr.name);
     }
 
     map.into_iter()
@@ -35,11 +38,14 @@ fn format_registrations(
         .collect()
 }
 
-fn get_registrations(
-    conn: &diesel::PgConnection,
+async fn get_registrations(
+    mut conn: Connection<Db>,
     window: SessionWindow,
 ) -> Option<Vec<context::Registrations>> {
-    let unformatted = schema::Registration::get_registration_list(conn, window).unwrap();
+    let unformatted = schema::Registration::get_registration_list(&mut *conn, window)
+        .await
+        .unwrap();
+
     let formatted = format_registrations(unformatted);
 
     match formatted.len() {
@@ -52,17 +58,17 @@ fn get_registrations(
 #[get("/sessions")]
 pub async fn sessions(
     user: User<Generic>,
-    conn: DatabaseConnection,
+    mut conn: Connection<Db>,
     flash: Option<FlashMessage<'_>>,
 ) -> Template {
     let window = SessionWindow::from_current_time();
 
-    let sessions = conn
-        .run(move |c| schema::Session::get_results_between(c, window).unwrap())
-        .await;
+    let sessions = schema::Session::get_results_between(&mut *conn, window)
+        .await
+        .unwrap();
 
     let message = flash.map(context::Message::from);
-    let registrations = conn.run(move |c| get_registrations(c, window)).await;
+    let registrations = get_registrations(conn, window).await;
     let is_site_admin = user.is_also::<SiteAdmin>();
 
     Template::render(
@@ -81,14 +87,14 @@ pub async fn sessions(
 #[get("/sessions/manage")]
 pub async fn manage_sessions(
     _user: User<SiteAdmin>,
-    conn: DatabaseConnection,
+    mut conn: Connection<Db>,
     flash: Option<FlashMessage<'_>>,
 ) -> Template {
     let window = SessionWindow::from_current_time();
 
-    let sessions = conn
-        .run(move |c| schema::Session::get_results_within_and_after(c, window).unwrap())
-        .await;
+    let sessions = schema::Session::get_results_within_and_after(&mut *conn, window)
+        .await
+        .unwrap();
 
     let message = flash.map(context::Message::from);
 
@@ -106,19 +112,20 @@ pub async fn manage_sessions(
 #[get("/sessions/manage/<session_id>")]
 pub async fn manage_specific_session(
     _user: User<SiteAdmin>,
-    conn: DatabaseConnection,
+    mut conn: Connection<Db>,
     flash: Option<FlashMessage<'_>>,
     session_id: i32,
 ) -> Template {
     let window = SessionWindow::from_current_time();
 
-    let sessions = conn
-        .run(move |c| schema::Session::get_results_within_and_after(c, window).unwrap())
-        .await;
+    let sessions = schema::Session::get_results_within_and_after(&mut *conn, window)
+        .await
+        .unwrap();
 
-    let current = conn
-        .run(move |c| schema::Session::find(session_id, c).ok())
-        .await;
+    let current = schema::Session::find(session_id, &mut *conn)
+        .await
+        .ok()
+        .flatten();
 
     let message = flash.map(context::Message::from);
 
@@ -136,20 +143,21 @@ pub async fn manage_specific_session(
 #[get("/sessions/<session_id>")]
 pub async fn specific_session(
     user: User<Generic>,
-    conn: DatabaseConnection,
+    mut conn: Connection<Db>,
     session_id: i32,
 ) -> Template {
     let window = SessionWindow::from_current_time();
 
-    let sessions = conn
-        .run(move |c| schema::Session::get_results_between(c, window).unwrap())
-        .await;
+    let sessions = schema::Session::get_results_between(&mut *conn, window)
+        .await
+        .unwrap();
 
-    let current = conn
-        .run(move |c| schema::Session::find(session_id, c).ok())
-        .await;
+    let current = schema::Session::find(session_id, &mut *conn)
+        .await
+        .ok()
+        .flatten();
 
-    let registrations = conn.run(move |c| get_registrations(c, window)).await;
+    let registrations = get_registrations(conn, window).await;
     let is_site_admin = user.is_also::<SiteAdmin>();
 
     Template::render(
@@ -166,10 +174,8 @@ pub async fn specific_session(
 
 /// Gets the information needed for the attendance recording dashboard and renders the template.
 #[get("/attendance")]
-pub async fn attendance(conn: DatabaseConnection) -> Template {
-    let sessions = conn
-        .run(move |c| schema::Session::get_results(c).unwrap())
-        .await;
+pub async fn attendance(mut conn: Connection<Db>) -> Template {
+    let sessions = schema::Session::get_results(&mut *conn).await.unwrap();
 
     Template::render(
         "attendance",
@@ -184,17 +190,15 @@ pub async fn attendance(conn: DatabaseConnection) -> Template {
 /// Gets the information needed for the attendance recording and renders the template.
 #[get("/attendance/<session_id>")]
 pub async fn session_attendance(
-    conn: DatabaseConnection,
+    mut conn: Connection<Db>,
     flash: Option<FlashMessage<'_>>,
     session_id: i32,
 ) -> Template {
-    let sessions = conn
-        .run(move |c| schema::Session::get_results(c).unwrap())
-        .await;
-
-    let current = conn
-        .run(move |c| schema::Session::find(session_id, c).ok())
-        .await;
+    let sessions = schema::Session::get_results(&mut *conn).await.unwrap();
+    let current = schema::Session::find(session_id, &mut *conn)
+        .await
+        .ok()
+        .flatten();
 
     let message = flash.map(context::Message::from);
 
@@ -221,13 +225,13 @@ pub fn authenticated(uri: &str) -> Template {
 
 /// Displays a small splash page after authenticating.
 #[get("/bookings")]
-pub async fn bookings(user: User<Member>, conn: DatabaseConnection) -> Template {
+pub async fn bookings(user: User<Member>, mut conn: Connection<Db>) -> Template {
     let is_site_admin = user.is_also::<SiteAdmin>();
 
     let window = SessionWindow::from_current_time();
-    let sessions = conn
-        .run(move |c| schema::Registration::get_user_bookings(user.id, window, c).unwrap())
-        .await;
+    let sessions = schema::Registration::get_user_bookings(user.id, window, &mut *conn)
+        .await
+        .unwrap();
 
     Template::render(
         "bookings",
@@ -245,12 +249,10 @@ pub async fn bookings(user: User<Member>, conn: DatabaseConnection) -> Template 
 #[get("/")]
 pub async fn blackboard(
     user: Option<User<Generic>>,
-    conn: DatabaseConnection,
+    mut conn: Connection<Db>,
     flash: Option<FlashMessage<'_>>,
 ) -> Template {
-    let (pl, wl) = conn
-        .run(move |c| schema::PersonalBest::get_results(c).unwrap())
-        .await;
+    let (pl, wl) = schema::PersonalBest::get_results(&mut *conn).await.unwrap();
 
     let user_id = user.map(|user| user.id);
     let message = flash.map(context::Message::from);
@@ -270,12 +272,12 @@ pub async fn blackboard(
 #[get("/pbs")]
 pub async fn personal_bests(
     user: User<Member>,
-    conn: DatabaseConnection,
+    mut conn: Connection<Db>,
     flash: Option<FlashMessage<'_>>,
 ) -> Template {
-    let personal_bests = conn
-        .run(move |c| schema::PersonalBest::find(user.id, &user.name, c).unwrap())
-        .await;
+    let personal_bests = schema::PersonalBest::find(user.id, &user.name, &mut *conn)
+        .await
+        .unwrap();
 
     let message = flash.map(context::Message::from);
     let warning = personal_bests.check_for_show_without_values();
@@ -294,12 +296,10 @@ pub async fn personal_bests(
 #[get("/elections")]
 pub async fn elections(
     user: User<Generic>,
-    conn: DatabaseConnection,
+    mut conn: Connection<Db>,
     flash: Option<FlashMessage<'_>>,
 ) -> Template {
-    let exec_positions = conn
-        .run(move |c| schema::ExecPosition::get_results(c).unwrap())
-        .await;
+    let exec_positions = schema::ExecPosition::get_results(&mut *conn).await.unwrap();
 
     let message = flash.map(context::Message::from);
 
@@ -317,14 +317,12 @@ pub async fn elections(
 #[get("/elections/voting/<position_id>")]
 pub async fn election_voting(
     user: User<Member>,
-    conn: DatabaseConnection,
+    mut conn: Connection<Db>,
     flash: Option<FlashMessage<'_>>,
     position_id: i32,
 ) -> Result<Template, Flash<Redirect>> {
     // Check whether voting for this position is open
-    let voting_is_open = conn
-        .run(move |c| schema::ExecPosition::voting_is_open(position_id, c))
-        .await;
+    let voting_is_open = schema::ExecPosition::voting_is_open(position_id, &mut *conn).await;
 
     if !voting_is_open {
         // Redirect to the main elections page
@@ -334,19 +332,19 @@ pub async fn election_voting(
         ));
     }
 
-    let position_title = conn
-        .run(move |c| schema::ExecPosition::get_title(position_id, c).unwrap())
-        .await;
+    let position_title = schema::ExecPosition::get_title(position_id, &mut *conn)
+        .await
+        .unwrap();
 
-    let mut nominations = conn
-        .run(move |c| schema::Nomination::for_position_with_names(position_id, c).unwrap())
-        .await;
+    let mut nominations = schema::Nomination::for_position_with_names(position_id, &mut *conn)
+        .await
+        .unwrap();
 
     let message = flash.map(context::Message::from);
 
-    let current_ballot = conn
-        .run(move |c| schema::Vote::get_current_ballot(user.id, position_id, c).unwrap())
-        .await;
+    let current_ballot = schema::Vote::get_current_ballot(user.id, position_id, &mut *conn)
+        .await
+        .unwrap();
 
     // Randomly shuffle the nominations for each person
     let mut rng = rand::thread_rng();
@@ -446,12 +444,15 @@ fn count_position_ballots<'a>(
     let ranked = tally.tally_ranked();
 
     // Iterate once to find the rank of the last winner
-    let last_winner_rank = ranked.get(num_winners - 1).map_or(usize::MAX, |r| r.1);
+    let last_winner_rank = ranked.get(num_winners - 1).map_or(usize::MAX, |r| r.rank);
 
     // Find all people with this rank or less
     let mut winners: Vec<_> = ranked
         .iter()
-        .filter_map(|(c, r)| (*r <= last_winner_rank).then(|| (*c, nominees[c].as_str(), *r)))
+        .filter_map(|rc| {
+            (rc.rank <= last_winner_rank)
+                .then(|| (rc.candidate, nominees[&rc.candidate].as_str(), rc.rank))
+        })
         .collect();
 
     // Resolve any ties
@@ -479,19 +480,18 @@ fn count_position_ballots<'a>(
 
 /// Calculates the results of the elections won so far.
 #[get("/elections/results")]
-pub async fn election_results(_user: User<ElectionAdmin>, conn: DatabaseConnection) -> Template {
+pub async fn election_results(_user: User<ElectionAdmin>, mut conn: Connection<Db>) -> Template {
     // Get all the available positions
-    let positions: BTreeMap<i32, schema::ExecPosition> = conn
-        .run(move |c| schema::ExecPosition::get_results(c))
-        .await
-        .unwrap()
-        .into_iter()
-        .map(|pos| (pos.id, pos))
-        .collect();
+    let positions: BTreeMap<i32, schema::ExecPosition> =
+        schema::ExecPosition::get_results(&mut *conn)
+            .await
+            .unwrap()
+            .into_iter()
+            .map(|pos| (pos.id, pos))
+            .collect();
 
     // Map all the nominees from `warwick_id` -> `name`
-    let nominees: HashMap<_, _> = conn
-        .run(move |c| schema::Candidate::get_results(c))
+    let nominees: HashMap<_, _> = schema::Candidate::get_results(&mut *conn)
         .await
         .unwrap()
         .into_iter()
@@ -499,9 +499,7 @@ pub async fn election_results(_user: User<ElectionAdmin>, conn: DatabaseConnecti
         .collect();
 
     // Pull all the votes so far
-    let votes = conn
-        .run(move |c| schema::Vote::get_results(c).unwrap())
-        .await;
+    let votes = schema::Vote::get_results(&mut *conn).await.unwrap();
 
     // Sort all the votes by position they are voting for
     let mut by_position: BTreeMap<i32, Vec<schema::Vote>> =
@@ -516,9 +514,9 @@ pub async fn election_results(_user: User<ElectionAdmin>, conn: DatabaseConnecti
         .map(|(id, votes)| count_position_ballots(*id, votes, &positions, &nominees))
         .collect();
 
-    let closed_positions: Vec<i32> = conn
-        .run(move |c| schema::ExecPosition::closed_identifiers(c).unwrap())
-        .await;
+    let closed_positions = schema::ExecPosition::closed_identifiers(&mut *conn)
+        .await
+        .unwrap();
 
     log::trace!(
         "Only the following positions are closed, ignoring results for all others: {:?}",
@@ -537,8 +535,9 @@ pub async fn election_results(_user: User<ElectionAdmin>, conn: DatabaseConnecti
         .map(|w| w.0)
         .collect();
 
-    conn.run(move |c| schema::Candidate::mark_elected(&all_winners, c).unwrap())
-        .await;
+    schema::Candidate::mark_elected(&all_winners, &mut *conn)
+        .await
+        .unwrap();
 
     Template::render("election_results", context::ElectionResults { results })
 }
@@ -547,12 +546,10 @@ pub async fn election_results(_user: User<ElectionAdmin>, conn: DatabaseConnecti
 #[get("/elections/settings")]
 pub async fn election_settings(
     _user: User<ElectionAdmin>,
-    conn: DatabaseConnection,
+    mut conn: Connection<Db>,
     flash: Option<FlashMessage<'_>>,
 ) -> Template {
-    let exec_positions = conn
-        .run(move |c| schema::ExecPosition::get_results(c).unwrap())
-        .await;
+    let exec_positions = schema::ExecPosition::get_results(&mut *conn).await.unwrap();
 
     let message = flash.map(context::Message::from);
 

@@ -1,35 +1,10 @@
 //! Allows modifications of the `personal_bests` table in the database.
 
-use diesel::{BoolExpressionMethods, ExpressionMethods, QueryDsl, QueryResult, RunQueryDsl};
-
 use crate::forms;
-
-table! {
-    /// Represents the schema for `personal_bests`.
-    personal_bests (warwick_id) {
-        /// The user's Warwick ID.
-        warwick_id -> Integer,
-        /// The user's name.
-        name -> Text,
-        /// The user's best squat.
-        squat -> Nullable<Float>,
-        /// The user's best bench.
-        bench -> Nullable<Float>,
-        /// The user's best deadlift.
-        deadlift -> Nullable<Float>,
-        /// The user's best snatch.
-        snatch -> Nullable<Float>,
-        /// The user's best clean and jerk.
-        clean_and_jerk -> Nullable<Float>,
-        /// Whether to show the user for the PL board.
-        show_pl -> Bool,
-        /// Whether to show the user for the WL board.
-        show_wl -> Bool,
-    }
-}
+use crate::schema::Pool;
 
 /// Represents a row in the `personal_bests` table.
-#[derive(Debug, Default, Insertable, Queryable, Serialize)]
+#[derive(Clone, Debug, Default, Serialize)]
 pub struct PersonalBest {
     /// The user's Warwick ID
     pub warwick_id: i32,
@@ -62,84 +37,65 @@ impl PersonalBest {
     }
 
     /// Inserts the [`PersonalBest`] into the database.
-    pub fn insert(&self, conn: &diesel::PgConnection) -> QueryResult<usize> {
-        diesel::insert_into(personal_bests::table)
-            .values(self)
-            .execute(conn)
+    pub async fn insert(&self, pool: &mut Pool) -> sqlx::Result<()> {
+        sqlx::query!("INSERT INTO personal_bests (warwick_id, name, squat, bench, deadlift, snatch, clean_and_jerk, show_pl, show_wl) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)", self.warwick_id, self.name, self.squat, self.bench, self.deadlift, self.snatch, self.clean_and_jerk, self.show_pl, self.show_wl).execute(pool).await?;
+
+        Ok(())
     }
 
     /// Gets all personal bests currently in the database.
-    pub fn get_results(conn: &diesel::PgConnection) -> QueryResult<(Vec<Self>, Vec<Self>)> {
-        let pl = Self::get_pl(conn)?;
-        let wl = Self::get_wl(conn)?;
+    pub async fn get_results(pool: &mut Pool) -> sqlx::Result<(Vec<Self>, Vec<Self>)> {
+        let pl = Self::get_pl(pool).await?;
+        let wl = Self::get_wl(pool).await?;
 
         Ok((pl, wl))
     }
 
     /// Gets all personal bests currently in the database.
-    pub fn get_pl(conn: &diesel::PgConnection) -> QueryResult<Vec<Self>> {
-        let filter = personal_bests::dsl::show_pl.eq(true).and(
-            personal_bests::dsl::squat
-                .is_not_null()
-                .or(personal_bests::dsl::bench
-                    .is_not_null()
-                    .or(personal_bests::dsl::deadlift.is_not_null())),
-        );
-        let order = personal_bests::dsl::warwick_id.asc();
-
-        personal_bests::dsl::personal_bests
-            .filter(filter)
-            .order_by(order)
-            .get_results::<Self>(conn)
+    pub async fn get_pl(pool: &mut Pool) -> sqlx::Result<Vec<Self>> {
+        sqlx::query_as!(Self, "SELECT * FROM personal_bests WHERE show_pl AND (squat IS NOT NULL OR bench IS NOT NULL OR deadlift IS NOT NULL) ORDER BY warwick_id").fetch_all(pool).await
     }
 
     /// Gets all personal bests currently in the database.
-    pub fn get_wl(conn: &diesel::PgConnection) -> QueryResult<Vec<Self>> {
-        let filter = personal_bests::dsl::show_wl.eq(true).and(
-            personal_bests::dsl::snatch
-                .is_not_null()
-                .or(personal_bests::dsl::clean_and_jerk.is_not_null()),
-        );
-        let order = personal_bests::dsl::warwick_id.asc();
-
-        personal_bests::dsl::personal_bests
-            .filter(filter)
-            .order_by(order)
-            .get_results::<Self>(conn)
+    pub async fn get_wl(pool: &mut Pool) -> sqlx::Result<Vec<Self>> {
+        sqlx::query_as!(Self, "SELECT * FROM personal_bests WHERE show_wl AND (snatch IS NOT NULL OR clean_and_jerk IS NOT NULL) ORDER BY warwick_id").fetch_all(pool).await
     }
 
     /// Finds a user's personal bests in the database given their Warwick ID.
-    pub fn find(user_id: i32, name: &str, conn: &diesel::PgConnection) -> QueryResult<Self> {
-        if let Ok(pbs) = personal_bests::dsl::personal_bests
-            .find(user_id)
-            .first::<Self>(conn)
-        {
+    pub async fn find(warwick_id: i32, name: &str, pool: &mut Pool) -> sqlx::Result<Self> {
+        // See if we can find some personal bests first
+        let potential = sqlx::query_as!(
+            Self,
+            "SELECT * FROM personal_bests WHERE warwick_id = $1",
+            warwick_id
+        )
+        .fetch_optional(&mut *pool)
+        .await?;
+
+        if let Some(pbs) = potential {
             return Ok(pbs);
         }
 
         log::info!(
             "User ({}, {}) has no personal bests, inserting defaults",
-            user_id,
+            warwick_id,
             name
         );
 
         // Insert a blank one and return that instead
-        let pbs = Self::new(user_id, String::from(name));
-        pbs.insert(conn)?;
+        let pbs = Self::new(warwick_id, String::from(name));
+        pbs.insert(&mut *pool).await?;
 
         Ok(pbs)
     }
 
     /// Updates a user's personal bests based on their form submission.
-    pub fn update(
+    pub async fn update(
         user_id: i32,
         name: String,
         data: forms::PersonalBests,
-        conn: &diesel::PgConnection,
-    ) -> QueryResult<usize> {
-        let filter = personal_bests::dsl::warwick_id.eq(user_id);
-        let current = Self::find(user_id, &name, conn)?;
-
+        pool: &mut Pool,
+    ) -> sqlx::Result<()> {
         log::info!(
             "Updating personal bests for ({}, {}) to: {:?}",
             user_id,
@@ -147,20 +103,9 @@ impl PersonalBest {
             data
         );
 
-        // Check which columns need updating
-        let updates = (
-            personal_bests::dsl::squat.eq(data.squat.or(current.squat)),
-            personal_bests::dsl::bench.eq(data.bench.or(current.bench)),
-            personal_bests::dsl::deadlift.eq(data.deadlift.or(current.deadlift)),
-            personal_bests::dsl::snatch.eq(data.snatch.or(current.snatch)),
-            personal_bests::dsl::clean_and_jerk.eq(data.clean_and_jerk.or(current.clean_and_jerk)),
-            personal_bests::dsl::show_pl.eq(data.show_pl),
-            personal_bests::dsl::show_wl.eq(data.show_wl),
-        );
+        sqlx::query!("UPDATE personal_bests SET squat = COALESCE(squat, $1), bench = COALESCE(bench, $2), deadlift = COALESCE(deadlift, $3), snatch = COALESCE(snatch, $4), clean_and_jerk = COALESCE(clean_and_jerk, $5), show_pl = $6, show_wl = $7", data.squat, data.bench, data.deadlift, data.snatch, data.clean_and_jerk, data.show_pl, data.show_wl).execute(pool).await?;
 
-        diesel::update(personal_bests::dsl::personal_bests.filter(filter))
-            .set(updates)
-            .execute(conn)
+        Ok(())
     }
 
     /// Checks whether the personal bests warrant a warning message.

@@ -11,6 +11,7 @@ use itertools::Itertools;
 use rocket::form::Form;
 use rocket::http::{Cookie, CookieJar};
 use rocket::response::{Flash, Redirect};
+use rocket_db_pools::Connection;
 
 use crate::auth;
 use crate::email;
@@ -18,13 +19,13 @@ use crate::forms;
 use crate::frontend;
 use crate::schema;
 
-use crate::guards::{DatabaseConnection, ElectionAdmin, Generic, Member, SiteAdmin, User};
+use crate::guards::{Db, ElectionAdmin, Generic, Member, SiteAdmin, User};
 
 /// Creates a new session in the database.
 #[post("/sessions/create", data = "<data>")]
 pub async fn sessions_create(
     _user: User<SiteAdmin>,
-    conn: DatabaseConnection,
+    mut conn: Connection<Db>,
     data: Form<forms::SessionCreate>,
 ) -> Flash<Redirect> {
     let data = data.into_inner();
@@ -33,9 +34,9 @@ pub async fn sessions_create(
     let datetime = chrono::Local.datetime_from_str(&formatted, "%Y-%m-%d %H:%M");
     let timestamp = datetime.unwrap().timestamp();
 
-    conn.run(move |c| schema::Session::create_and_insert(c, data.title, timestamp, data.spaces))
-        .await
-        .unwrap();
+    // Create an identifier for the session
+    let session = schema::Session::new(data.title, timestamp, data.spaces, &mut *conn).await;
+    session.insert(&mut *conn).await;
 
     Flash::success(
         Redirect::to(uri!(frontend::manage_sessions)),
@@ -47,12 +48,12 @@ pub async fn sessions_create(
 #[post("/sessions/delete", data = "<data>")]
 pub async fn session_delete(
     _user: User<SiteAdmin>,
-    conn: DatabaseConnection,
+    mut conn: Connection<Db>,
     data: Form<forms::SessionDelete>,
 ) -> Flash<Redirect> {
     let data = data.into_inner();
 
-    conn.run(move |c| schema::Session::delete(c, data.session_id))
+    schema::Session::delete(data.session_id, &mut *conn)
         .await
         .unwrap();
 
@@ -66,7 +67,7 @@ pub async fn session_delete(
 #[post("/session/register", data = "<data>")]
 pub async fn register(
     user: User<Generic>,
-    conn: DatabaseConnection,
+    mut conn: Connection<Db>,
     data: Form<forms::Register>,
 ) -> Flash<Redirect> {
     let data = data.into_inner();
@@ -74,10 +75,10 @@ pub async fn register(
     let insertable = registration.clone();
     let session_id = registration.session_id;
 
-    let result = conn.run(move |c| insertable.insert(c)).await;
-    let session = conn
-        .run(move |c| schema::Session::find(session_id, c))
+    let result = insertable.insert(&mut *conn).await;
+    let session = schema::Session::find(session_id, &mut *conn)
         .await
+        .unwrap()
         .unwrap();
 
     // Check whether they broke the database
@@ -101,16 +102,14 @@ pub async fn register(
 #[post("/session/cancel", data = "<data>")]
 pub async fn cancel(
     user: User<Generic>,
-    conn: DatabaseConnection,
+    mut conn: Connection<Db>,
     data: Form<forms::Cancel>,
 ) -> Flash<Redirect> {
     let data = data.into_inner();
-    let registration = conn
-        .run(move |c| schema::Registration::cancel(user.id, data.session_id, c))
-        .await;
+    let result = schema::Registration::cancel(user.id, data.session_id, &mut *conn).await;
 
     // Check whether they broke the database
-    match registration {
+    match result {
         Ok(_) => Flash::success(
             Redirect::to(uri!(frontend::sessions)),
             "Successfully cancelled the session!",
@@ -140,13 +139,11 @@ pub fn logout(user: User<Generic>, cookies: &CookieJar<'_>) -> Flash<Redirect> {
 #[post("/pbs", data = "<data>")]
 pub async fn personal_bests(
     user: User<Member>,
-    conn: DatabaseConnection,
+    mut conn: Connection<Db>,
     data: Form<forms::PersonalBests>,
 ) -> Flash<Redirect> {
     let data = data.into_inner();
-    let result = conn
-        .run(move |c| schema::PersonalBest::update(user.id, user.name, data, c))
-        .await;
+    let result = schema::PersonalBest::update(user.id, user.name, data, &mut *conn).await;
 
     // Check whether they broke the database
     match result {
@@ -164,33 +161,24 @@ pub async fn personal_bests(
 /// Records the attendance for a given Warwick ID at a session.
 #[post("/attendance/record", data = "<data>")]
 pub async fn record_attendance(
-    conn: DatabaseConnection,
+    mut conn: Connection<Db>,
     data: Form<forms::Attendance>,
 ) -> Flash<Redirect> {
     let data = data.into_inner();
 
-    let result = conn
-        .run(move |c| schema::Attendance::from(data).insert(c))
-        .await;
+    let attendance = schema::Attendance::from(data);
+    let result = attendance.insert(&mut *conn).await;
 
     // Record the attendance
-    if let Err(e) = result {
-        use diesel::result::{DatabaseErrorKind, Error};
-
-        let redirect = Redirect::to(uri!(frontend::session_attendance: data.session_id));
-        let msg = match e {
-            Error::DatabaseError(DatabaseErrorKind::UniqueViolation, _) => format!(
-                "Attendance for {} has already been recorded for this session",
-                data.warwick_id.0
-            ),
-            _ => String::from("Something happened in the database incorrectly"),
-        };
-
-        return Flash::error(redirect, msg);
+    if result.is_err() {
+        return Flash::error(
+            Redirect::to(uri!(frontend::session_attendance(data.session_id))),
+            "Something happened in the database incorrectly",
+        );
     }
 
     Flash::success(
-        Redirect::to(uri!(frontend::session_attendance: data.session_id)),
+        Redirect::to(uri!(frontend::session_attendance(data.session_id))),
         format!("Recorded attendance for ID: {}", data.warwick_id.0),
     )
 }
@@ -199,7 +187,7 @@ pub async fn record_attendance(
 #[get("/authenticate/<uri>")]
 pub async fn authenticate(
     cookies: &CookieJar<'_>,
-    conn: DatabaseConnection,
+    mut conn: Connection<Db>,
     uri: String,
 ) -> Redirect {
     // Check whether their cookie is already set
@@ -214,8 +202,8 @@ pub async fn authenticate(
     let callback = auth::build_callback(&pair.token, &uri);
 
     // Write the secret to the database
-    conn.run(move |c| schema::AuthPair::from(pair).insert(c).unwrap())
-        .await;
+    let pair = schema::AuthPair::from(pair);
+    pair.insert(&mut *conn).await.unwrap();
 
     Redirect::to(callback)
 }
@@ -229,23 +217,28 @@ pub async fn authenticate(
 pub async fn authorised(
     cookies: &CookieJar<'_>,
     uri: String,
-    conn: DatabaseConnection,
+    mut conn: Connection<Db>,
     oauth_token: &str,
     oauth_verifier: &str,
 ) -> Redirect {
     let consumer_key = env::var("CONSUMER_KEY").unwrap();
     let consumer_secret = env::var("CONSUMER_SECRET").unwrap();
 
-    let token = oauth_token.to_owned();
-    let auth_pair = conn
-        .run(move |c| schema::AuthPair::find(&token, c).unwrap())
-        .await;
+    let auth_pair = schema::AuthPair::find(oauth_token, &mut *conn)
+        .await
+        .unwrap();
+
+    // Check we have a secret
+    let (token, secret) = match auth_pair.secret {
+        Some(s) => (auth_pair.token, s),
+        None => return Redirect::to(uri!(frontend::blackboard)),
+    };
 
     let pair = auth::exchange_request_for_access(
         &consumer_key,
         &consumer_secret,
-        &auth_pair.token,
-        &auth_pair.secret,
+        &token,
+        &secret,
         oauth_verifier,
     )
     .await;
@@ -259,23 +252,21 @@ pub async fn authorised(
     cookies.add_private(Cookie::new("id", user_info.id.to_string()));
     cookies.add_private(Cookie::new("name", user_info.name));
 
-    Redirect::to(uri!(frontend::authenticated: uri))
+    Redirect::to(uri!(frontend::authenticated(uri)))
 }
 
 /// Allows users to vote on the election.
 #[post("/election/vote/<position_id>", data = "<data>")]
 pub async fn election_vote(
     user: User<Member>,
-    conn: DatabaseConnection,
+    mut conn: Connection<Db>,
     position_id: i32,
     data: Form<HashMap<i32, i32>>,
 ) -> Flash<Redirect> {
     let data = data.into_inner();
-    let redirect = Redirect::to(uri!(frontend::election_voting: position_id));
+    let redirect = Redirect::to(uri!(frontend::election_voting(position_id)));
 
-    let voting_is_open = conn
-        .run(move |c| schema::ExecPosition::voting_is_open(position_id, c))
-        .await;
+    let voting_is_open = schema::ExecPosition::voting_is_open(position_id, &mut *conn).await;
 
     // Check whether voting for this position is open
     if !voting_is_open {
@@ -294,9 +285,9 @@ pub async fn election_vote(
     }
 
     // Check that they submitted a full ballot
-    let candidates = conn
-        .run(move |c| schema::Nomination::for_position_with_names(position_id, c).unwrap())
-        .await;
+    let candidates = schema::Nomination::for_position_with_names(position_id, &mut *conn)
+        .await
+        .unwrap();
 
     if data.values().count() != candidates.len() {
         return Flash::error(
@@ -306,7 +297,10 @@ pub async fn election_vote(
     }
 
     // Check whether the user is a candidate
-    if candidates.iter().any(|(id, _)| *id == user.id) {
+    if candidates
+        .iter()
+        .any(|candidate| candidate.warwick_id == user.id)
+    {
         return Flash::error(
             redirect,
             "You are a candidate for this position, so you cannot vote.",
@@ -314,8 +308,9 @@ pub async fn election_vote(
     }
 
     // Record the user's votes
-    conn.run(move |c| schema::Vote::insert_all(user.id, position_id, &data, c).unwrap())
-        .await;
+    schema::Vote::insert_all(user.id, position_id, &data, &mut *conn)
+        .await
+        .unwrap();
 
     Flash::success(redirect, "Successfully recorded your votes!")
 }
@@ -324,11 +319,12 @@ pub async fn election_vote(
 #[get("/elections/settings/toggle/<position_id>")]
 pub async fn election_settings_toggle(
     _user: User<ElectionAdmin>,
-    conn: DatabaseConnection,
+    mut conn: Connection<Db>,
     position_id: i32,
 ) -> Flash<Redirect> {
-    conn.run(move |c| schema::ExecPosition::toggle_state(position_id, c).unwrap())
-        .await;
+    schema::ExecPosition::toggle_state(position_id, &mut *conn)
+        .await
+        .unwrap();
 
     Flash::success(
         Redirect::to(uri!(frontend::election_settings)),

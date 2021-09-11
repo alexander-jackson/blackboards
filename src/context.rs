@@ -29,8 +29,8 @@ pub struct Message {
 impl From<FlashMessage<'_>> for Message {
     fn from(flash: FlashMessage) -> Self {
         Self {
-            variant: flash.name().to_string(),
-            message: flash.msg().to_string(),
+            variant: flash.kind().to_string(),
+            message: flash.message().to_string(),
         }
     }
 }
@@ -122,7 +122,7 @@ pub struct Voting {
     /// The title of the position itself.
     pub position_title: String,
     /// The positions to show
-    pub nominations: Vec<(i32, String)>,
+    pub nominations: Vec<schema::nomination::NamedNominationForPosition>,
     /// The user's current votes for this position, if they have voted
     pub current_ballot: Option<Vec<String>>,
     /// The message to display to the user, for errors

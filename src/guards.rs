@@ -8,9 +8,11 @@ use std::{env, marker::PhantomData};
 
 use rocket::http::Status;
 use rocket::request::{FromRequest, Outcome, Request};
+use rocket_db_pools::Database;
 
+#[derive(Database)]
 #[database("blackboards")]
-pub struct DatabaseConnection(diesel::PgConnection);
+pub struct Db(sqlx::PgPool);
 
 /// Represents a generic user who is at Warwick.
 pub struct Generic;

@@ -3,15 +3,22 @@
 use std::fmt;
 
 use chrono::TimeZone;
+use sqlx::Type;
 
 /// Represents a custom datetime, to be stored as BigInt in SQL and formatted otherwise.
-#[derive(Debug, Eq, PartialEq, Ord, PartialOrd, DieselNewType)]
-pub struct DateTime(i64);
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Type)]
+#[sqlx(transparent)]
+pub struct DateTime(pub i64);
 
 impl DateTime {
     /// Creates a new [`DateTime`] from a timestamp.
     pub fn new(timestamp: i64) -> Self {
         Self(timestamp)
+    }
+
+    /// Gets the inner value of the [`DateTime`].
+    pub fn inner(&self) -> i64 {
+        self.0
     }
 }
 

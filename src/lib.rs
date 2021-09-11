@@ -6,22 +6,17 @@
 #[macro_use]
 extern crate rocket;
 #[macro_use]
-extern crate rocket_contrib;
-#[macro_use]
-extern crate diesel;
-#[macro_use]
 extern crate serde_derive;
-#[macro_use]
-extern crate diesel_derive_newtype;
 
 use std::collections::HashMap;
 use std::env;
 
 use fern::colors::{Color, ColoredLevelConfig};
+use rocket::fs::FileServer;
 use rocket::{figment::providers::Env, request::Request};
 use rocket::{figment::Figment, response::Redirect, Config};
-use rocket_contrib::serve::StaticFiles;
-use rocket_contrib::templates::Template;
+use rocket_db_pools::Database;
+use rocket_dyn_templates::Template;
 
 pub mod api;
 pub mod auth;
@@ -42,7 +37,7 @@ pub async fn unauthorised(req: &Request<'_>) -> Redirect {
     // Encode the uri
     let encoded = base64::encode(&uri);
 
-    Redirect::to(uri!(api::authenticate: encoded))
+    Redirect::to(uri!(api::authenticate(encoded)))
 }
 
 /// Catches 403 error codes for displaying a custom page.
@@ -74,14 +69,14 @@ fn config_from_env() -> Figment {
 ///
 /// Adds the database connection and the template handler to the rocket, along with the routes that
 /// are supported and returns the Rocket object ready to be launched.
-pub fn build_rocket() -> rocket::Rocket {
+pub fn build_rocket() -> rocket::Rocket<rocket::Build> {
     rocket::custom(config_from_env())
-        .attach(guards::DatabaseConnection::fairing())
+        .attach(guards::Db::init())
         .attach(Template::fairing())
-        .register(catchers![unauthorised, forbidden])
+        .register("/", catchers![unauthorised, forbidden])
         .mount(
             "/assets",
-            StaticFiles::from(concat!(env!("CARGO_MANIFEST_DIR"), "/assets")),
+            FileServer::from(concat!(env!("CARGO_MANIFEST_DIR"), "/assets")),
         )
         .mount(
             "/",

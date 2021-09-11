@@ -42,7 +42,7 @@
 
 				{% for nomination in nominations %}
 
-				<option value="{{ nomination.0 }}">{{ nomination.1 }}</option>
+				<option value="{{ nomination.warwick_id }}">{{ nomination.name }}</option>
 
 				{% endfor %}
 

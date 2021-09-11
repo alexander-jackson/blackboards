@@ -1,21 +1,10 @@
 //! Allows modifications of the `attendances` table in the database.
 
-use diesel::{QueryResult, RunQueryDsl};
-
 use crate::forms;
-
-table! {
-    /// Represents the schema for `attendances`.
-    attendances (session_id, warwick_id) {
-        /// The identifier for the session.
-        session_id -> Integer,
-        /// The user's Warwick ID.
-        warwick_id -> Integer,
-    }
-}
+use crate::schema::Pool;
 
 /// Represents a row in the `attendances` table.
-#[derive(Debug, Insertable, Queryable, Serialize)]
+#[derive(Copy, Clone, Debug, Serialize)]
 pub struct Attendance {
     /// The identifier for the session.
     pub session_id: i32,
@@ -25,10 +14,16 @@ pub struct Attendance {
 
 impl Attendance {
     /// Inserts the data into the appropriate table.
-    pub fn insert(&self, conn: &diesel::PgConnection) -> QueryResult<usize> {
-        diesel::insert_into(attendances::table)
-            .values(self)
-            .execute(conn)
+    pub async fn insert(&self, pool: &mut Pool) -> sqlx::Result<()> {
+        sqlx::query!(
+            "INSERT INTO attendances (session_id, warwick_id) VALUES ($1, $2)",
+            self.session_id,
+            self.warwick_id
+        )
+        .execute(pool)
+        .await?;
+
+        Ok(())
     }
 }
 
