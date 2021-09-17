@@ -95,27 +95,6 @@ impl Vote {
         .fetch_all(pool)
         .await
         .map(|v| if v.is_empty() { None } else { Some(v.into_iter().map(|e| e.name).collect()) })
-
-        // let votes = votes::dsl::votes
-        //     .filter(
-        //         votes::dsl::warwick_id
-        //             .eq(user_id)
-        //             .and(votes::dsl::position_id.eq(position_id)),
-        //     )
-        //     .inner_join(
-        //         nominations::dsl::nominations.on(nominations::dsl::warwick_id
-        //             .eq(votes::dsl::candidate_id)
-        //             .and(nominations::dsl::position_id.eq(votes::dsl::position_id))),
-        //     )
-        //     .inner_join(
-        //         candidates::dsl::candidates
-        //             .on(candidates::dsl::warwick_id.eq(nominations::dsl::warwick_id)),
-        //     )
-        //     .order_by(votes::dsl::ranking)
-        //     .select(candidates::dsl::name)
-        //     .get_results(conn);
-
-        // votes.map(|v| if v.is_empty() { None } else { Some(v) })
     }
 }
 

@@ -105,24 +105,6 @@ impl Registration {
         )
         .fetch_all(pool)
         .await
-
-        // let columns = (
-        //     sessions::dsl::id,
-        //     sessions::dsl::start_time,
-        //     sessions::dsl::title,
-        //     registrations::dsl::name,
-        // );
-        // let ordering = (sessions::dsl::start_time, sessions::dsl::id);
-        // let filter = sessions::dsl::start_time
-        //     .gt(window.start)
-        //     .and(sessions::dsl::start_time.lt(window.end));
-
-        // registrations::dsl::registrations
-        //     .inner_join(sessions::dsl::sessions)
-        //     .select(columns)
-        //     .filter(filter)
-        //     .order_by(ordering)
-        //     .load(conn)
     }
 
     /// Gets all the sessions that a user has booked.
@@ -148,21 +130,7 @@ impl Registration {
             window.end,
             id,
         )
-            .fetch_all(pool)
-            .await
-
-        // let columns = sessions::all_columns;
-        // let ordering = (sessions::dsl::start_time, sessions::dsl::id);
-        // let filter = sessions::dsl::start_time
-        //     .gt(window.start)
-        //     .and(sessions::dsl::start_time.lt(window.end))
-        //     .and(registrations::dsl::warwick_id.eq(id));
-
-        // registrations::dsl::registrations
-        //     .inner_join(sessions::dsl::sessions)
-        //     .select(columns)
-        //     .filter(filter)
-        //     .order_by(ordering)
-        //     .load(conn)
+        .fetch_all(pool)
+        .await
     }
 }
