@@ -73,7 +73,7 @@ impl ExecPosition {
 
     /// Toggles the state of the position, either opening or closing voting.
     pub async fn toggle_state(position_id: i32, pool: &mut Pool) -> sqlx::Result<()> {
-        log::info!("Toggling the state of position_id={}", position_id);
+        tracing::info!(%position_id, "Toggling the state of an exec position");
 
         sqlx::query!(
             "UPDATE exec_positions SET open = NOT open WHERE id = $1",

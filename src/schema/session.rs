@@ -79,7 +79,7 @@ impl Session {
         pool: &mut Pool,
         window: SessionWindow,
     ) -> sqlx::Result<Vec<Self>> {
-        log::debug!("Getting all the sessions in window={:?}", window);
+        tracing::debug!(?window, "Getting all the sessions in a window");
 
         sqlx::query_as!(
             Self,
@@ -103,7 +103,7 @@ impl Session {
         pool: &mut Pool,
         window: SessionWindow,
     ) -> sqlx::Result<Vec<Self>> {
-        log::debug!("Getting all the sessions after time={}", window.start);
+        tracing::debug!(time = %window.start, "Getting all the sessions after a certain time");
 
         sqlx::query_as!(
             Self,
@@ -123,7 +123,7 @@ impl Session {
 
     /// Finds a session in the database given its identifier.
     pub async fn find(id: i32, pool: &mut Pool) -> sqlx::Result<Option<Self>> {
-        log::debug!("Querying the database for session_id={}", id);
+        tracing::debug!(%id, "Querying the database for a specific session");
 
         sqlx::query_as!(
             Self,
@@ -142,7 +142,7 @@ impl Session {
 
     /// Deletes the session with the given identifier.
     pub async fn delete(id: i32, pool: &mut Pool) -> sqlx::Result<()> {
-        log::warn!("Deleting session with id={}, including registrations", id);
+        tracing::warn!(%id, "Deleting a specific session, including its registrations");
 
         sqlx::query!("DELETE FROM sessions WHERE id = $1", id)
             .execute(pool)
@@ -153,7 +153,7 @@ impl Session {
 
     /// Decreases the number of remaining places for a session given its identifier.
     pub async fn decrement_remaining(id: i32, pool: &mut Pool) -> sqlx::Result<()> {
-        log::debug!("Decrementing remaining places for session_id={}", id);
+        tracing::debug!(%id, "Decrementing remaining places for a session");
 
         sqlx::query!(
             "UPDATE sessions SET remaining = remaining - 1 WHERE id = $1",
@@ -167,7 +167,7 @@ impl Session {
 
     /// Increases the number of remaining places for a session given its identifier.
     pub async fn increment_remaining(id: i32, pool: &mut Pool) -> sqlx::Result<()> {
-        log::debug!("Incrementing remaining places for session_id={}", id);
+        tracing::debug!(%id, "Incrementing remaining places for a session");
 
         sqlx::query!(
             "UPDATE sessions SET remaining = remaining + 1 WHERE id = $1",

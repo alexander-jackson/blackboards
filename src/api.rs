@@ -124,7 +124,7 @@ pub async fn cancel(
 /// Logs the user out and deletes their cookies.
 #[get("/logout")]
 pub fn logout(user: User<Generic>, cookies: &CookieJar<'_>) -> Flash<Redirect> {
-    log::info!("Logging out user ({}, {})", user.id, user.name);
+    tracing::info!(id = %user.id, name = %user.name, "Logging out a user from the system");
 
     cookies.remove_private(Cookie::named("id"));
     cookies.remove_private(Cookie::named("name"));

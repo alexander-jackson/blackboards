@@ -218,7 +218,8 @@ pub fn authenticated(uri: &str) -> Template {
     // Decode the uri
     let bytes = base64::decode(&uri).unwrap();
     let uri = String::from_utf8(bytes).unwrap();
-    log::debug!("Authenticated user, redirecting to: {}", uri);
+
+    tracing::debug!(%uri, "Authenticated a user, redirecting them to their original request");
 
     Template::render("authenticated", context::Authenticated { uri })
 }
@@ -464,11 +465,7 @@ fn count_position_ballots<'a>(
 
     let title = positions[&position_id].title.clone();
 
-    log::debug!(
-        "Voting has decided that {:?} has/have won the nomination for: {}",
-        winners,
-        title
-    );
+    tracing::info!(%title, ?winners, "Votes have been tallied for a position");
 
     context::ElectionResult {
         position_id,
@@ -518,9 +515,9 @@ pub async fn election_results(_user: User<ElectionAdmin>, mut conn: Connection<D
         .await
         .unwrap();
 
-    log::trace!(
-        "Only the following positions are closed, ignoring results for all others: {:?}",
-        closed_positions
+    tracing::debug!(
+        ?closed_positions,
+        "Only some positions have closed, so ignoring results for all others"
     );
 
     // All ties should have been resolved by the presidential vote, so elect users

@@ -67,7 +67,8 @@ fn parse_mappings(text: &str) -> HashMap<&str, &str> {
 /// Builds the callback url for OAuth1.
 pub fn build_callback(token: &str, uri: &str) -> String {
     let callback = format!("{}/{}", OAUTH_CALLBACK, uri);
-    log::debug!("Callback uri: {}", callback);
+
+    tracing::debug!(%callback, "Building a callback url for OAuth1 verification");
 
     format!(
         "{}?oauth_token={}&oauth_callback={}",

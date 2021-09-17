@@ -74,10 +74,10 @@ impl<T: AccessControl> User<T> {
                 let contains = var.split(',').any(|v| v == value);
 
                 if !contains {
-                    log::warn!(
-                        "user_id={} was not found in the following environment variable: {}",
-                        value,
-                        key
+                    tracing::warn!(
+                        user_id = %value,
+                        environment_variable = %key,
+                        "Failed to find user in the environment variable"
                     );
                 }
 

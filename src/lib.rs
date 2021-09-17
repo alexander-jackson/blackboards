@@ -11,7 +11,6 @@ extern crate serde_derive;
 use std::collections::HashMap;
 use std::env;
 
-use fern::colors::{Color, ColoredLevelConfig};
 use rocket::fs::FileServer;
 use rocket::{figment::providers::Env, request::Request};
 use rocket::{figment::Figment, response::Redirect, Config};
@@ -32,7 +31,7 @@ pub mod session_window;
 #[catch(401)]
 pub async fn unauthorised(req: &Request<'_>) -> Redirect {
     let uri = req.uri().to_string();
-    log::debug!("Unauthorised user requested: {}", uri);
+    tracing::debug!(%uri, "Caught a 401 Unauthorized response");
 
     // Encode the uri
     let encoded = base64::encode(&uri);
@@ -44,6 +43,7 @@ pub async fn unauthorised(req: &Request<'_>) -> Redirect {
 #[catch(403)]
 pub async fn forbidden(req: &Request<'_>) -> Template {
     let path = req.uri().path().as_str();
+    tracing::warn!(%path, "Caught a 403 Forbidden response");
 
     Template::render("forbidden", context::Forbidden { path })
 }
@@ -108,43 +108,4 @@ pub fn build_rocket() -> rocket::Rocket<rocket::Build> {
                 api::election_settings_toggle,
             ],
         )
-}
-
-/// Setup a logger with custom filters.
-pub fn setup_logger_with_filters<Conditions, Name>(conditions: Conditions)
-where
-    Conditions: IntoIterator<Item = (Name, log::LevelFilter)>,
-    Name: Into<String>,
-{
-    let colours_line = ColoredLevelConfig::new()
-        .error(Color::Red)
-        .warn(Color::Yellow)
-        .info(Color::Green)
-        .debug(Color::Blue)
-        .trace(Color::BrightBlack);
-
-    let mut dispatch = fern::Dispatch::new()
-        .format(move |out, message, record| {
-            out.finish(format_args!(
-                "{colours_line}[{date}][{target}][{level}]\x1B[0m {message}",
-                colours_line = format_args!(
-                    "\x1B[{}m",
-                    colours_line.get_color(&record.level()).to_fg_str()
-                ),
-                date = chrono::Local::now().format("%Y-%m-%d %H:%M:%S"),
-                target = record.target(),
-                level = record.level(),
-                message = message,
-            ));
-        })
-        .level(log::LevelFilter::Warn);
-
-    for (module_name, level) in conditions {
-        dispatch = dispatch.level_for(module_name.into(), level);
-    }
-
-    dispatch
-        .chain(std::io::stdout())
-        .apply()
-        .expect("Failed to initialise the logger");
 }

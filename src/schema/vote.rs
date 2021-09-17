@@ -20,6 +20,8 @@ pub struct Vote {
 impl Vote {
     /// Inserts the [`Vote`] into the database.
     pub async fn insert(&self, pool: &mut Pool) -> sqlx::Result<()> {
+        tracing::debug!(?self, "Inserting an entry to the `vote` table");
+
         sqlx::query!("INSERT INTO votes (warwick_id, position_id, candidate_id, ranking) VALUES ($1, $2, $3, $4)", self.warwick_id, self.position_id, self.candidate_id, self.ranking).execute(pool).await?;
 
         Ok(())
@@ -41,11 +43,7 @@ impl Vote {
         .execute(&mut *pool)
         .await?;
 
-        log::debug!(
-            "Deleted all votes for warwick_id={}, position_id={}",
-            warwick_id,
-            position_id
-        );
+        tracing::info!(%warwick_id, %position_id, "Deleted all the votes in the database");
 
         let votes: Vec<Self> = map
             .iter()
@@ -57,17 +55,12 @@ impl Vote {
             })
             .collect();
 
-        log::debug!(
-            "warwick_id={} cast the following votes: {:?} for position_id={}",
-            warwick_id,
-            map,
-            position_id
-        );
-
         // `sqlx` doesn't support multiple entries, so iterate instead
         for vote in votes {
             vote.insert(&mut *pool).await?;
         }
+
+        tracing::info!(%warwick_id, %position_id, ?map, "Inserted a ballot into the database");
 
         Ok(())
     }
@@ -85,6 +78,8 @@ impl Vote {
         position_id: i32,
         pool: &mut Pool,
     ) -> sqlx::Result<Option<Vec<String>>> {
+        tracing::debug!(%user_id, %position_id, "Fetching the current ballot");
+
         // Get their votes for this position
         sqlx::query!(
         r#"

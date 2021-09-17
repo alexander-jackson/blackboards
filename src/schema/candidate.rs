@@ -36,10 +36,10 @@ impl Candidate {
     }
 
     /// Mark the winning candidates as such.
-    pub async fn mark_elected(winners: &[i32], pool: &mut Pool) -> sqlx::Result<()> {
-        log::info!(
-            "Marking the following identifiers as elected: {:?}",
-            winners
+    pub async fn mark_elected(candidates: &[i32], pool: &mut Pool) -> sqlx::Result<()> {
+        tracing::info!(
+            ?candidates,
+            "Marking some candidates as elected to positions"
         );
 
         // Remove all the existing winners
@@ -48,7 +48,7 @@ impl Candidate {
             .await?;
 
         // Set each candidate to be elected TODO: this could use `IN`
-        for candidate in winners {
+        for candidate in candidates {
             sqlx::query!(
                 "UPDATE candidates SET elected = TRUE WHERE warwick_id = $1",
                 candidate

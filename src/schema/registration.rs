@@ -49,12 +49,7 @@ impl Registration {
             _ => (),
         }
 
-        log::debug!(
-            "Attempting to register ({}, {}) for session_id={}",
-            self.warwick_id,
-            self.name,
-            self.session_id,
-        );
+        tracing::info!(?self, "Registering a user for a session");
 
         // Insert the registration
         sqlx::query!(
@@ -71,11 +66,7 @@ impl Registration {
 
     /// Deletes a user's registration from the database if it exists.
     pub async fn cancel(warwick_id: i32, session_id: i32, pool: &mut Pool) -> sqlx::Result<()> {
-        log::debug!(
-            "Cancelling registration for session_id={} from warwick_id={}",
-            session_id,
-            warwick_id
-        );
+        tracing::info!(%session_id, %warwick_id, "Cancelling a registration for a session");
 
         Session::increment_remaining(session_id, pool).await?;
 

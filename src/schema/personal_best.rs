@@ -76,11 +76,7 @@ impl PersonalBest {
             return Ok(pbs);
         }
 
-        log::info!(
-            "User ({}, {}) has no personal bests, inserting defaults",
-            warwick_id,
-            name
-        );
+        tracing::info!(%name, %warwick_id, "Inserting default personal bests for a user");
 
         // Insert a blank one and return that instead
         let pbs = Self::new(warwick_id, String::from(name));
@@ -96,12 +92,7 @@ impl PersonalBest {
         data: forms::PersonalBests,
         pool: &mut Pool,
     ) -> sqlx::Result<()> {
-        log::info!(
-            "Updating personal bests for ({}, {}) to: {:?}",
-            user_id,
-            name,
-            data
-        );
+        tracing::info!(%name, %user_id, ?data, "Updating personal bests for a user with new information");
 
         sqlx::query!("UPDATE personal_bests SET squat = COALESCE(squat, $1), bench = COALESCE(bench, $2), deadlift = COALESCE(deadlift, $3), snatch = COALESCE(snatch, $4), clean_and_jerk = COALESCE(clean_and_jerk, $5), show_pl = $6, show_wl = $7", data.squat, data.bench, data.deadlift, data.snatch, data.clean_and_jerk, data.show_pl, data.show_wl).execute(pool).await?;
 
