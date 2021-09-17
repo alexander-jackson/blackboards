@@ -344,42 +344,6 @@
       ]
     }
   },
-  "67773bb97fcc93b0161acd98ac990a59d100d571dbdf88c82ed3e623879f600f": {
-    "query": "SELECT * FROM exec_positions",
-    "describe": {
-      "columns": [
-        {
-          "ordinal": 0,
-          "name": "id",
-          "type_info": "Int4"
-        },
-        {
-          "ordinal": 1,
-          "name": "title",
-          "type_info": "Text"
-        },
-        {
-          "ordinal": 2,
-          "name": "num_winners",
-          "type_info": "Int4"
-        },
-        {
-          "ordinal": 3,
-          "name": "open",
-          "type_info": "Bool"
-        }
-      ],
-      "parameters": {
-        "Left": []
-      },
-      "nullable": [
-        false,
-        false,
-        false,
-        false
-      ]
-    }
-  },
   "6d13e350d0da075c7ba8d806a71255aff9382ff5dbfd469c4c1a0d6b1b3ffded": {
     "query": "SELECT * FROM votes",
     "describe": {
@@ -959,6 +923,42 @@
         ]
       },
       "nullable": []
+    }
+  },
+  "e4a2f445888b6fdf7997351056dc4ca784043ccefe42c87f298b4a9a86934b9e": {
+    "query": "SELECT * FROM exec_positions ORDER BY id",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Int4"
+        },
+        {
+          "ordinal": 1,
+          "name": "title",
+          "type_info": "Text"
+        },
+        {
+          "ordinal": 2,
+          "name": "num_winners",
+          "type_info": "Int4"
+        },
+        {
+          "ordinal": 3,
+          "name": "open",
+          "type_info": "Bool"
+        }
+      ],
+      "parameters": {
+        "Left": []
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        false
+      ]
     }
   },
   "ed4eb05613fc1fdbc7e8606ea168bea272f2e586488f15ae47b3d086a6f56202": {

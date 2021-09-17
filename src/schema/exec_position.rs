@@ -33,7 +33,7 @@ impl ExecPosition {
 
     /// Gets all [`ExecPosition`] entries in the database.
     pub async fn get_results(pool: &mut Pool) -> sqlx::Result<Vec<Self>> {
-        sqlx::query_as!(Self, "SELECT * FROM exec_positions")
+        sqlx::query_as!(Self, "SELECT * FROM exec_positions ORDER BY id")
             .fetch_all(pool)
             .await
     }
