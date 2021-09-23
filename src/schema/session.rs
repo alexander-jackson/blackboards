@@ -2,6 +2,7 @@
 
 use rand::Rng;
 
+use crate::context;
 use crate::schema::{custom_types, Pool};
 use crate::session_window::SessionWindow;
 
@@ -14,13 +15,13 @@ pub struct Session {
     pub title: String,
     /// The starting time for the session.
     pub start_time: custom_types::DateTime,
-    /// The number of remaining places.
-    pub remaining: i32,
+    /// The original number of spaces in the session.
+    pub spaces: i32,
 }
 
 impl Session {
     /// Creates a new session with a unique database identifier.
-    pub async fn new(title: String, start_time: i64, remaining: u32, pool: &mut Pool) -> Self {
+    pub async fn new(title: String, start_time: i64, spaces: u32, pool: &mut Pool) -> Self {
         // Generate a new identifier for the session
         let id = loop {
             let potential = rand::thread_rng().gen::<i32>();
@@ -40,18 +41,20 @@ impl Session {
             id,
             title,
             start_time: custom_types::DateTime::new(start_time),
-            remaining: remaining as i32,
+            spaces: spaces as i32,
         }
     }
 
     /// Inserts the [`Session`] into the database.
     pub async fn insert(&self, pool: &mut Pool) {
+        tracing::info!(?self, "Inserting a new session into the database");
+
         sqlx::query!(
-            "INSERT INTO sessions (id, title, start_time, remaining) VALUES ($1, $2, $3, $4)",
+            "INSERT INTO sessions (id, title, start_time, spaces) VALUES ($1, $2, $3, $4)",
             self.id,
             self.title,
             self.start_time.inner(),
-            self.remaining
+            self.spaces,
         )
         .execute(pool)
         .await
@@ -59,14 +62,18 @@ impl Session {
     }
 
     /// Gets all available sessions currently in the database.
-    pub async fn get_results(pool: &mut Pool) -> sqlx::Result<Vec<Self>> {
+    pub async fn get_results(pool: &mut Pool) -> sqlx::Result<Vec<context::Session>> {
         sqlx::query_as!(
-            Self,
+            context::Session,
             r#"SELECT
                 sessions.id,
                 sessions.title,
                 sessions.start_time AS "start_time: custom_types::DateTime",
-                sessions.remaining
+                sessions.spaces - (
+                    SELECT COUNT(*)
+                    FROM registrations
+                    WHERE sessions.id = registrations.session_id
+                ) AS remaining_spaces
             FROM sessions
             ORDER BY start_time"#
         )
@@ -78,16 +85,20 @@ impl Session {
     pub async fn get_results_between(
         pool: &mut Pool,
         window: SessionWindow,
-    ) -> sqlx::Result<Vec<Self>> {
+    ) -> sqlx::Result<Vec<context::Session>> {
         tracing::debug!(?window, "Getting all the sessions in a window");
 
         sqlx::query_as!(
-            Self,
+            context::Session,
             r#"SELECT
                 sessions.id,
                 sessions.title,
                 sessions.start_time AS "start_time: custom_types::DateTime",
-                sessions.remaining
+                sessions.spaces - (
+                    SELECT COUNT(*)
+                    FROM registrations
+                    WHERE sessions.id = registrations.session_id
+                ) AS remaining_spaces
             FROM sessions
             WHERE $1 < start_time AND start_time < $2
             ORDER BY start_time"#,
@@ -102,16 +113,20 @@ impl Session {
     pub async fn get_results_within_and_after(
         pool: &mut Pool,
         window: SessionWindow,
-    ) -> sqlx::Result<Vec<Self>> {
+    ) -> sqlx::Result<Vec<context::Session>> {
         tracing::debug!(time = %window.start, "Getting all the sessions after a certain time");
 
         sqlx::query_as!(
-            Self,
+            context::Session,
             r#"SELECT
                 sessions.id,
                 sessions.title,
                 sessions.start_time AS "start_time: custom_types::DateTime",
-                sessions.remaining
+                sessions.spaces - (
+                    SELECT COUNT(*)
+                    FROM registrations
+                    WHERE sessions.id = registrations.session_id
+                ) AS remaining_spaces
             FROM sessions
             WHERE $1 < start_time
             ORDER BY start_time"#,
@@ -122,16 +137,20 @@ impl Session {
     }
 
     /// Finds a session in the database given its identifier.
-    pub async fn find(id: i32, pool: &mut Pool) -> sqlx::Result<Option<Self>> {
+    pub async fn find(id: i32, pool: &mut Pool) -> sqlx::Result<Option<context::Session>> {
         tracing::debug!(%id, "Querying the database for a specific session");
 
         sqlx::query_as!(
-            Self,
+            context::Session,
             r#"SELECT
                 sessions.id,
                 sessions.title,
                 sessions.start_time AS "start_time: custom_types::DateTime",
-                sessions.remaining
+                sessions.spaces - (
+                    SELECT COUNT(*)
+                    FROM registrations
+                    WHERE sessions.id = registrations.session_id
+                ) AS remaining_spaces
             FROM sessions
             WHERE id = $1"#,
             id,
@@ -151,31 +170,22 @@ impl Session {
         Ok(())
     }
 
-    /// Decreases the number of remaining places for a session given its identifier.
-    pub async fn decrement_remaining(id: i32, pool: &mut Pool) -> sqlx::Result<()> {
-        tracing::debug!(%id, "Decrementing remaining places for a session");
-
+    /// Checks whether the session is full or not.
+    pub async fn is_full(id: i32, pool: &mut Pool) -> sqlx::Result<bool> {
         sqlx::query!(
-            "UPDATE sessions SET remaining = remaining - 1 WHERE id = $1",
-            id
+            r#"
+            SELECT spaces - (
+                SELECT COUNT(*)
+                FROM registrations
+                WHERE registrations.session_id = sessions.id
+            ) AS remaining
+            FROM sessions
+            WHERE id = $1
+            "#,
+            id,
         )
-        .execute(pool)
-        .await?;
-
-        Ok(())
-    }
-
-    /// Increases the number of remaining places for a session given its identifier.
-    pub async fn increment_remaining(id: i32, pool: &mut Pool) -> sqlx::Result<()> {
-        tracing::debug!(%id, "Incrementing remaining places for a session");
-
-        sqlx::query!(
-            "UPDATE sessions SET remaining = remaining + 1 WHERE id = $1",
-            id
-        )
-        .execute(pool)
-        .await?;
-
-        Ok(())
+        .fetch_one(pool)
+        .await
+        .map(|record| record.remaining == Some(0))
     }
 }

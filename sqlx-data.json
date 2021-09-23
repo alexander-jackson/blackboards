@@ -1,43 +1,5 @@
 {
   "db": "PostgreSQL",
-  "02d36d76b7da471bcdb83971a69afd9fbe6516ddda82d1b58ed6f21ef6ee77fa": {
-    "query": "SELECT\n                sessions.id,\n                sessions.title,\n                sessions.start_time AS \"start_time: custom_types::DateTime\",\n                sessions.remaining\n            FROM sessions\n            WHERE id = $1",
-    "describe": {
-      "columns": [
-        {
-          "ordinal": 0,
-          "name": "id",
-          "type_info": "Int4"
-        },
-        {
-          "ordinal": 1,
-          "name": "title",
-          "type_info": "Text"
-        },
-        {
-          "ordinal": 2,
-          "name": "start_time: custom_types::DateTime",
-          "type_info": "Int8"
-        },
-        {
-          "ordinal": 3,
-          "name": "remaining",
-          "type_info": "Int4"
-        }
-      ],
-      "parameters": {
-        "Left": [
-          "Int4"
-        ]
-      },
-      "nullable": [
-        false,
-        false,
-        false,
-        false
-      ]
-    }
-  },
   "09552bf3169aee27f4cc3e72e1f8c501a2d50b6d0a454e859efd3123e9382ffa": {
     "query": "DELETE FROM registrations WHERE session_id = $1 AND warwick_id = $2",
     "describe": {
@@ -45,6 +7,21 @@
       "parameters": {
         "Left": [
           "Int4",
+          "Int4"
+        ]
+      },
+      "nullable": []
+    }
+  },
+  "0b5a00132d3c3d700f8856f22bab507cbb557447f36795a8d3382fe83e711120": {
+    "query": "INSERT INTO sessions (id, title, start_time, spaces) VALUES ($1, $2, $3, $4)",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Int4",
+          "Text",
+          "Int8",
           "Int4"
         ]
       },
@@ -131,44 +108,6 @@
       ]
     }
   },
-  "2515736a8005d6a03cbc041bb3617237246005708b0f1407b22826694ea82447": {
-    "query": "SELECT\n                sessions.id,\n                sessions.title,\n                sessions.start_time AS \"start_time: custom_types::DateTime\",\n                sessions.remaining\n            FROM sessions\n            WHERE $1 < start_time\n            ORDER BY start_time",
-    "describe": {
-      "columns": [
-        {
-          "ordinal": 0,
-          "name": "id",
-          "type_info": "Int4"
-        },
-        {
-          "ordinal": 1,
-          "name": "title",
-          "type_info": "Text"
-        },
-        {
-          "ordinal": 2,
-          "name": "start_time: custom_types::DateTime",
-          "type_info": "Int8"
-        },
-        {
-          "ordinal": 3,
-          "name": "remaining",
-          "type_info": "Int4"
-        }
-      ],
-      "parameters": {
-        "Left": [
-          "Int8"
-        ]
-      },
-      "nullable": [
-        false,
-        false,
-        false,
-        false
-      ]
-    }
-  },
   "2b91afc77554d48423f71935dbd38171443de58699362e55bbbc33988039c0e1": {
     "query": "SELECT * FROM personal_bests WHERE show_pl AND (squat IS NOT NULL OR bench IS NOT NULL OR deadlift IS NOT NULL) ORDER BY warwick_id",
     "describe": {
@@ -235,6 +174,46 @@
       ]
     }
   },
+  "315c1cf4293999ee5e79804619af88f9f7463bb0e582fb59aeca40ae5f555db2": {
+    "query": "\n            SELECT\n                sessions.id,\n                sessions.title,\n                sessions.start_time AS \"start_time: custom_types::DateTime\",\n                sessions.spaces - (\n                    SELECT COUNT(*)\n                    FROM registrations\n                    WHERE sessions.id = registrations.session_id\n                ) AS remaining_spaces\n            FROM registrations\n            INNER JOIN sessions ON registrations.session_id = sessions.id\n            WHERE $1 < sessions.start_time AND sessions.start_time < $2 AND registrations.warwick_id = $3\n            ORDER BY sessions.start_time, sessions.title\n            ",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Int4"
+        },
+        {
+          "ordinal": 1,
+          "name": "title",
+          "type_info": "Text"
+        },
+        {
+          "ordinal": 2,
+          "name": "start_time: custom_types::DateTime",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 3,
+          "name": "remaining_spaces",
+          "type_info": "Int8"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Int8",
+          "Int8",
+          "Int4"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        null
+      ]
+    }
+  },
   "3c07e68f505a2ce4e529e1002cb0d6db7c4c893c3930ddf750226f467b3d1cea": {
     "query": "INSERT INTO personal_bests (warwick_id, name, squat, bench, deadlift, snatch, clean_and_jerk, show_pl, show_wl) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)",
     "describe": {
@@ -253,6 +232,26 @@
         ]
       },
       "nullable": []
+    }
+  },
+  "3efcaf1d5310d20bf9d157321eac67552b5d4de635a4468c8e7301363aa55342": {
+    "query": "\n            SELECT spaces - (\n                SELECT COUNT(*)\n                FROM registrations\n                WHERE registrations.session_id = sessions.id\n            ) AS remaining\n            FROM sessions\n            WHERE id = $1\n            ",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "remaining",
+          "type_info": "Int8"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Int4"
+        ]
+      },
+      "nullable": [
+        null
+      ]
     }
   },
   "46b7e2b84b369bc61e656de4d76688662f4d2adfdc0734cf8b8f16070b9b30b8": {
@@ -344,6 +343,44 @@
       ]
     }
   },
+  "654005e92a07531a638b7de0675a1fc6fcac3172171c7400ffbbd10b00343f6b": {
+    "query": "SELECT\n                sessions.id,\n                sessions.title,\n                sessions.start_time AS \"start_time: custom_types::DateTime\",\n                sessions.spaces - (\n                    SELECT COUNT(*)\n                    FROM registrations\n                    WHERE sessions.id = registrations.session_id\n                ) AS remaining_spaces\n            FROM sessions\n            WHERE $1 < start_time\n            ORDER BY start_time",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Int4"
+        },
+        {
+          "ordinal": 1,
+          "name": "title",
+          "type_info": "Text"
+        },
+        {
+          "ordinal": 2,
+          "name": "start_time: custom_types::DateTime",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 3,
+          "name": "remaining_spaces",
+          "type_info": "Int8"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Int8"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        null
+      ]
+    }
+  },
   "6d13e350d0da075c7ba8d806a71255aff9382ff5dbfd469c4c1a0d6b1b3ffded": {
     "query": "SELECT * FROM votes",
     "describe": {
@@ -398,6 +435,45 @@
       ]
     }
   },
+  "74035e8e1dc190a50f15d5a49d86ba15be0bbdfaf419b8f6b17d255a8cf2b235": {
+    "query": "SELECT\n                sessions.id,\n                sessions.title,\n                sessions.start_time AS \"start_time: custom_types::DateTime\",\n                sessions.spaces - (\n                    SELECT COUNT(*)\n                    FROM registrations\n                    WHERE sessions.id = registrations.session_id\n                ) AS remaining_spaces\n            FROM sessions\n            WHERE $1 < start_time AND start_time < $2\n            ORDER BY start_time",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Int4"
+        },
+        {
+          "ordinal": 1,
+          "name": "title",
+          "type_info": "Text"
+        },
+        {
+          "ordinal": 2,
+          "name": "start_time: custom_types::DateTime",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 3,
+          "name": "remaining_spaces",
+          "type_info": "Int8"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Int8",
+          "Int8"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        null
+      ]
+    }
+  },
   "763644001062e385901941cb69f78eb27f638a72376a1c95b84395db61cfbdc4": {
     "query": "INSERT INTO auth_pairs (token, secret) VALUES ($1, $2)",
     "describe": {
@@ -420,18 +496,6 @@
           "Int4",
           "Text",
           "Bool"
-        ]
-      },
-      "nullable": []
-    }
-  },
-  "80d49ce9e0cd96c2290db77bba885e718f411a316a69dcc0f88382855192f9cf": {
-    "query": "UPDATE sessions SET remaining = remaining - 1 WHERE id = $1",
-    "describe": {
-      "columns": [],
-      "parameters": {
-        "Left": [
-          "Int4"
         ]
       },
       "nullable": []
@@ -699,57 +763,6 @@
       "nullable": []
     }
   },
-  "b2f3c3380b484a8d352a42e1b01ae7a6d091c85fd3f2008572c3c9b02f0a43a7": {
-    "query": "INSERT INTO sessions (id, title, start_time, remaining) VALUES ($1, $2, $3, $4)",
-    "describe": {
-      "columns": [],
-      "parameters": {
-        "Left": [
-          "Int4",
-          "Text",
-          "Int8",
-          "Int4"
-        ]
-      },
-      "nullable": []
-    }
-  },
-  "b531e3808c0ec48ffa0f6e0f6289cbf9c4c852a04fb2004e237bd764a2150d92": {
-    "query": "SELECT\n                sessions.id,\n                sessions.title,\n                sessions.start_time AS \"start_time: custom_types::DateTime\",\n                sessions.remaining\n            FROM sessions\n            ORDER BY start_time",
-    "describe": {
-      "columns": [
-        {
-          "ordinal": 0,
-          "name": "id",
-          "type_info": "Int4"
-        },
-        {
-          "ordinal": 1,
-          "name": "title",
-          "type_info": "Text"
-        },
-        {
-          "ordinal": 2,
-          "name": "start_time: custom_types::DateTime",
-          "type_info": "Int8"
-        },
-        {
-          "ordinal": 3,
-          "name": "remaining",
-          "type_info": "Int4"
-        }
-      ],
-      "parameters": {
-        "Left": []
-      },
-      "nullable": [
-        false,
-        false,
-        false,
-        false
-      ]
-    }
-  },
   "b61377101cd65dbd8c97702fe3a76f791c43849b84d5e16e4e3d98cbde9f7a17": {
     "query": "SELECT * FROM sessions WHERE id = $1",
     "describe": {
@@ -771,7 +784,7 @@
         },
         {
           "ordinal": 3,
-          "name": "remaining",
+          "name": "spaces",
           "type_info": "Int4"
         }
       ],
@@ -801,8 +814,8 @@
       "nullable": []
     }
   },
-  "c7b9d887ea9166f7b96ae756b8a46b4a88e074d0018ba4ca21131199d920467a": {
-    "query": "SELECT\n                sessions.id,\n                sessions.title,\n                sessions.start_time AS \"start_time: custom_types::DateTime\",\n                sessions.remaining\n            FROM sessions\n            WHERE $1 < start_time AND start_time < $2\n            ORDER BY start_time",
+  "bc8101bd4d92a839c581e4db5e5c9c93552454f5e53ab9f04716ef824243c06e": {
+    "query": "SELECT\n                sessions.id,\n                sessions.title,\n                sessions.start_time AS \"start_time: custom_types::DateTime\",\n                sessions.spaces - (\n                    SELECT COUNT(*)\n                    FROM registrations\n                    WHERE sessions.id = registrations.session_id\n                ) AS remaining_spaces\n            FROM sessions\n            WHERE id = $1",
     "describe": {
       "columns": [
         {
@@ -822,53 +835,12 @@
         },
         {
           "ordinal": 3,
-          "name": "remaining",
-          "type_info": "Int4"
-        }
-      ],
-      "parameters": {
-        "Left": [
-          "Int8",
-          "Int8"
-        ]
-      },
-      "nullable": [
-        false,
-        false,
-        false,
-        false
-      ]
-    }
-  },
-  "cabce0bcddeff8f8f03074caf9c4a8d684b5a37ee72ab62c51ca6537c589a389": {
-    "query": "\n            SELECT\n                sessions.id,\n                sessions.title,\n                sessions.start_time AS \"start_time: custom_types::DateTime\",\n                sessions.remaining\n            FROM registrations\n            INNER JOIN sessions ON registrations.session_id = sessions.id\n            WHERE $1 < sessions.start_time AND sessions.start_time < $2 AND registrations.warwick_id = $3\n            ORDER BY sessions.start_time, sessions.title\n            ",
-    "describe": {
-      "columns": [
-        {
-          "ordinal": 0,
-          "name": "id",
-          "type_info": "Int4"
-        },
-        {
-          "ordinal": 1,
-          "name": "title",
-          "type_info": "Text"
-        },
-        {
-          "ordinal": 2,
-          "name": "start_time: custom_types::DateTime",
+          "name": "remaining_spaces",
           "type_info": "Int8"
-        },
-        {
-          "ordinal": 3,
-          "name": "remaining",
-          "type_info": "Int4"
         }
       ],
       "parameters": {
         "Left": [
-          "Int8",
-          "Int8",
           "Int4"
         ]
       },
@@ -876,7 +848,7 @@
         false,
         false,
         false,
-        false
+        null
       ]
     }
   },
@@ -903,18 +875,6 @@
   },
   "dc07fb867564e9af7ee9eeb66cdf435b365f2fc3e77edbe9fb643531d5f2c521": {
     "query": "UPDATE exec_positions SET open = NOT open WHERE id = $1",
-    "describe": {
-      "columns": [],
-      "parameters": {
-        "Left": [
-          "Int4"
-        ]
-      },
-      "nullable": []
-    }
-  },
-  "e46bc1871233f5998003f4df17876486b60195c9c3233a3cae4362de51f8e590": {
-    "query": "UPDATE sessions SET remaining = remaining + 1 WHERE id = $1",
     "describe": {
       "columns": [],
       "parameters": {
@@ -958,6 +918,42 @@
         false,
         false,
         false
+      ]
+    }
+  },
+  "e5049195a2b579e97c7243ba5e7c702da718200507502e07e51d3f965eaf4b08": {
+    "query": "SELECT\n                sessions.id,\n                sessions.title,\n                sessions.start_time AS \"start_time: custom_types::DateTime\",\n                sessions.spaces - (\n                    SELECT COUNT(*)\n                    FROM registrations\n                    WHERE sessions.id = registrations.session_id\n                ) AS remaining_spaces\n            FROM sessions\n            ORDER BY start_time",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Int4"
+        },
+        {
+          "ordinal": 1,
+          "name": "title",
+          "type_info": "Text"
+        },
+        {
+          "ordinal": 2,
+          "name": "start_time: custom_types::DateTime",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 3,
+          "name": "remaining_spaces",
+          "type_info": "Int8"
+        }
+      ],
+      "parameters": {
+        "Left": []
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        null
       ]
     }
   },

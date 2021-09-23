@@ -77,7 +77,7 @@
 				>{{ session.title }}</a>
 			</td>
 			<td>{{ session.start_time }}</td>
-			<td>{{ session.remaining }}</td>
+			<td>{{ session.remaining_spaces }}</td>
 		</tr>
 
 		{% endfor %}

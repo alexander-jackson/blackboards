@@ -84,7 +84,13 @@ pub async fn register(
     // Check whether they broke the database
     match result {
         Ok(_) => {
-            email::send_confirmation(&registration, &session).await;
+            email::send_confirmation(
+                &registration.name,
+                registration.warwick_id,
+                &session.title,
+                session.start_time,
+            )
+            .await;
 
             Flash::success(
                 Redirect::to(uri!(frontend::sessions)),

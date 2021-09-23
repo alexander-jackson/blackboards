@@ -5,7 +5,7 @@ use std::env;
 use lettre::transport::smtp::authentication::Credentials;
 use lettre::{AsyncSmtpTransport, AsyncTransport, Message, Tokio1Executor};
 
-use crate::schema;
+use crate::schema::custom_types;
 
 /// The configuration for sending emails.
 #[derive(Debug)]
@@ -35,7 +35,12 @@ fn format_warwick_email(warwick_id: i32) -> String {
 }
 
 /// Sends an email to the user confirming their booking for a given session.
-pub async fn send_confirmation(registration: &schema::Registration, session: &schema::Session) {
+pub async fn send_confirmation(
+    name: &str,
+    warwick_id: i32,
+    session_title: &str,
+    start_time: custom_types::DateTime,
+) {
     // Check whether email settings are on
     if env::var("SEND_EMAILS").is_err() {
         return;
@@ -44,16 +49,12 @@ pub async fn send_confirmation(registration: &schema::Registration, session: &sc
     let config = Config::from_env().expect("Config was malformed");
 
     let from = format!("{} <{}>", config.from_name, config.from_address);
-    let to = format!(
-        "{} <{}>",
-        registration.name,
-        format_warwick_email(registration.warwick_id)
-    );
+    let to = format!("{} <{}>", name, format_warwick_email(warwick_id));
     let body = format!(
         r#"Hey {},
 
 Your booking for {} at {} has been confirmed, see you there!"#,
-        registration.name, session.title, session.start_time
+        name, session_title, start_time
     );
 
     let email = Message::builder()

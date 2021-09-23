@@ -4,7 +4,7 @@ use std::collections::HashMap;
 
 use rocket::request::FlashMessage;
 
-use crate::schema;
+use crate::schema::{self, custom_types};
 
 /// Represents the registrations for a given session.
 #[derive(Debug, Serialize)]
@@ -35,13 +35,27 @@ impl From<FlashMessage<'_>> for Message {
     }
 }
 
+/// Information needed to display a session on the frontend.
+#[derive(Clone, Debug, Serialize)]
+pub struct Session {
+    /// The identifier for the session.
+    pub id: i32,
+    /// The title for the session.
+    pub title: String,
+    /// The starting time for the session.
+    pub start_time: custom_types::DateTime,
+    /// The number of remaining spaces
+    // TODO: remove the `Option` here through some Postgres magic
+    pub remaining_spaces: Option<i64>,
+}
+
 /// The context for session registrations.
 #[derive(Serialize)]
 pub struct Context {
     /// The sessions that are available.
-    pub sessions: Vec<schema::Session>,
+    pub sessions: Vec<Session>,
     /// The currently selected session if it exists.
-    pub current: Option<schema::Session>,
+    pub current: Option<Session>,
     /// The message to display to the user, for errors.
     pub message: Option<Message>,
     /// The registrations for each session.
@@ -54,9 +68,9 @@ pub struct Context {
 #[derive(Serialize)]
 pub struct ManageSessions {
     /// The sessions that are available.
-    pub sessions: Vec<schema::Session>,
+    pub sessions: Vec<Session>,
     /// The session currently being managed, if one is
-    pub current: Option<schema::Session>,
+    pub current: Option<Session>,
     /// The message to display to the user, for errors.
     pub message: Option<Message>,
 }
@@ -72,9 +86,9 @@ pub struct Authenticated {
 #[derive(Serialize)]
 pub struct Attendance {
     /// The sessions that are available.
-    pub sessions: Vec<schema::Session>,
+    pub sessions: Vec<Session>,
     /// The currently selected session if it exists.
-    pub current: Option<schema::Session>,
+    pub current: Option<Session>,
     /// The message to display to the user, for errors.
     pub message: Option<Message>,
 }

@@ -49,7 +49,7 @@
 				<a class="font-weight-bold" href="/sessions/{{ session.id }}">{{ session.title }}</a>
 			</td>
 			<td>{{ session.start_time }}</td>
-			<td>{{ session.remaining }}</td>
+			<td>{{ session.remaining_spaces }}</td>
 		</tr>
 
 		{% endfor %}
