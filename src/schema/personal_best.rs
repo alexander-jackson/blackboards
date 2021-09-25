@@ -94,7 +94,29 @@ impl PersonalBest {
     ) -> sqlx::Result<()> {
         tracing::info!(%name, %user_id, ?data, "Updating personal bests for a user with new information");
 
-        sqlx::query!("UPDATE personal_bests SET squat = COALESCE(squat, $1), bench = COALESCE(bench, $2), deadlift = COALESCE(deadlift, $3), snatch = COALESCE(snatch, $4), clean_and_jerk = COALESCE(clean_and_jerk, $5), show_pl = $6, show_wl = $7", data.squat, data.bench, data.deadlift, data.snatch, data.clean_and_jerk, data.show_pl, data.show_wl).execute(pool).await?;
+        sqlx::query!(
+            r#"
+            UPDATE personal_bests
+            SET
+                squat = COALESCE($1, squat),
+                bench = COALESCE($2, bench),
+                deadlift = COALESCE($3, deadlift),
+                snatch = COALESCE($4, snatch),
+                clean_and_jerk = COALESCE($5, clean_and_jerk),
+                show_pl = $6,
+                show_wl = $7
+            WHERE warwick_id = $8"#,
+            data.squat,
+            data.bench,
+            data.deadlift,
+            data.snatch,
+            data.clean_and_jerk,
+            data.show_pl,
+            data.show_wl,
+            user_id
+        )
+        .execute(pool)
+        .await?;
 
         Ok(())
     }

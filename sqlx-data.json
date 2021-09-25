@@ -254,24 +254,6 @@
       ]
     }
   },
-  "46b7e2b84b369bc61e656de4d76688662f4d2adfdc0734cf8b8f16070b9b30b8": {
-    "query": "UPDATE personal_bests SET squat = COALESCE(squat, $1), bench = COALESCE(bench, $2), deadlift = COALESCE(deadlift, $3), snatch = COALESCE(snatch, $4), clean_and_jerk = COALESCE(clean_and_jerk, $5), show_pl = $6, show_wl = $7",
-    "describe": {
-      "columns": [],
-      "parameters": {
-        "Left": [
-          "Float4",
-          "Float4",
-          "Float4",
-          "Float4",
-          "Float4",
-          "Bool",
-          "Bool"
-        ]
-      },
-      "nullable": []
-    }
-  },
   "497534f52bd6f1348b19827a53ffa75e028cf0b7e3ba70873213dab52ee80d95": {
     "query": "UPDATE candidates SET elected = TRUE WHERE warwick_id = $1",
     "describe": {
@@ -757,6 +739,25 @@
           "Int4",
           "Int4",
           "Int4",
+          "Int4"
+        ]
+      },
+      "nullable": []
+    }
+  },
+  "aa9c20cc231c29805128c0df32bd111f2a73a0e3e95c10ad285accece1af372f": {
+    "query": "\n            UPDATE personal_bests\n            SET\n                squat = COALESCE($1, squat),\n                bench = COALESCE($2, bench),\n                deadlift = COALESCE($3, deadlift),\n                snatch = COALESCE($4, snatch),\n                clean_and_jerk = COALESCE($5, clean_and_jerk),\n                show_pl = $6,\n                show_wl = $7\n            WHERE warwick_id = $8",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Float4",
+          "Float4",
+          "Float4",
+          "Float4",
+          "Float4",
+          "Bool",
+          "Bool",
           "Int4"
         ]
       },
