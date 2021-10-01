@@ -36,7 +36,7 @@ impl From<FlashMessage<'_>> for Message {
 }
 
 /// Information needed to display a session on the frontend.
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Eq, PartialEq, Serialize)]
 pub struct Session {
     /// The identifier for the session.
     pub id: i32,

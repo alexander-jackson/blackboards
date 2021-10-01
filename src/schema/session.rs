@@ -7,7 +7,7 @@ use crate::schema::{custom_types, Pool};
 use crate::session_window::SessionWindow;
 
 /// Represents a session in the database.
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Eq, PartialEq, Serialize)]
 pub struct Session {
     /// The identifier for the session.
     pub id: i32,
