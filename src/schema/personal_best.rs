@@ -4,7 +4,7 @@ use crate::forms;
 use crate::schema::Pool;
 
 /// Represents a row in the `personal_bests` table.
-#[derive(Clone, Debug, Default, Serialize)]
+#[derive(Clone, Debug, Default, PartialEq, Serialize)]
 pub struct PersonalBest {
     /// The user's Warwick ID
     pub warwick_id: i32,

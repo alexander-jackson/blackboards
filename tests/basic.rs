@@ -3,7 +3,7 @@ use sqlx::{migrate::Migrator, pool::Pool, Postgres};
 use uuid::Uuid;
 
 use blackboards::context;
-use blackboards::schema::{custom_types, Registration, Session};
+use blackboards::schema::{custom_types, PersonalBest, Registration, Session};
 
 static MIGRATOR: Migrator = sqlx::migrate!();
 static BASE_URL: &str = "postgres://postgres:password@localhost:5433";
@@ -56,9 +56,54 @@ async fn insert_registrations(conn: &mut PoolConnection<Postgres>) -> sqlx::Resu
     Ok(())
 }
 
+async fn insert_personal_bests(conn: &mut PoolConnection<Postgres>) -> sqlx::Result<()> {
+    let personal_bests = vec![
+        PersonalBest {
+            warwick_id: 1,
+            name: String::from("Dan"),
+            squat: Some(180.0),
+            bench: None,
+            deadlift: Some(210.0),
+            snatch: Some(45.0),
+            clean_and_jerk: None,
+            show_pl: true,
+            show_wl: true,
+        },
+        PersonalBest {
+            warwick_id: 2,
+            name: String::from("James"),
+            squat: Some(150.0),
+            bench: Some(97.5),
+            deadlift: Some(175.0),
+            snatch: None,
+            clean_and_jerk: None,
+            show_pl: true,
+            show_wl: false,
+        },
+        PersonalBest {
+            warwick_id: 3,
+            name: String::from("Michael"),
+            squat: None,
+            bench: None,
+            deadlift: None,
+            snatch: Some(70.0),
+            clean_and_jerk: Some(95.0),
+            show_pl: false,
+            show_wl: true,
+        },
+    ];
+
+    for personal_best in personal_bests {
+        personal_best.insert(conn).await?;
+    }
+
+    Ok(())
+}
+
 async fn insert_test_data(conn: &mut PoolConnection<Postgres>) -> sqlx::Result<()> {
     insert_sessions(conn).await?;
     insert_registrations(conn).await?;
+    insert_personal_bests(conn).await?;
 
     Ok(())
 }
@@ -203,6 +248,146 @@ async fn sessions_can_be_checked_for_capacity() -> sqlx::Result<()> {
 
     let full = Session::is_full(2, &mut conn).await?;
     assert!(full);
+
+    cleanup_database(pool, conn, uuid).await?;
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn powerlifting_pbs_can_be_queried() -> sqlx::Result<()> {
+    let (pool, uuid) = create_database().await?;
+    let mut conn = pool.acquire().await?;
+
+    let pbs = PersonalBest::get_pl(&mut conn).await?;
+    let expected = vec![
+        PersonalBest {
+            warwick_id: 1,
+            name: String::from("Dan"),
+            squat: Some(180.0),
+            bench: None,
+            deadlift: Some(210.0),
+            snatch: Some(45.0),
+            clean_and_jerk: None,
+            show_pl: true,
+            show_wl: true,
+        },
+        PersonalBest {
+            warwick_id: 2,
+            name: String::from("James"),
+            squat: Some(150.0),
+            bench: Some(97.5),
+            deadlift: Some(175.0),
+            snatch: None,
+            clean_and_jerk: None,
+            show_pl: true,
+            show_wl: false,
+        },
+    ];
+
+    assert_eq!(expected, pbs);
+
+    cleanup_database(pool, conn, uuid).await?;
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn weightlifting_pbs_can_be_queried() -> sqlx::Result<()> {
+    let (pool, uuid) = create_database().await?;
+    let mut conn = pool.acquire().await?;
+
+    let pbs = PersonalBest::get_wl(&mut conn).await?;
+    let expected = vec![
+        PersonalBest {
+            warwick_id: 1,
+            name: String::from("Dan"),
+            squat: Some(180.0),
+            bench: None,
+            deadlift: Some(210.0),
+            snatch: Some(45.0),
+            clean_and_jerk: None,
+            show_pl: true,
+            show_wl: true,
+        },
+        PersonalBest {
+            warwick_id: 3,
+            name: String::from("Michael"),
+            squat: None,
+            bench: None,
+            deadlift: None,
+            snatch: Some(70.0),
+            clean_and_jerk: Some(95.0),
+            show_pl: false,
+            show_wl: true,
+        },
+    ];
+
+    assert_eq!(expected, pbs);
+
+    cleanup_database(pool, conn, uuid).await?;
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn all_pbs_can_be_queried() -> sqlx::Result<()> {
+    let (pool, uuid) = create_database().await?;
+    let mut conn = pool.acquire().await?;
+
+    let pbs = PersonalBest::get_results(&mut conn).await?;
+    let expected = (
+        vec![
+            PersonalBest {
+                warwick_id: 1,
+                name: String::from("Dan"),
+                squat: Some(180.0),
+                bench: None,
+                deadlift: Some(210.0),
+                snatch: Some(45.0),
+                clean_and_jerk: None,
+                show_pl: true,
+                show_wl: true,
+            },
+            PersonalBest {
+                warwick_id: 2,
+                name: String::from("James"),
+                squat: Some(150.0),
+                bench: Some(97.5),
+                deadlift: Some(175.0),
+                snatch: None,
+                clean_and_jerk: None,
+                show_pl: true,
+                show_wl: false,
+            },
+        ],
+        vec![
+            PersonalBest {
+                warwick_id: 1,
+                name: String::from("Dan"),
+                squat: Some(180.0),
+                bench: None,
+                deadlift: Some(210.0),
+                snatch: Some(45.0),
+                clean_and_jerk: None,
+                show_pl: true,
+                show_wl: true,
+            },
+            PersonalBest {
+                warwick_id: 3,
+                name: String::from("Michael"),
+                squat: None,
+                bench: None,
+                deadlift: None,
+                snatch: Some(70.0),
+                clean_and_jerk: Some(95.0),
+                show_pl: false,
+                show_wl: true,
+            },
+        ],
+    );
+
+    assert_eq!(expected, pbs);
 
     cleanup_database(pool, conn, uuid).await?;
 
