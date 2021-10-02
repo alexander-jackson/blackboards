@@ -52,7 +52,7 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: test
-          args: --test basic
+          args: --test integration
 
   fmt:
     name: Rustfmt
