@@ -13,7 +13,7 @@ async fn main() {
 /// Sources the environment variables from `.env` and creates the logging instance.
 fn setup() {
     // Populate the environment variables
-    dotenv::dotenv().expect("Failed to populate the environment variables");
+    dotenv::dotenv().ok();
 
     if std::env::var("RUST_LOG").is_err() {
         // Set a reasonable default for logging in production
