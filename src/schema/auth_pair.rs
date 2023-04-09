@@ -2,6 +2,8 @@
 
 use std::borrow::Cow;
 
+use serde::Serialize;
+
 use crate::auth;
 use crate::schema::Pool;
 

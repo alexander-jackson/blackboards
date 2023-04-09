@@ -5,8 +5,6 @@
 
 #[macro_use]
 extern crate rocket;
-#[macro_use]
-extern crate serde_derive;
 
 use std::env;
 

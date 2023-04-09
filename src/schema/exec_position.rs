@@ -1,5 +1,7 @@
 //! Allows modifications of the `exec_positions` table in the database.
 
+use serde::Serialize;
+
 use crate::schema::Pool;
 
 /// Represents a row in the `exec_positions` table.

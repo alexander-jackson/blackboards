@@ -3,6 +3,7 @@
 use std::collections::HashMap;
 
 use rocket::request::FlashMessage;
+use serde::Serialize;
 
 use crate::schema::{self, custom_types};
 

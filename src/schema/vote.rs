@@ -2,6 +2,8 @@
 
 use std::collections::HashMap;
 
+use serde::Serialize;
+
 use crate::schema::Pool;
 
 /// Represents a row in the `votes` table.

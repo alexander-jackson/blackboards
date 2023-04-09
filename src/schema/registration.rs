@@ -1,5 +1,7 @@
 //! Allows modifications of the `registrations` table in the database.
 
+use serde::Serialize;
+
 use crate::context;
 use crate::schema::{custom_types, Pool, Session};
 use crate::session_window::SessionWindow;

@@ -9,6 +9,7 @@ use std::{env, marker::PhantomData};
 use rocket::http::Status;
 use rocket::request::{FromRequest, Outcome, Request};
 use rocket_db_pools::Database;
+use serde::Deserialize;
 
 #[derive(Database)]
 #[database("blackboards")]

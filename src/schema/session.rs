@@ -1,6 +1,7 @@
 //! Allows modifications of the `sessions` table in the database.
 
 use rand::Rng;
+use serde::Serialize;
 
 use crate::context;
 use crate::schema::{custom_types, Pool};

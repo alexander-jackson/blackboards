@@ -1,5 +1,7 @@
 //! Allows modifications of the `personal_bests` table in the database.
 
+use serde::Serialize;
+
 use crate::forms;
 use crate::schema::Pool;
 
