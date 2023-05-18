@@ -2,7 +2,7 @@
 
 use std::collections::HashMap;
 
-use rocket::request::FlashMessage;
+use axum_flash::{IncomingFlashes, Level};
 use serde::Serialize;
 
 use crate::schema::{self, custom_types};
@@ -22,17 +22,17 @@ pub struct Registrations {
 #[derive(Serialize)]
 pub struct Message {
     /// The type of message, such as "error" or "success"
-    pub variant: String,
+    pub variant: Level,
     /// The message to display
     pub message: String,
 }
 
-impl From<FlashMessage<'_>> for Message {
-    fn from(flash: FlashMessage) -> Self {
-        Self {
-            variant: flash.kind().to_string(),
-            message: flash.message().to_string(),
-        }
+impl Message {
+    pub fn foo(flashes: IncomingFlashes) -> Option<Self> {
+        flashes.iter().next().map(|(variant, message)| Self {
+            variant,
+            message: message.to_string(),
+        })
     }
 }
 

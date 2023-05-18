@@ -3,47 +3,58 @@
 //! Deals with processing data into the database from forms and returning error messages to the
 //! frontend to be displayed.
 
-use std::collections::HashMap;
 use std::env;
 
+// use std::collections::HashMap;
+// use std::env;
+//
+// use chrono::TimeZone;
+// use itertools::Itertools;
+//
+// use crate::auth;
+// use crate::email;
+// use crate::forms;
+// use crate::frontend;
+// use crate::schema;
+//
+// use crate::guards::{Db, ElectionAdmin, Generic, Member, SiteAdmin, User};
+
+use axum::extract::Path;
+use axum::response::Redirect;
+use axum::Form;
+use axum_flash::Flash;
 use chrono::TimeZone;
-use itertools::Itertools;
-use rocket::form::Form;
-use rocket::http::{Cookie, CookieJar};
-use rocket::response::{Flash, Redirect};
-use rocket_db_pools::Connection;
+use tower_cookies::{Cookies, Key};
 
 use crate::auth;
-use crate::email;
 use crate::forms;
-use crate::frontend;
+use crate::guards::{SiteAdmin, User};
+use crate::persistence::ConnectionExtractor;
 use crate::schema;
 
-use crate::guards::{Db, ElectionAdmin, Generic, Member, SiteAdmin, User};
-
 /// Creates a new session in the database.
-#[post("/sessions/create", data = "<data>")]
 pub async fn sessions_create(
     _user: User<SiteAdmin>,
-    mut conn: Connection<Db>,
+    ConnectionExtractor(mut conn): ConnectionExtractor,
+    flash: Flash,
     data: Form<forms::SessionCreate>,
-) -> Flash<Redirect> {
-    let data = data.into_inner();
+) -> (Flash, Redirect) {
     let formatted = format!("{} {}", data.date, data.start_time);
 
     let datetime = chrono::Local.datetime_from_str(&formatted, "%Y-%m-%d %H:%M");
     let timestamp = datetime.unwrap().timestamp();
 
     // Create an identifier for the session
-    let session = schema::Session::new(data.title, timestamp, data.spaces, &mut *conn).await;
-    session.insert(&mut *conn).await;
+    let session = schema::Session::new(&data.title, timestamp, data.spaces, &mut conn).await;
+    session.insert(&mut conn).await;
 
-    Flash::success(
-        Redirect::to(uri!(frontend::manage_sessions)),
-        "Successfully created the session!",
+    (
+        flash.info("Successfully created the session!"),
+        Redirect::to("/sessions/manage"),
     )
 }
 
+/*
 /// Deletes a session in the database.
 #[post("/sessions/delete", data = "<data>")]
 pub async fn session_delete(
@@ -188,32 +199,36 @@ pub async fn record_attendance(
         format!("Recorded attendance for ID: {}", data.warwick_id.0),
     )
 }
+*/
 
 /// Begins the OAuth1 authentication process.
-#[get("/authenticate/<uri>")]
 pub async fn authenticate(
-    cookies: &CookieJar<'_>,
-    mut conn: Connection<Db>,
-    uri: String,
+    cookies: Cookies,
+    ConnectionExtractor(mut conn): ConnectionExtractor,
+    Path(redirect): Path<String>,
 ) -> Redirect {
+    let key = Key::from(b"D4BAA06CFF71992CF798B05D714C23B1917887BB17AC6B1B5AD223156CFC4CE4D9050C88F4F1C2720C759F6357D83B34AF2E031D59647D0C55E4ECC4C2B05944");
+    let private_cookies = cookies.private(&key);
+
     // Check whether their cookie is already set
-    if cookies.get_private("id").is_some() && cookies.get_private("name").is_some() {
-        return Redirect::to(uri!(frontend::sessions));
+    if private_cookies.get("id").is_some() && private_cookies.get("name").is_some() {
+        return Redirect::to("/sessions");
     }
 
     let consumer_key = env::var("CONSUMER_KEY").unwrap();
     let consumer_secret = env::var("CONSUMER_SECRET").unwrap();
 
-    let pair = auth::obtain_request_token(&consumer_key, &consumer_secret, &uri).await;
-    let callback = auth::build_callback(&pair.token, &uri);
+    let pair = auth::obtain_request_token(&consumer_key, &consumer_secret, &redirect).await;
+    let callback = auth::build_callback(&pair.token, &redirect);
 
     // Write the secret to the database
     let pair = schema::AuthPair::from(pair);
-    pair.insert(&mut *conn).await.unwrap();
+    pair.insert(&mut conn).await.unwrap();
 
-    Redirect::to(callback)
+    Redirect::to(&callback)
 }
 
+/*
 /// Represents the callback of the website. Users are sent here after signing in through SSO.
 ///
 /// Gets the parameters from the query string and logs them to the terminal before requesting to
@@ -337,3 +352,5 @@ pub async fn election_settings_toggle(
         "Successfully toggled the state.",
     )
 }
+
+*/

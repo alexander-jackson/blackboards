@@ -26,7 +26,7 @@
 		{% block head %}{% endblock %}
 	</head>
 	<body>
-		{% include "navbar" %}
+		{% include "navbar.html.tera" %}
 
 		{% if message %}
 

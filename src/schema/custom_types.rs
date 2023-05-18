@@ -35,7 +35,7 @@ impl serde::Serialize for DateTime {
 impl fmt::Display for DateTime {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         // Mon 08 Oct, 12:15
-        let datetime = chrono::Local.timestamp(self.0, 0);
+        let datetime = chrono::Local.timestamp_opt(self.0, 0).single().unwrap();
         write!(f, "{}", datetime.format("%a %d %h, %H:%M"))
     }
 }

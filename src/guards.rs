@@ -1,19 +1,14 @@
 //! Stores custom request guards for Rocket routes.
 
-// This is only really for `DatabaseConnection`
-#![allow(missing_docs)]
-
 use std::str::FromStr;
 use std::{env, marker::PhantomData};
 
-use rocket::http::Status;
-use rocket::request::{FromRequest, Outcome, Request};
-use rocket_db_pools::Database;
+use axum::async_trait;
+use axum::extract::FromRequestParts;
+use axum::http::request::Parts;
+use reqwest::StatusCode;
 use serde::Deserialize;
-
-#[derive(Database)]
-#[database("blackboards")]
-pub struct Db(sqlx::PgPool);
+use tower_cookies::{Cookies, Key};
 
 /// Represents a generic user who is at Warwick.
 pub struct Generic;
@@ -88,33 +83,38 @@ impl<T: AccessControl> User<T> {
     }
 }
 
-#[rocket::async_trait]
-impl<T: AccessControl, 'r> FromRequest<'r> for User<T> {
-    type Error = ();
+#[async_trait]
+impl<T: AccessControl, S> FromRequestParts<S> for User<T>
+where
+    S: Send + Sync,
+{
+    type Rejection = (StatusCode, &'static str);
 
-    async fn from_request(request: &'r Request<'_>) -> Outcome<Self, ()> {
-        let unauthorised = Outcome::Failure((Status::Unauthorized, ()));
-        let forbidden = Outcome::Failure((Status::Forbidden, ()));
+    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
+        let cookies = Cookies::from_request_parts(parts, state).await?;
 
-        let id = match request.cookies().get_private("id") {
-            Some(id) => id,
-            None => return unauthorised,
-        };
+        let key = Key::from(b"D4BAA06CFF71992CF798B05D714C23B1917887BB17AC6B1B5AD223156CFC4CE4D9050C88F4F1C2720C759F6357D83B34AF2E031D59647D0C55E4ECC4C2B05944");
+        let cookies = cookies.private(&key);
 
-        let name = match request.cookies().get_private("name") {
-            Some(name) => name,
-            None => return unauthorised,
-        };
+        let id = cookies
+            .get("id")
+            .ok_or_else(|| (StatusCode::UNAUTHORIZED, "Unauthorized"))?;
+
+        let name = cookies
+            .get("name")
+            .ok_or_else(|| (StatusCode::UNAUTHORIZED, "Unauthorized"))?;
 
         if !Self::environment_contains(id.value()) {
-            return forbidden;
+            return Err((StatusCode::FORBIDDEN, "Forbidden"));
         }
 
-        Outcome::Success(Self {
+        let user = User {
             id: i32::from_str(id.value()).unwrap(),
             name: String::from(name.value()),
             level: PhantomData,
-        })
+        };
+
+        Ok(user)
     }
 }
 

@@ -27,7 +27,7 @@ impl SessionWindow {
             .find(|d| d.weekday() == Weekday::Sun)
             .unwrap();
 
-        let start = last_sunday.date().and_hms(18, 0, 0);
+        let start = last_sunday.date_naive().and_hms_opt(18, 0, 0).unwrap();
         let end = start + Duration::weeks(1);
 
         Self {

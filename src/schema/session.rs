@@ -22,7 +22,12 @@ pub struct Session {
 
 impl Session {
     /// Creates a new session with a unique database identifier.
-    pub async fn new(title: String, start_time: i64, spaces: u32, pool: &mut Pool) -> Self {
+    pub async fn new<S: Into<String>>(
+        title: S,
+        start_time: i64,
+        spaces: u32,
+        pool: &mut Pool,
+    ) -> Self {
         // Generate a new identifier for the session
         let id = loop {
             let potential = rand::thread_rng().gen::<i32>();
@@ -40,7 +45,7 @@ impl Session {
 
         Self {
             id,
-            title,
+            title: title.into(),
             start_time: custom_types::DateTime::new(start_time),
             spaces: spaces as i32,
         }

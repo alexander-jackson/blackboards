@@ -1,29 +1,14 @@
 //! Stores the expected structure of various forms for the user to submit.
 
-use rocket::form::{self, FromFormField, ValueField};
+use serde::Deserialize;
 
 /// Defines a custom struct that can only contain a valid Warwick ID.
-#[derive(Copy, Clone, Debug)]
+// TODO: validate this again
+#[derive(Copy, Clone, Debug, Deserialize)]
 pub struct WarwickId(pub i32);
 
-#[rocket::async_trait]
-impl<'r> FromFormField<'r> for WarwickId {
-    fn from_value(field: ValueField<'r>) -> form::Result<'r, Self> {
-        let value = field.value;
-
-        if !(value.chars().all(char::is_numeric) && value.len() == 7) {
-            return Err(form::Error::validation(
-                "Value was either not numeric or incorrect length",
-            )
-            .into());
-        }
-
-        Ok(Self(value.parse::<i32>().unwrap()))
-    }
-}
-
 /// Defines the information needed to create a new session.
-#[derive(Debug, FromForm)]
+#[derive(Debug, Deserialize)]
 pub struct SessionCreate {
     /// The title of the session.
     pub title: String,
@@ -36,28 +21,28 @@ pub struct SessionCreate {
 }
 
 /// Defines the information needed to delete a session.
-#[derive(Debug, FromForm)]
+#[derive(Debug, Deserialize)]
 pub struct SessionDelete {
     /// The session identifier to delete.
     pub session_id: i32,
 }
 
 /// Defines the contents of the registration form for a session.
-#[derive(Debug, FromForm)]
+#[derive(Debug, Deserialize)]
 pub struct Register {
     /// The identifier for the session.
     pub session_id: i32,
 }
 
 /// Defines the contents of the cancellation form for a session.
-#[derive(Debug, FromForm)]
+#[derive(Debug, Deserialize)]
 pub struct Cancel {
     /// The identifier for the session.
     pub session_id: i32,
 }
 
 /// Defines the contents of the attendance form for a session.
-#[derive(Copy, Clone, Debug, FromForm)]
+#[derive(Copy, Clone, Debug, Deserialize)]
 pub struct Attendance {
     /// The identifier for the session.
     pub session_id: i32,
@@ -66,7 +51,7 @@ pub struct Attendance {
 }
 
 /// Defines the contents of the personal bests form.
-#[derive(Clone, Debug, FromForm)]
+#[derive(Clone, Debug, Deserialize)]
 pub struct PersonalBests {
     /// The user's best squat.
     pub squat: Option<f32>,
@@ -86,10 +71,7 @@ pub struct PersonalBests {
 
 #[cfg(test)]
 mod tests {
-    use rocket::form::name::NameView;
-
-    use super::*;
-
+    /*
     #[test]
     fn invalid_identifiers_are_not_parsed() {
         let identifiers = vec!["170250", "strings", "170250p"];
@@ -117,4 +99,5 @@ mod tests {
             assert!(WarwickId::from_value(value_field).is_ok());
         }
     }
+    */
 }

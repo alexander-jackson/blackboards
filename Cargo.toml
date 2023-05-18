@@ -7,6 +7,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+axum = "0.6.18"
 serde = { version = "1.0.159", features = ["derive"] }
 dotenv = "0.15.0"
 rand = "0.8.5"
@@ -17,21 +18,11 @@ either = "1.8.1"
 base64 = "0.13.1"
 tracing = "0.1.37"
 tracing-subscriber = { version = "0.3.16", features = ["env-filter"] }
-
-[dependencies.rocket]
-git = "https://github.com/SergioBenitez/Rocket"
-branch = "master"
-features = ["secrets"]
-
-[dependencies.rocket_dyn_templates]
-git = "https://github.com/SergioBenitez/Rocket"
-branch = "master"
-features = ["tera"]
-
-[dependencies.rocket_db_pools]
-git = "https://github.com/SergioBenitez/Rocket"
-branch = "master"
-features = ["sqlx_postgres"]
+tower-cookies = { version = "0.9.0", features = ["private"] }
+axum-flash = "0.6.0"
+tera = "1.18.1"
+tokio = { version = "1.27.0", features = ["macros", "rt-multi-thread"] }
+testing = { version = "0.1.0", path = "../testing" }
 
 [dependencies.sqlx]
 version = "0.5.13"

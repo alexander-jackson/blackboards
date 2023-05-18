@@ -3,7 +3,8 @@
 use serde::Serialize;
 
 use crate::context;
-use crate::schema::{custom_types, Pool, Session};
+use crate::persistence::Connection;
+use crate::schema::{custom_types, Session};
 use crate::session_window::SessionWindow;
 
 /// Represents a row in the `registrations` table.
@@ -44,7 +45,7 @@ impl Registration {
     ///
     /// This fails if the session has no remaining places, and sends the user a confirmation email
     /// upon success. It also decrements the number of remaining places for the given session.
-    pub async fn insert(&self, pool: &mut Pool) -> sqlx::Result<()> {
+    pub async fn insert(&self, pool: &mut Connection) -> sqlx::Result<()> {
         // Ensure the session has spaces
         if Session::is_full(self.session_id, &mut *pool).await? {
             return Err(sqlx::Error::RowNotFound);
@@ -66,7 +67,11 @@ impl Registration {
     }
 
     /// Deletes a user's registration from the database if it exists.
-    pub async fn cancel(warwick_id: i32, session_id: i32, pool: &mut Pool) -> sqlx::Result<()> {
+    pub async fn cancel(
+        warwick_id: i32,
+        session_id: i32,
+        pool: &mut Connection,
+    ) -> sqlx::Result<()> {
         tracing::info!(%session_id, %warwick_id, "Cancelling a registration for a session");
 
         sqlx::query!(
@@ -82,7 +87,7 @@ impl Registration {
 
     /// Gets the session data and names of those registered for all sessions in the database.
     pub async fn get_registration_list(
-        pool: &mut Pool,
+        pool: &mut Connection,
         window: SessionWindow,
     ) -> sqlx::Result<Vec<SessionRegistration>> {
         sqlx::query_as!(
@@ -110,7 +115,7 @@ impl Registration {
     pub async fn get_user_bookings(
         id: i32,
         window: SessionWindow,
-        pool: &mut Pool,
+        pool: &mut Connection,
     ) -> sqlx::Result<Vec<context::Session>> {
         sqlx::query_as!(
             context::Session,

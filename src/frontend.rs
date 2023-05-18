@@ -4,18 +4,17 @@ use std::collections::{BTreeMap, HashMap};
 use std::env;
 use std::str::FromStr;
 
+use axum::extract::State;
+use axum::response::Html;
+use axum_flash::IncomingFlashes;
 use itertools::Itertools;
-use rand::seq::SliceRandom;
-use rocket::request::FlashMessage;
-use rocket::response::{Flash, Redirect};
-use rocket_db_pools::Connection;
-use rocket_dyn_templates::Template;
 use tallystick::{irv::Tally, Transfer};
+use tera::Tera;
 
-use crate::{context, schema};
-
-use crate::guards::{Db, ElectionAdmin, Generic, Member, SiteAdmin, User};
+use crate::guards::{ElectionAdmin, Generic, Member, SiteAdmin, User};
+use crate::persistence::{Connection, ConnectionExtractor};
 use crate::session_window::SessionWindow;
+use crate::{context, schema, Templates};
 
 fn format_registrations(
     unformatted: Vec<schema::registration::SessionRegistration>,
@@ -39,7 +38,7 @@ fn format_registrations(
 }
 
 async fn get_registrations(
-    mut conn: Connection<Db>,
+    conn: &mut Connection,
     window: SessionWindow,
 ) -> Option<Vec<context::Registrations>> {
     let unformatted = schema::Registration::get_registration_list(&mut *conn, window)
@@ -55,52 +54,53 @@ async fn get_registrations(
 }
 
 /// Gets the information needed for the sessions page and renders the template.
-#[get("/sessions")]
 pub async fn sessions(
     user: User<Generic>,
-    mut conn: Connection<Db>,
-    flash: Option<FlashMessage<'_>>,
-) -> Template {
+    ConnectionExtractor(mut conn): ConnectionExtractor,
+    flash: Option<IncomingFlashes>,
+) -> String {
     let window = SessionWindow::from_current_time();
 
-    let sessions = schema::Session::get_results_between(&mut *conn, window)
+    let sessions = schema::Session::get_results_between(&mut conn, window)
         .await
         .unwrap();
 
-    let message = flash.map(context::Message::from);
-    let registrations = get_registrations(conn, window).await;
+    let message = flash.and_then(context::Message::foo);
+    let registrations = get_registrations(&mut conn, window).await;
     let is_site_admin = user.is_also::<SiteAdmin>();
 
-    Template::render(
-        "sessions",
-        context::Context {
-            sessions,
-            current: None,
-            message,
-            registrations,
-            is_site_admin,
-        },
-    )
+    let tera = Tera::new("templates/*").unwrap();
+
+    let context = tera::Context::from_serialize(context::Context {
+        sessions,
+        current: None,
+        message,
+        registrations,
+        is_site_admin,
+    })
+    .unwrap();
+
+    tera.render("sessions", &context).unwrap()
 }
 
 /// Allows site administrators to manage the upcoming sessions.
-#[get("/sessions/manage")]
 pub async fn manage_sessions(
     _user: User<SiteAdmin>,
-    mut conn: Connection<Db>,
-    flash: Option<FlashMessage<'_>>,
-) -> Template {
+    ConnectionExtractor(mut conn): ConnectionExtractor,
+    flash: Option<IncomingFlashes>,
+    templates: State<Templates>,
+) -> Html<String> {
     let window = SessionWindow::from_current_time();
 
-    let sessions = schema::Session::get_results_within_and_after(&mut *conn, window)
+    let sessions = schema::Session::get_results_within_and_after(&mut conn, window)
         .await
         .unwrap();
 
-    let message = flash.map(context::Message::from);
+    let message = flash.and_then(context::Message::foo);
 
-    Template::render(
+    templates.render_with(
         "sessions_manage",
-        context::ManageSessions {
+        &context::ManageSessions {
             sessions,
             current: None,
             message,
@@ -108,6 +108,7 @@ pub async fn manage_sessions(
     )
 }
 
+/*
 /// Allows site administrators to manage a specific session.
 #[get("/sessions/manage/<session_id>")]
 pub async fn manage_specific_session(
@@ -171,15 +172,18 @@ pub async fn specific_session(
         },
     )
 }
+*/
 
 /// Gets the information needed for the attendance recording dashboard and renders the template.
-#[get("/attendance")]
-pub async fn attendance(mut conn: Connection<Db>) -> Template {
-    let sessions = schema::Session::get_results(&mut *conn).await.unwrap();
+pub async fn attendance(
+    ConnectionExtractor(mut conn): ConnectionExtractor,
+    templates: State<Templates>,
+) -> Html<String> {
+    let sessions = schema::Session::get_results(&mut conn).await.unwrap();
 
-    Template::render(
+    templates.render_with(
         "attendance",
-        context::Attendance {
+        &context::Attendance {
             sessions,
             current: None,
             message: None,
@@ -187,6 +191,7 @@ pub async fn attendance(mut conn: Connection<Db>) -> Template {
     )
 }
 
+/*
 /// Gets the information needed for the attendance recording and renders the template.
 #[get("/attendance/<session_id>")]
 pub async fn session_attendance(
@@ -223,20 +228,24 @@ pub fn authenticated(uri: &str) -> Template {
 
     Template::render("authenticated", context::Authenticated { uri })
 }
+*/
 
 /// Displays a small splash page after authenticating.
-#[get("/bookings")]
-pub async fn bookings(user: User<Member>, mut conn: Connection<Db>) -> Template {
+pub async fn bookings(
+    user: User<Member>,
+    ConnectionExtractor(mut conn): ConnectionExtractor,
+    templates: State<Templates>,
+) -> Html<String> {
     let is_site_admin = user.is_also::<SiteAdmin>();
 
     let window = SessionWindow::from_current_time();
-    let sessions = schema::Registration::get_user_bookings(user.id, window, &mut *conn)
+    let sessions = schema::Registration::get_user_bookings(user.id, window, &mut conn)
         .await
         .unwrap();
 
-    Template::render(
+    templates.render_with(
         "bookings",
-        context::Context {
+        &context::Context {
             sessions,
             current: None,
             message: None,
@@ -247,20 +256,20 @@ pub async fn bookings(user: User<Member>, mut conn: Connection<Db>) -> Template 
 }
 
 /// Displays the PB board for people to view.
-#[get("/")]
 pub async fn blackboard(
     user: Option<User<Generic>>,
-    mut conn: Connection<Db>,
-    flash: Option<FlashMessage<'_>>,
-) -> Template {
-    let (pl, wl) = schema::PersonalBest::get_results(&mut *conn).await.unwrap();
+    ConnectionExtractor(mut conn): ConnectionExtractor,
+    flash: Option<IncomingFlashes>,
+    templates: State<Templates>,
+) -> Html<String> {
+    let (pl, wl) = schema::PersonalBest::get_results(&mut conn).await.unwrap();
 
     let user_id = user.map(|user| user.id);
-    let message = flash.map(context::Message::from);
+    let message = flash.and_then(context::Message::foo);
 
-    Template::render(
+    templates.render_with(
         "blackboard",
-        context::Blackboard {
+        &context::Blackboard {
             pl,
             wl,
             user_id,
@@ -270,22 +279,22 @@ pub async fn blackboard(
 }
 
 /// Allows the user to change their personal bests.
-#[get("/pbs")]
 pub async fn personal_bests(
     user: User<Member>,
-    mut conn: Connection<Db>,
-    flash: Option<FlashMessage<'_>>,
-) -> Template {
-    let personal_bests = schema::PersonalBest::find(user.id, &user.name, &mut *conn)
+    ConnectionExtractor(mut conn): ConnectionExtractor,
+    flash: Option<IncomingFlashes>,
+    templates: State<Templates>,
+) -> Html<String> {
+    let personal_bests = schema::PersonalBest::find(user.id, &user.name, &mut conn)
         .await
         .unwrap();
 
-    let message = flash.map(context::Message::from);
+    let message = flash.and_then(context::Message::foo);
     let warning = personal_bests.check_for_show_without_values();
 
-    Template::render(
+    templates.render_with(
         "personal_bests",
-        context::PersonalBests {
+        &context::PersonalBests {
             personal_bests,
             warning,
             message,
@@ -294,19 +303,19 @@ pub async fn personal_bests(
 }
 
 /// Shows the elections board.
-#[get("/elections")]
 pub async fn elections(
     user: User<Generic>,
-    mut conn: Connection<Db>,
-    flash: Option<FlashMessage<'_>>,
-) -> Template {
-    let exec_positions = schema::ExecPosition::get_results(&mut *conn).await.unwrap();
+    ConnectionExtractor(mut conn): ConnectionExtractor,
+    flash: Option<IncomingFlashes>,
+    templates: State<Templates>,
+) -> Html<String> {
+    let exec_positions = schema::ExecPosition::get_results(&mut conn).await.unwrap();
 
-    let message = flash.map(context::Message::from);
+    let message = flash.and_then(context::Message::foo);
 
-    Template::render(
+    templates.render_with(
         "elections",
-        context::Elections {
+        &context::Elections {
             exec_positions,
             message,
             admin: user.is_also::<ElectionAdmin>(),
@@ -314,6 +323,7 @@ pub async fn elections(
     )
 }
 
+/*
 /// Gets the information needed for the session registration and renders the template.
 #[get("/elections/voting/<position_id>")]
 pub async fn election_voting(
@@ -362,6 +372,7 @@ pub async fn election_voting(
         },
     ))
 }
+*/
 
 /// Resolves the winners of a tie based on a presidential vote ballot.
 fn resolve_ties<'a, 'b>(
@@ -476,11 +487,14 @@ fn count_position_ballots<'a>(
 }
 
 /// Calculates the results of the elections won so far.
-#[get("/elections/results")]
-pub async fn election_results(_user: User<ElectionAdmin>, mut conn: Connection<Db>) -> Template {
+pub async fn election_results(
+    _user: User<ElectionAdmin>,
+    ConnectionExtractor(mut conn): ConnectionExtractor,
+    templates: State<Templates>,
+) -> Html<String> {
     // Get all the available positions
     let positions: BTreeMap<i32, schema::ExecPosition> =
-        schema::ExecPosition::get_results(&mut *conn)
+        schema::ExecPosition::get_results(&mut conn)
             .await
             .unwrap()
             .into_iter()
@@ -488,7 +502,7 @@ pub async fn election_results(_user: User<ElectionAdmin>, mut conn: Connection<D
             .collect();
 
     // Map all the nominees from `warwick_id` -> `name`
-    let nominees: HashMap<_, _> = schema::Candidate::get_results(&mut *conn)
+    let nominees: HashMap<_, _> = schema::Candidate::get_results(&mut conn)
         .await
         .unwrap()
         .into_iter()
@@ -496,7 +510,7 @@ pub async fn election_results(_user: User<ElectionAdmin>, mut conn: Connection<D
         .collect();
 
     // Pull all the votes so far
-    let votes = schema::Vote::get_results(&mut *conn).await.unwrap();
+    let votes = schema::Vote::get_results(&mut conn).await.unwrap();
 
     // Sort all the votes by position they are voting for
     let mut by_position: BTreeMap<i32, Vec<schema::Vote>> =
@@ -511,7 +525,7 @@ pub async fn election_results(_user: User<ElectionAdmin>, mut conn: Connection<D
         .map(|(id, votes)| count_position_ballots(*id, votes, &positions, &nominees))
         .collect();
 
-    let closed_positions = schema::ExecPosition::closed_identifiers(&mut *conn)
+    let closed_positions = schema::ExecPosition::closed_identifiers(&mut conn)
         .await
         .unwrap();
 
@@ -532,27 +546,27 @@ pub async fn election_results(_user: User<ElectionAdmin>, mut conn: Connection<D
         .map(|w| w.0)
         .collect();
 
-    schema::Candidate::mark_elected(&all_winners, &mut *conn)
+    schema::Candidate::mark_elected(&all_winners, &mut conn)
         .await
         .unwrap();
 
-    Template::render("election_results", context::ElectionResults { results })
+    templates.render_with("election_results", &context::ElectionResults { results })
 }
 
 /// Shows the elections settings page.
-#[get("/elections/settings")]
 pub async fn election_settings(
     _user: User<ElectionAdmin>,
-    mut conn: Connection<Db>,
-    flash: Option<FlashMessage<'_>>,
-) -> Template {
-    let exec_positions = schema::ExecPosition::get_results(&mut *conn).await.unwrap();
+    ConnectionExtractor(mut conn): ConnectionExtractor,
+    flash: Option<IncomingFlashes>,
+    templates: State<Templates>,
+) -> Html<String> {
+    let exec_positions = schema::ExecPosition::get_results(&mut conn).await.unwrap();
 
-    let message = flash.map(context::Message::from);
+    let message = flash.and_then(context::Message::foo);
 
-    Template::render(
+    templates.render_with(
         "election_settings",
-        context::Elections {
+        &context::Elections {
             exec_positions,
             message,
             admin: true,
@@ -560,6 +574,7 @@ pub async fn election_settings(
     )
 }
 
+/*
 #[cfg(test)]
 mod tests {
     use std::collections::{BTreeMap, HashMap};
@@ -678,3 +693,4 @@ mod tests {
         assert_eq!(result, expected);
     }
 }
+*/

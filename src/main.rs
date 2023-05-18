@@ -1,10 +1,5 @@
-use std::collections::HashMap;
-use std::env;
-
-use rocket::figment::{providers::Env, Figment};
-use rocket::Config;
 use sqlx::migrate::Migrator;
-use sqlx::PgPool;
+use sqlx::{PgPool, Pool, Postgres};
 
 /// Runs the setup for the server.
 ///
@@ -23,6 +18,7 @@ fn setup() {
         .init();
 }
 
+/*
 /// Builds the configuration for the Rocket instance.
 fn config_from_env() -> Figment {
     let mut databases = HashMap::new();
@@ -39,34 +35,27 @@ fn config_from_env() -> Figment {
         .merge(("log_level", "off"))
         .merge(("databases", databases))
 }
+*/
 
-async fn run_migrations(database_url: &str) -> sqlx::Result<()> {
-    let pool = PgPool::connect(database_url).await?;
-
+async fn run_migrations(pool: &Pool<Postgres>) -> sqlx::Result<()> {
     static MIGRATOR: Migrator = sqlx::migrate!();
-    MIGRATOR.run(&pool).await?;
+    MIGRATOR.run(pool).await?;
 
     Ok(())
 }
 
-#[rocket::main]
-async fn main() {
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
     setup();
 
-    let config = config_from_env();
+    let database_url = "postgresql://localhost:5432/postgres";
+    let pool = PgPool::connect(database_url).await?;
 
-    let value = config
-        .find_value("databases.blackboards.url")
-        .expect("Failed to find value in the configuration");
-
-    let database_url = value.as_str().expect("Config value was not a string");
-
-    run_migrations(database_url)
+    run_migrations(&pool)
         .await
         .expect("Failed to run migrations");
 
-    blackboards::build_rocket(config)
-        .launch()
-        .await
-        .expect("Failed to launch");
+    blackboards::build_router(pool).await;
+
+    Ok(())
 }
